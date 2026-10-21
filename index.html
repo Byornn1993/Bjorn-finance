@@ -558,7 +558,32 @@ async function sendCode(){
 }
 function renderAcct(){
   const b=document.getElementById('acctBox'); if(!b)return;
-  b.innerHTML=session?'<span>Aangemeld als<br><b style="color:var(--fg)">'+esc(session.user.email||'')+'</b></span><button class="btn small" type="button" data-act="logout">Afmelden</button>':'';
+  b.innerHTML=session?'<span>Aangemeld als<br><b style="color:var(--fg)">'+esc(session.user.email||'')+'</b></span><button class="btn small" type="button" data-act="pwopen">Wachtwoord wijzigen</button><button class="btn small" type="button" data-act="logout">Afmelden</button>':'';
+}
+let PW=null; // wachtwoord wijzigen
+function openPw(){PW={err:'',busy:false};drawPw();setTimeout(()=>{const a=document.getElementById('pwNew');a&&a.focus()},30)}
+function drawPw(){
+  if(!PW)return;
+  document.getElementById('sheetRoot').innerHTML='<div class="scrim" data-act="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pwT"><div class="shead"><h2 id="pwT">Wachtwoord wijzigen</h2><button class="iconbtn" type="button" data-act="close" aria-label="Sluiten"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'+
+  '<form id="pwForm" style="display:flex;flex-direction:column;gap:14px" novalidate>'+
+  '<input type="email" name="email" autocomplete="username" value="'+esc(session&&session.user.email||'')+'" hidden>'+
+  '<label class="field">Nieuw wachtwoord<input id="pwNew" type="password" autocomplete="new-password" minlength="8"></label>'+
+  '<label class="field">Herhaal nieuw wachtwoord<input id="pwRep" type="password" autocomplete="new-password" minlength="8"></label>'+
+  '<span class="hint">Minstens 8 tekens. Je blijft op dit toestel aangemeld; op andere toestellen meld je je aan met het nieuwe wachtwoord.</span>'+
+  (PW.err?'<div class="err" role="alert">'+esc(PW.err)+'</div>':'')+
+  '<button class="btn primary" type="submit" style="height:50px;justify-content:center;font-size:16px"'+(PW.busy?' disabled':'')+'>'+(PW.busy?'Bezig…':'Opslaan')+'</button></form></div></div>';
+}
+async function submitPw(){
+  const p=document.getElementById('pwNew').value||'', r=document.getElementById('pwRep').value||'';
+  if(p.length<8){PW.err='Je wachtwoord moet minstens 8 tekens hebben.';drawPw();return}
+  if(p!==r){PW.err='De twee wachtwoorden zijn niet gelijk.';drawPw();return}
+  PW.busy=true;PW.err='';drawPw();
+  const {error}=await sb.auth.updateUser({password:p});
+  if(error){const m=String(error.message||'');PW.busy=false;
+    PW.err=/different from the old|same/i.test(m)?'Dit is je huidige wachtwoord. Kies een ander.':/weak|password/i.test(m)?'Kies een sterker wachtwoord (minstens 8 tekens, met letters en cijfers).':/reauth|nonce/i.test(m)?'Supabase vraagt eerst opnieuw aanmelden. Meld je af en weer aan, en probeer opnieuw.':'Dat lukte niet. Controleer je internet en probeer opnieuw.';
+    drawPw();return}
+  PW=null;document.getElementById('sheetRoot').innerHTML='';
+  toast('Wachtwoord gewijzigd');
 }
 
 /* ---------- UI-hulpjes ---------- */
@@ -966,7 +991,7 @@ function openSheet(tx,preset){
 }
 function closeSheet(discard){
   if(discard&&F&&F.newReceipt&&assets){assets.delete(F.newReceipt.id).catch(()=>{})}
-  F=null;document.getElementById('sheetRoot').innerHTML='';
+  F=null;PW=null;document.getElementById('sheetRoot').innerHTML='';
 }
 function drawSheet(){
   if(!F)return; const t=F.t; const r=F.removeReceipt?null:(F.newReceipt||F.origReceipt);
@@ -1046,6 +1071,7 @@ document.addEventListener('click',async e=>{
   switch(act){
     case 'export': exportData(); break;
     case 'logout': await sb.auth.signOut(); break;
+    case 'pwopen': openPw(); break;
     case 'reload': dbState='wachten'; render(); loadAll(); break;
     case 'lgmode': loginUi.mode=loginUi.mode==='nieuw'?'in':'nieuw'; loginUi.err=''; render(); break;
     case 'impask': imp.confirm=true; render(); break;
@@ -1087,6 +1113,7 @@ document.getElementById('fab').addEventListener('click',()=>openSheet(null,ui.vi
 document.getElementById('themeBtn').addEventListener('click',cycleTheme);
 document.addEventListener('submit',e=>{e.preventDefault();
   if(e.target.id==='txForm'){submitSheet();return}
+  if(e.target.id==='pwForm'){submitPw();return}
   if(e.target.dataset.form==='pbulk'){const p=getPlan();if(!p)return;const fd=new FormData(e.target);const from=+fd.get('from');const a=parseAmount(fd.get('amt'));if(!isFinite(a)||a<0){toast('Vul een geldig bedrag in, bijvoorbeeld 1500.');return}
     const months=p.months.map((m,i)=>i>=from?Object.assign({},m,{planned:round2(a)}):m);savePlan(Object.assign({},p,{months})).then(ok=>ok&&toast('Gepland bedrag aangepast vanaf '+mlabel(months[from].month)));return}
   if(e.target.dataset.form==='pot'){const id=e.target.dataset.id;const fd=new FormData(e.target);const g=parseAmount(fd.get('goal')),b=parseAmount(fd.get('startBalance'));
