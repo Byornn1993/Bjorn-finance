@@ -838,19 +838,20 @@ const YEAR_LAYOUT=[
 ];
 function yearData(y){
   const inc=Array.from({length:12},()=>({})), exp=Array.from({length:12},()=>({}));
+  const potInfo=Array(12).fill(0); // opnames: zichtbaar bij uitgaven Spaarpotjes, maar niet in de totalen
   const known=new Set(YEAR_LAYOUT.slice(1).flatMap(s=>s.rows));
   const add=(o,k,a)=>{o[k]=(o[k]||0)+a};
   for(const t of S.tx){
     if(!t.date||+t.date.slice(0,4)!==y)continue; const m=+t.date.slice(5,7)-1, a=+t.amount||0;
     if(t.type==='inkomen'){add(inc[m],groupOf(t.category).kind==='inkomen'&&CAT_GROUP[t.category]?t.category:'Overige inkomsten',a)}
-    else if(moveKind(t)==='opname')add(inc[m],POT_ROW,a);
+    else if(moveKind(t)==='opname'){add(inc[m],POT_ROW,a);potInfo[m]+=a}
     else if(moveKind(t)==='storting')add(exp[m],SAVE_CAT,a);
     else if(t.type==='uitgave'){
       if(t.category!==SAVE_CAT&&t.potOut){add(exp[m],POT_ROW,a);add(inc[m],POT_ROW,a)}
       else add(exp[m],known.has(t.category)?t.category:'Overig',a);
     }
   }
-  return {inc,exp};
+  return {inc,exp,potInfo};
 }
 function viewYear(){
   const y=ui.y, d=yearData(y), ys=yearsAvailable();
@@ -870,7 +871,7 @@ function viewYear(){
   YEAR_LAYOUT.forEach((s,si)=>{
     const src=s.id==='in'?d.inc:d.exp;
     t+='<tr class="sec"><td colspan="14">'+esc(s.name)+'</td></tr>';
-    for(const r of s.rows){const vals=src.map(o=>o[r]||0);
+    for(const r of s.rows){const vals=src.map((o,m)=>(o[r]||0)+(s.id==='dag'&&r===POT_ROW?d.potInfo[m]:0));
       t+='<tr><td title="'+esc(r)+'">'+esc(r)+(r===POT_ROW?' <span class="small muted">(uit potjes)</span>':'')+'</td>'+vals.map((v,m)=>cell(v,cc(m),r===POT_ROW?null:{m:m+1,c:r})).join('')+cell(sum(vals),' yt')+'</tr>'}
     t+='<tr class="tot"><td>'+esc(s.total)+'</td>'+secTot[si].map((v,m)=>cell(v,cc(m))).join('')+cell(sum(secTot[si]),' yt')+'</tr>';
   });
@@ -879,6 +880,7 @@ function viewYear(){
   t+='<tr class="grand"><td>Netto saldo (inkomsten − uitgaven)</td>'+netM.map((v,m)=>{const r=round2(v);return r?'<td class="'+(r<0?'neg':'pos')+cc(m)+'">'+fmt(r)+'</td>':'<td class="z'+cc(m)+'">–</td>'}).join('')+'<td class="yt '+(tNet<0?'neg':'pos')+'">'+fmt(tNet)+'</td></tr>';
   t+='</tbody></table></div>';
   h+='<section class="card" style="padding:0;overflow:hidden"><div style="padding:16px 18px 10px"><h2>Overzicht per categorie</h2><div class="cap" style="margin:0">Tik op een bedrag om de transacties te zien'+(isWide()?'':'. Veeg opzij voor alle maanden')+'</div></div>'+t+'</section>';
+  if(sum(d.potInfo))h+='<div class="note">Bij <b>Uitgaven — dagelijks leven</b> zie je in de rij Spaarpotjes ook wat je uit een potje naar je rekening haalde. Dat bedrag telt alleen mee als inkomen, niet in de totalen van de uitgaven.</div>';
   if(!active)h+='<div class="note">Voor '+y+' zijn nog geen transacties. Zodra je iets boekt met een datum in '+y+', vult dit overzicht zich vanzelf.</div>';
   return h;
 }
