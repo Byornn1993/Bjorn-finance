@@ -323,19 +323,31 @@ function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
    levenskosten  = alle uitgaven − sparen
    vrije cashflow= inkomen − levenskosten
    eindsaldo     = inkomen − levenskosten − sparen
-   overboekingen tussen rekening en potjes tellen nooit als inkomen of uitgave */
+   overboekingen: rekening → potje telt als sparen (zoals een storting),
+                  potje → rekening telt als inkomen uit potjes (rij Spaarpotjes),
+                  potje → potje telt niet mee */
 function txIn(y,m){return S.tx.filter(t=>t.date&&+t.date.slice(0,4)===y&&(!m||+t.date.slice(5,7)===m))}
+// Een lege potIn/potOut bij een overboeking is de rekening.
+function moveKind(t){
+  if(t.type!=='overboeking')return null;
+  if(!t.potOut&&t.potIn)return 'storting';
+  if(t.potOut&&!t.potIn)return 'opname';
+  return null;
+}
 function stats(y,m){
-  const L=txIn(y,m); const r={inkomen:0,uitgaven:0,sparen:0,uitPot:0,count:L.length,groups:{},cats:{}};
+  const L=txIn(y,m); const r={inkomen:0,uitgaven:0,sparen:0,uitPot:0,opname:0,count:L.length,groups:{},cats:{}};
   for(const t of L){const a=+t.amount||0;
     if(t.type==='inkomen'){r.inkomen+=a;continue}
+    const mk=moveKind(t);
+    if(mk==='opname'){r.opname+=a;continue}
+    if(mk==='storting'){r.uitgaven+=a;r.sparen+=a;r.groups.spaar=(r.groups.spaar||0)+a;r.cats[SAVE_CAT]=(r.cats[SAVE_CAT]||0)+a;continue}
     if(t.type!=='uitgave')continue;
     r.uitgaven+=a;
     if(t.category===SAVE_CAT)r.sparen+=a; else if(t.potOut)r.uitPot+=a;
     const fromPot=t.category!==SAVE_CAT&&t.potOut; const ck=fromPot?'Spaarpotjes':t.category;
     const g=fromPot?'dag':groupOf(t.category).id; r.groups[g]=(r.groups[g]||0)+a; r.cats[ck]=(r.cats[ck]||0)+a;
   }
-  r.inkomenLoon=r.inkomen; r.inkomen+=r.uitPot;
+  r.inkomenLoon=r.inkomen; r.inkomen+=r.uitPot+r.opname;
   r.levenskosten=r.uitgaven-r.sparen;
   r.cashflow=r.inkomen-r.levenskosten;
   r.eindsaldo=r.inkomen-r.levenskosten-r.sparen;
@@ -831,6 +843,8 @@ function yearData(y){
   for(const t of S.tx){
     if(!t.date||+t.date.slice(0,4)!==y)continue; const m=+t.date.slice(5,7)-1, a=+t.amount||0;
     if(t.type==='inkomen'){add(inc[m],groupOf(t.category).kind==='inkomen'&&CAT_GROUP[t.category]?t.category:'Overige inkomsten',a)}
+    else if(moveKind(t)==='opname')add(inc[m],POT_ROW,a);
+    else if(moveKind(t)==='storting')add(exp[m],SAVE_CAT,a);
     else if(t.type==='uitgave'){
       if(t.category!==SAVE_CAT&&t.potOut){add(exp[m],POT_ROW,a);add(inc[m],POT_ROW,a)}
       else add(exp[m],known.has(t.category)?t.category:'Overig',a);
@@ -878,7 +892,7 @@ function filteredTx(incomeOnly){
     if(!incomeOnly&&f.type!=='all'&&t.type!==f.type)return false;
     if(f.year!=='all'&&(t.date||'').slice(0,4)!==f.year)return false;
     if(f.month!=='all'&&+(t.date||'').slice(5,7)!==+f.month)return false;
-    if(f.cat!=='all'&&t.category!==f.cat)return false;
+    if(f.cat!=='all'&&t.category!==f.cat&&!(f.cat===SAVE_CAT&&moveKind(t)==='storting'))return false;
     if(q&&!((t.description||'')+' '+(t.category||'')+' '+(t.note||'')).toLowerCase().includes(q))return false;
     return true});
   const dir=ui.sort.d==='asc'?1:-1;
@@ -953,7 +967,7 @@ function viewPots(){
     if(editing)h+='<form class="row2" data-form="pot" data-id="'+esc(p.id)+'"><label class="field">Spaardoel<input id="pg-'+esc(p.id)+'" name="goal" inputmode="decimal" value="'+esc(amtStr(p.goal))+'"></label><label class="field">Huidige stand<input id="pb-'+esc(p.id)+'" name="startBalance" inputmode="decimal" value="'+esc(amtStr(p.startBalance))+'"></label><label class="field">Naam<input id="pn-'+esc(p.id)+'" name="name" value="'+esc(p.name)+'"></label><label class="field">Stand op datum<input id="pd-'+esc(p.id)+'" type="date" name="startDate" value="'+esc(p.startDate)+'"></label><button class="btn primary" type="submit" style="grid-column:1/-1">Opslaan</button></form>';
     h+='<details><summary>Geschiedenis ('+L.length+')</summary><div class="minilist">'+(L.length?L.map(t=>'<div><span>'+fdate(t.date)+' · '+esc(t.description||t.category||'Overboeking')+'</span><b class="num" style="color:var('+(t.potIn===p.id?'--pos':'--neg')+')">'+(t.potIn===p.id?'+':'−')+fmt(t.amount)+'</b></div>').join(''):'<div><span class="muted">Nog geen stortingen of opnames.</span></div>')+'<div><span class="muted">'+fdate(p.startDate)+' · huidige stand (handmatig)</span><b class="num">'+fmt(p.startBalance)+'</b></div></div></details></section>';
   }
-  h+='</div><div class="note">Een <b>storting</b> boek je als uitgave in de categorie Sparen / beleggen met het potje erbij: dat telt als sparen, niet als levenskosten. Betaal je iets <b>uit een potje</b> (zoals de nieuwe douche), boek dan een gewone uitgave en kies "Betaald uit potje". Net zoals in je Excel telt dat bedrag dan als inkomen én als uitgave (rij Spaarpotjes). Een <b>opname</b> naar je rekening is een overboeking en telt niet mee in inkomen of uitgaven.</div>';
+  h+='</div><div class="note">Een <b>storting</b> boek je als uitgave in de categorie Sparen / beleggen met het potje erbij: dat telt als sparen, niet als levenskosten. Betaal je iets <b>uit een potje</b> (zoals de nieuwe douche), boek dan een gewone uitgave en kies "Betaald uit potje". Net zoals in je Excel telt dat bedrag dan als inkomen én als uitgave (rij Spaarpotjes). Een <b>opname</b> naar je rekening is een overboeking en telt als inkomen uit potjes (rij Spaarpotjes). Een overboeking van je rekening naar een potje telt als sparen; tussen twee potjes telt ze niet mee.</div>';
   return h;
 }
 
@@ -1002,7 +1016,7 @@ function drawSheet(){
   '<label class="field">Bedrag<input id="sAmount" class="amount num" inputmode="decimal" placeholder="0,00" value="'+esc(amtStr(t.amount))+'" data-f="amount"></label>'+
   '<div class="row2"><label class="field">Datum<input id="sDate" type="date" value="'+esc(t.date)+'" data-f="date"></label>'+
   (t.type==='overboeking'?'<span></span>':'<label class="field">Categorie<select id="sCat" data-f="category">'+catOptions(t.type,t.category)+'</select></label>')+'</div>';
-  if(t.type==='overboeking')h+='<div class="row2"><label class="field">Van<select id="sFrom" data-f="potOut">'+potOptions(t.potOut||'',true,'Kies…')+'</select></label><label class="field">Naar<select id="sTo" data-f="potIn">'+potOptions(t.potIn||'',true,'Kies…')+'</select></label></div><span class="hint">Geld verplaatsen tussen je rekening en potjes telt niet als inkomen of uitgave.</span>';
+  if(t.type==='overboeking')h+='<div class="row2"><label class="field">Van<select id="sFrom" data-f="potOut">'+potOptions(t.potOut||'',true,'Kies…')+'</select></label><label class="field">Naar<select id="sTo" data-f="potIn">'+potOptions(t.potIn||'',true,'Kies…')+'</select></label></div><span class="hint">Rekening naar potje telt als sparen, potje naar rekening als inkomen uit potjes. Tussen twee potjes telt het niet mee.</span>';
   else if(isSave)h+='<label class="field">Naar spaarpotje<select id="sPotIn" data-f="potIn">'+potOptions(t.potIn||'',false,'Geen potje (beleggen of pensioen)')+'</select></label>';
   else if(t.type==='uitgave')h+='<label class="field">Betaald uit potje<select id="sPotOut" data-f="potOut">'+potOptions(t.potOut||'',false,'Nee, gewoon van mijn rekening')+'</select></label>';
   h+='<label class="field">Omschrijving<input id="sDesc" placeholder="'+(t.type==='inkomen'?'Bijv. loon oktober':'Bijv. supermarkt')+'" value="'+esc(t.description)+'" data-f="description"></label>'+
