@@ -703,7 +703,7 @@ function monthNav(){
 function viewDash(){
   const st=stats(ui.y,ui.m);
   const py=ui.m===1?ui.y-1:ui.y, pm=ui.m===1?12:ui.m-1; const pst=stats(py,pm); const hasPrev=pst.count>0;
-  const bt=balTotals(S.balance); const acc=S.balance.find(b=>b.isAccount);
+  const bt=balTotals(S.balance);
   const totPots=S.pots.reduce((a,p)=>a+potBalance(p),0), totGoal=S.pots.reduce((a,p)=>a+(+p.goal||0),0);
   let h='<div class="head"><div><h1>Dashboard</h1><div class="sub">'+MONTHS[ui.m-1]+' '+ui.y+' · '+st.count+' transacties</div></div>'+monthNav()+'</div>';
   h+='<div class="kpis">'+
@@ -713,7 +713,8 @@ function viewDash(){
     kpi('Gespaard & belegd',fmt(st.sparen),'pos',hasPrev?deltaChip(st.sparen,pst.sparen,true):'')+
     kpi('Spaarpercentage',pct(st.spaarPct),'','<span class="small muted">levenskosten '+pct(st.levPct)+'</span>')+
     kpi('Eindsaldo maand',fmt(st.eindsaldo),st.eindsaldo<0?'neg':'','<span class="small muted">na sparen</span>')+
-    kpi('Saldo rekening',acc?fmt(acc.value):'—','','<span class="small muted">'+(acc?'uit je balans':'markeer een rekening op Balans')+'</span>')+
+    // Saldo rekening = alle spaarpotjes samen + eindsaldo van de gekozen maand; verandert mee met elke transactie.
+    kpi('Saldo rekening',fmt(totPots+st.eindsaldo),totPots+st.eindsaldo<0?'neg':'','<span class="small muted">potjes '+fmt(totPots)+' + eindsaldo '+fmt(st.eindsaldo)+'</span>')+
     kpi('Netto vermogen',fmt0(bt.netto),'','<span class="small muted">'+fmt0(bt.activa)+' bezit · '+fmt0(bt.schulden)+' schuld</span>')+
   '</div>';
   if(!st.count)h+='<div class="note">Voor '+MONTHS[ui.m-1]+' '+ui.y+' zijn nog geen transacties. Tik op de plusknop om de eerste toe te voegen.</div>';
@@ -996,7 +997,7 @@ function balRow(b){
   const conf=ui.confirm===b.id;
   return '<div class="brow" data-bid="'+esc(b.id)+'"><input aria-label="Naam" value="'+esc(b.name)+'" data-bedit="name"><input aria-label="Bedrag '+esc(b.name)+'" class="val" inputmode="decimal" value="'+esc(amtStr(b.value))+'" data-bedit="value">'+
     (conf?'<button class="btn small danger" type="button" data-act="baldel" data-id="'+esc(b.id)+'" aria-label="Bevestig verwijderen" style="padding:0 6px">Ja</button>':'<button class="btn small ghost" type="button" data-act="askdel" data-id="'+esc(b.id)+'" aria-label="Verwijder '+esc(b.name)+'" style="padding:0 8px">'+ICON.trash+'</button>')+
-    (b.isAccount?'<span class="small muted" style="grid-column:1/-1;padding:0 8px">Wordt getoond als saldo rekening op je dashboard</span>':'')+'</div>';
+    '</div>';
 }
 
 /* ---------- Invoerformulier (sheet) ---------- */
