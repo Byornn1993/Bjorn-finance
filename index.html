@@ -366,7 +366,7 @@ function potBalance(p){
 }
 function potTx(p){return S.tx.filter(t=>t.potIn===p.id||t.potOut===p.id).sort((a,b)=>b.date.localeCompare(a.date))}
 function balTotals(items){let a=0,s=0;for(const i of items){const v=+i.value||0;if(i.side==='schuld')s+=v;else a+=v}return{activa:a,schulden:s,netto:a-s}}
-const potName=id=>id==='rekening'?'Rekening':(S.pots.find(p=>p.id===id)||{}).name||'Potje';
+const potName=id=>(!id||id==='rekening')?'Rekening':(S.pots.find(p=>p.id===id)||{}).name||'Potje';
 const potColor=p=>'var('+(p.color||'--c3')+')';
 
 /* ---------- Opslag (Supabase) ---------- */
