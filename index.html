@@ -874,7 +874,9 @@ function viewYear(){
   // totalen
   const secTot=YEAR_LAYOUT.map(s=>Array.from({length:12},(_,m)=>s.rows.reduce((a,r)=>a+((s.id==='in'?d.inc:d.exp)[m][r]||0),0)));
   const incM=secTot[0], expM=Array.from({length:12},(_,m)=>secTot.slice(1).reduce((a,s)=>a+s[m],0)), netM=incM.map((v,m)=>v-expM[m]);
-  const sum=a=>a.reduce((x,v)=>x+v,0); const tIn=sum(incM), tEx=sum(expM), tNet=tIn-tEx;
+  const sum=a=>a.reduce((x,v)=>x+v,0);
+  // Het overgedragen bedrag telt per maand mee, maar niet in de jaartotalen (anders telt het dubbel).
+  const cTot=sum(d.inc.map(o=>o[CARRY_ROW]||0)); const tIn=sum(incM)-cTot, tEx=sum(expM), tNet=tIn-tEx;
   const tSave=sum(d.exp.map(o=>o[SAVE_CAT]||0)); const active=incM.filter((v,m)=>v||expM[m]).length;
   h+='<div class="kpis">'+kpi('Totaal inkomsten',fmt(tIn),'','<span class="small muted">'+active+' maand'+(active===1?'':'en')+' met gegevens</span>')+kpi('Totaal uitgaven',fmt(tEx),'','<span class="small muted">inclusief sparen</span>')+(()=>{let km=curM;if(km<0){km=11;for(let i=11;i>=0;i--){if(incM[i]||expM[i]){km=i;break}}}const v=round2(netM[km]);return kpi('Netto saldo '+MONTHS[km].toLowerCase(),fmt(v),v<0?'neg':'pos','<span class="small muted">inkomsten − uitgaven deze maand</span>')})()+kpi('Spaarpercentage jaar',pct(tIn?tSave/tIn:0),'','<span class="small muted">'+fmt(tSave)+' gespaard</span>')+'</div>';
   h+='<section class="card"><h2>Inkomsten vs. uitgaven per maand</h2><div class="cap">'+y+', totale uitgaven inclusief sparen</div>'+barChart([incM.map(round2),expM.map(round2)],MSHORT,['--c3','--c2'],curM)+'<div class="legend"><span><i class="sw" style="background:var(--c3)"></i>Inkomsten</span><span><i class="sw" style="background:var(--c2)"></i>Uitgaven</span></div></section>';
@@ -884,8 +886,8 @@ function viewYear(){
     const src=s.id==='in'?d.inc:d.exp;
     t+='<tr class="sec"><td colspan="14">'+esc(s.name)+'</td></tr>';
     for(const r of s.rows){const vals=src.map((o,m)=>(o[r]||0)+(s.id==='dag'&&r===POT_ROW?d.potInfo[m]:0));
-      t+='<tr><td title="'+esc(r)+'">'+esc(r)+(r===POT_ROW?' <span class="small muted">(uit potjes)</span>':'')+'</td>'+vals.map((v,m)=>cell(v,cc(m),r===POT_ROW||r===CARRY_ROW?null:{m:m+1,c:r})).join('')+cell(sum(vals),' yt')+'</tr>'}
-    t+='<tr class="tot"><td>'+esc(s.total)+'</td>'+secTot[si].map((v,m)=>cell(v,cc(m))).join('')+cell(sum(secTot[si]),' yt')+'</tr>';
+      t+='<tr><td title="'+esc(r)+'">'+esc(r)+(r===POT_ROW?' <span class="small muted">(uit potjes)</span>':'')+'</td>'+vals.map((v,m)=>cell(v,cc(m),r===POT_ROW||r===CARRY_ROW?null:{m:m+1,c:r})).join('')+cell(r===CARRY_ROW?0:sum(vals),' yt')+'</tr>'}
+    t+='<tr class="tot"><td>'+esc(s.total)+'</td>'+secTot[si].map((v,m)=>cell(v,cc(m))).join('')+cell(sum(secTot[si])-(si===0?cTot:0),' yt')+'</tr>';
   });
   t+='<tr class="sec"><td colspan="14">Totaal &amp; saldo</td></tr>';
   t+='<tr class="tot"><td>Totaal uitgaven</td>'+expM.map((v,m)=>cell(v,cc(m))).join('')+cell(tEx,' yt')+'</tr>';
