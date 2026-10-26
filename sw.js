@@ -1,5 +1,5 @@
 // Bjorn Finance service worker: bewaart de app zelf (niet je gegevens) zodat hij snel opent.
-const CACHE = 'bjorn-finance-v9';
+const CACHE = 'bjorn-finance-v10';
 const SHELL = ['./', 'index.html', 'supabase.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'favicon.png'];
 
 self.addEventListener('install', e => {
@@ -17,8 +17,8 @@ self.addEventListener('fetch', e => {
   const isFont = url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
   if (url.origin !== self.location.origin && !isFont) return;
   if (req.mode === 'navigate' || url.pathname.endsWith('/index.html')) {
-    // Eerst het netwerk (zodat je altijd de nieuwste versie krijgt), anders de bewaarde versie.
-    e.respondWith(fetch(req).then(res => { const copy = res.clone(); caches.open(CACHE).then(c => c.put('index.html', copy)); return res; })
+    // Eerst het netwerk, zonder de browsercache (zodat je altijd de nieuwste versie krijgt), anders de bewaarde versie.
+    e.respondWith(fetch(req, { cache: 'no-cache' }).then(res => { const copy = res.clone(); caches.open(CACHE).then(c => c.put('index.html', copy)); return res; })
       .catch(() => caches.match('index.html')));
     return;
   }
