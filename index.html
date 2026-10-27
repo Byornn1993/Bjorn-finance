@@ -901,7 +901,8 @@ function viewYear(){
   const cTot=sum(d.inc.map(o=>o[CARRY_ROW]||0)); const tIn=sum(incM)-cTot, tEx=sum(expM), tNet=tIn-tEx;
   const tSave=sum(secTot[YEAR_LAYOUT.findIndex(s=>s.id==='spaar')]); const active=incM.filter((v,m)=>v||expM[m]).length;
   h+='<div class="kpis">'+kpi('Totaal inkomsten',fmt(tIn),'','<span class="small muted">'+active+' maand'+(active===1?'':'en')+' met gegevens</span>')+kpi('Totaal uitgaven',fmt(tEx),'','<span class="small muted">inclusief sparen</span>')+(()=>{let km=curM;if(km<0){km=11;for(let i=11;i>=0;i--){if(incM[i]||expM[i]){km=i;break}}}const v=round2(netM[km]);return kpi('Netto saldo '+MONTHS[km].toLowerCase(),fmt(v),v<0?'neg':'pos','<span class="small muted">inkomsten − uitgaven deze maand</span>')})()+kpi('Spaarpercentage jaar',pct(tIn?tSave/tIn:0),'','<span class="small muted">'+fmt(tSave)+' gespaard</span>')+'</div>';
-  h+='<section class="card"><h2>Inkomsten vs. uitgaven per maand</h2><div class="cap">'+y+', totale uitgaven inclusief sparen</div>'+barChart([incM.map(round2),expM.map(round2)],MSHORT,['--c3','--c2'],curM)+'<div class="legend"><span><i class="sw" style="background:var(--c3)"></i>Inkomsten</span><span><i class="sw" style="background:var(--c2)"></i>Uitgaven</span></div></section>';
+  // grafiek komt onder de tabel per categorie
+  const chart='<section class="card"><h2>Inkomsten vs. uitgaven per maand</h2><div class="cap">'+y+', totale uitgaven inclusief sparen</div>'+barChart([incM.map(round2),expM.map(round2)],MSHORT,['--c3','--c2'],curM)+'<div class="legend"><span><i class="sw" style="background:var(--c3)"></i>Inkomsten</span><span><i class="sw" style="background:var(--c2)"></i>Uitgaven</span></div></section>';
   // tabel
   let t='<div class="tablebox"><table class="yr"><thead><tr><th scope="col">Categorie</th>'+MSHORT.map((n,m)=>'<th scope="col" class="'+cc(m).trim()+'">'+n+'</th>').join('')+'<th scope="col">Totaal</th></tr></thead><tbody>';
   YEAR_LAYOUT.forEach((s,si)=>{
@@ -916,7 +917,7 @@ function viewYear(){
   t+='<tr class="tot"><td>Totaal uitgaven</td>'+expM.map((v,m)=>cell(v,cc(m))).join('')+cell(tEx,' yt')+'</tr>';
   t+='<tr class="grand"><td>Netto saldo (inkomsten − uitgaven)</td>'+netM.map((v,m)=>{const r=round2(v);return r?'<td class="'+(r<0?'neg':'pos')+cc(m)+'">'+fmt(r)+'</td>':'<td class="z'+cc(m)+'">–</td>'}).join('')+'<td class="yt '+(tNet<0?'neg':'pos')+'">'+fmt(tNet)+'</td></tr>';
   t+='</tbody></table></div>';
-  h+='<section class="card" style="padding:0;overflow:hidden"><div style="padding:16px 18px 10px"><h2>Overzicht per categorie</h2><div class="cap" style="margin:0">Tik op een bedrag om de transacties te zien'+(isWide()?'':'. Veeg opzij voor alle maanden')+'</div></div>'+t+'</section>';
+  h+='<section class="card" style="padding:0;overflow:hidden"><div style="padding:16px 18px 10px"><h2>Overzicht per categorie</h2><div class="cap" style="margin:0">Tik op een bedrag om de transacties te zien'+(isWide()?'':'. Veeg opzij voor alle maanden')+'</div></div>'+t+'</section>'+chart;
   if(sum(d.potInfo))h+='<div class="note">Bij <b>Uitgaven — dagelijks leven</b> zie je in de rij Spaarpotjes ook wat je uit een potje naar je rekening haalde. Dat bedrag telt alleen mee als inkomen, niet in de totalen van de uitgaven.</div>';
   if(!active)h+='<div class="note">Voor '+y+' zijn nog geen transacties. Zodra je iets boekt met een datum in '+y+', vult dit overzicht zich vanzelf.</div>';
   return h;
