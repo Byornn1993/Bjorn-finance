@@ -278,10 +278,12 @@ const GROUPS=[
   {id:'verz',name:'Verzekeringen',kind:'uitgave',color:'--c4',cats:['Levensverzekering','Aansprakelijkheidsverzekering','Overige verzekeringen']},
   {id:'dag',name:'Dagelijks leven',kind:'uitgave',color:'--c2',cats:['Boodschappen','Kleding','Gezondheid & persoonlijke verzorging']},
   {id:'vrij',name:'Vrije tijd & overig',kind:'uitgave',color:'--c5',cats:['Uit eten & horeca','Abonnementen (streaming, sport, etc.)','Vakantie','Cadeaus','Goede doelen','Visa Argenta','Overig']},
-  {id:'spaar',name:'Sparen / beleggen',kind:'uitgave',color:'--c3',cats:[SAVE_CAT]}
+  {id:'spaar',name:'Sparen / beleggen',kind:'uitgave',color:'--c3',cats:['Crypto','Aandelen Argenta','Pensioensparen',SAVE_CAT]}
 ];
 const CAT_GROUP={}; GROUPS.forEach(g=>g.cats.forEach(c=>CAT_GROUP[c]=g));
 const groupOf=c=>CAT_GROUP[c]||GROUPS[4];
+// Elke categorie uit de groep Sparen / beleggen telt als sparen (niet als levenskosten).
+const isSaveCat=c=>(CAT_GROUP[c]||{}).id==='spaar';
 const MONTHS=['Januari','Februari','Maart','April','Mei','Juni','Juli','Augustus','September','Oktober','November','December'];
 const MSHORT=['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
 const TYPES={inkomen:'Inkomen',uitgave:'Uitgave',overboeking:'Overboeking'};
@@ -351,8 +353,8 @@ function stats(y,m){
     if(mk==='storting'){r.uitgaven+=a;r.sparen+=a;r.groups.spaar=(r.groups.spaar||0)+a;r.cats[SAVE_CAT]=(r.cats[SAVE_CAT]||0)+a;continue}
     if(t.type!=='uitgave')continue;
     r.uitgaven+=a;
-    if(t.category===SAVE_CAT)r.sparen+=a; else if(t.potOut)r.uitPot+=a;
-    const fromPot=t.category!==SAVE_CAT&&t.potOut; const ck=fromPot?'Spaarpotjes':t.category;
+    if(isSaveCat(t.category))r.sparen+=a; else if(t.potOut)r.uitPot+=a;
+    const fromPot=!isSaveCat(t.category)&&t.potOut; const ck=fromPot?'Spaarpotjes':t.category;
     const g=fromPot?'dag':groupOf(t.category).id; r.groups[g]=(r.groups[g]||0)+a; r.cats[ck]=(r.cats[ck]||0)+a;
   }
   r.carry=carryIn(y,m);
@@ -615,7 +617,7 @@ const isWide=()=>window.matchMedia('(min-width:900px)').matches;
 function catOptions(type,sel){
   const gs=GROUPS.filter(g=>type==='inkomen'?g.kind==='inkomen':g.kind==='uitgave');
   let h=''; let found=false;
-  for(const g of gs){h+='<optgroup label="'+esc(g.name)+'">';for(const c of g.cats){if(c===sel)found=true;h+='<option'+(c===sel?' selected':'')+'>'+esc(c)+'</option>'}h+='</optgroup>'}
+  for(const g of gs){h+='<optgroup label="'+esc(g.name)+'">';for(const c of g.cats){if(c===sel)found=true;h+='<option value="'+esc(c)+'"'+(c===sel?' selected':'')+'>'+esc(c===SAVE_CAT?'Sparen / beleggen (overig)':c)+'</option>'}h+='</optgroup>'}
   if(sel&&!found)h+='<option selected>'+esc(sel)+'</option>';
   return h;
 }
@@ -707,6 +709,15 @@ function monthNav(){
     '<button class="iconbtn" type="button" data-act="mnext" aria-label="Volgende maand">'+ICON.right+'</button></div>';
 }
 
+// Dashboardkaart: wat je dit jaar spaarde, per potje en per spaarcategorie (zelfde regels als het jaaroverzicht).
+function saveCard(){
+  const d=yearData(ui.y);
+  const rows=saveRowDefs().map(r=>({...r,v:d.exp.reduce((a,o)=>a+(o[r.key]||0),0)})).filter(r=>round2(r.v));
+  const tot=rows.reduce((a,r)=>a+r.v,0), max=rows.length?Math.max(...rows.map(r=>r.v)):1;
+  return '<section class="card"><h2>Gespaard in '+ui.y+'</h2><div class="cap">Totaal '+fmt(tot)+'</div>'+
+    (rows.length?'<div class="hbar">'+rows.map(r=>'<div class="row"><div class="top"><span>'+esc(r.label)+'</span><b class="num">'+fmt(r.v)+'</b></div><div class="track"><div class="fill" style="width:'+(r.v/max*100).toFixed(1)+'%;background:'+r.color+'"></div></div></div>').join('')+'</div>':'<div class="empty small">Nog niets gespaard in '+ui.y+'.</div>')+
+    '</section>';
+}
 function viewDash(){
   const st=stats(ui.y,ui.m);
   const py=ui.m===1?ui.y-1:ui.y, pm=ui.m===1?12:ui.m-1; const pst=stats(py,pm); const hasPrev=pst.count>0;
@@ -735,12 +746,12 @@ function viewDash(){
     (gt>0?'<div class="donutwrap">'+donut(parts,gt,fmt0(gt))+'<div class="dl">'+parts.map(p=>'<div><i class="sw" style="background:var('+p.color+')"></i><span>'+esc(p.label)+'</span><b class="num">'+fmt(p.v)+'</b><span class="pct num">'+Math.round(p.v/gt*100)+'%</span></div>').join('')+'</div></div>':'<div class="empty small">Nog geen uitgaven deze maand.</div>')+
     '</section></div>';
   // categorieën, potjes, vermogen
-  const cats=Object.entries(st.cats).filter(([c])=>c!==SAVE_CAT).sort((a,b)=>b[1]-a[1]).slice(0,8); const cmax=cats.length?cats[0][1]:1;
+  const cats=Object.entries(st.cats).filter(([c])=>!isSaveCat(c)).sort((a,b)=>b[1]-a[1]).slice(0,8); const cmax=cats.length?cats[0][1]:1;
   h+='<div class="grid3"><section class="card"><h2>Uitgaven per categorie</h2><div class="cap">Top '+cats.length+', zonder sparen</div>'+
     (cats.length?'<div class="hbar">'+cats.map(([c,v])=>'<div class="row"><div class="top"><span>'+esc(c)+'</span><b class="num">'+fmt(v)+'</b></div><div class="track"><div class="fill" style="width:'+(v/cmax*100).toFixed(1)+'%;background:var('+groupOf(c).color+')"></div></div></div>').join('')+'</div>':'<div class="empty small">Nog geen uitgaven.</div>')+
     '</section><section class="card"><div class="head" style="margin-bottom:10px"><div><h2>Spaarpotjes</h2><div class="cap" style="margin:0">'+fmt0(totPots)+' van '+fmt0(totGoal)+'</div></div><a class="btn small" href="#potjes">Alle potjes</a></div><div class="hbar">'+
     S.pots.map(p=>{const b=potBalance(p),g=+p.goal||0,pr=g?Math.min(b/g,1):0;return '<div class="row"><div class="top"><span>'+esc(p.name)+'</span><b class="num">'+fmt0(b)+' <span class="muted" style="font-weight:400">/ '+fmt0(g)+'</span></b></div><div class="track"><div class="fill" style="width:'+(pr*100).toFixed(1)+'%;background:'+potColor(p)+'"></div></div><span class="small muted num">'+Math.round(pr*100)+'%</span></div>'}).join('')+
-    '</div></section><section class="card"><h2>Nettovermogen</h2><div class="cap">Stand per maand, uit je balans</div>'+lineChart(S.networth.map(n=>({label:MSHORT[+n.month.slice(5,7)-1]+' '+n.month.slice(2,4),v:+n.netto||0})))+'</section></div>';
+    '</div></section>'+saveCard()+'<section class="card"><h2>Nettovermogen</h2><div class="cap">Stand per maand, uit je balans</div>'+lineChart(S.networth.map(n=>({label:MSHORT[+n.month.slice(5,7)-1]+' '+n.month.slice(2,4),v:+n.netto||0})))+'</section></div>';
   return h;
 }
 /* ---------- Prognose spaarpotjes (zelfde logica als Excel) ----------
@@ -845,20 +856,31 @@ const YEAR_LAYOUT=[
   {id:'vast',name:'Uitgaven — vaste lasten',rows:GROUPS[1].cats,total:'Totaal vaste lasten'},
   {id:'verz',name:'Uitgaven — verzekeringen',rows:GROUPS[2].cats,total:'Totaal verzekeringen'},
   {id:'dag',name:'Uitgaven — dagelijks leven',rows:GROUPS[3].cats.concat([POT_ROW]),total:'Totaal dagelijks leven'},
-  {id:'vrij',name:'Uitgaven — vrije tijd & overig',rows:['Uit eten & horeca','Abonnementen (streaming, sport, etc.)','Vakantie','Cadeaus','Goede doelen',SAVE_CAT,'Visa Argenta','Overig'],total:'Totaal vrije tijd & overig'}
+  {id:'vrij',name:'Uitgaven — vrije tijd & overig',rows:['Uit eten & horeca','Abonnementen (streaming, sport, etc.)','Vakantie','Cadeaus','Goede doelen','Visa Argenta','Overig'],total:'Totaal vrije tijd & overig'},
+  {id:'spaar',name:'Uitgaven — sparen & beleggen',rows:null,total:'Totaal sparen & beleggen'}
 ];
+// Spaarregels: één regel per potje (stortingen) plus de spaarcategorieën.
+function saveRowDefs(){return S.pots.map(p=>({key:'pot:'+p.id,label:p.name,color:potColor(p)})).concat(GROUPS[5].cats.map(c=>({key:c,label:c===SAVE_CAT?'Overig sparen':c,color:'var(--c3)'})))}
+// Op welke spaarregel telt deze transactie? null = geen sparen.
+function saveKey(t){
+  const potKey=id=>S.pots.some(p=>p.id===id)?'pot:'+id:SAVE_CAT;
+  if(moveKind(t)==='storting')return potKey(t.potIn);
+  if(t.type!=='uitgave'||!isSaveCat(t.category))return null;
+  return t.potIn?potKey(t.potIn):t.category;
+}
+const rowsOf=s=>s.rows?s.rows.map(r=>({key:r,label:r})):saveRowDefs();
 function yearData(y){
   const inc=Array.from({length:12},()=>({})), exp=Array.from({length:12},()=>({}));
   const potInfo=Array(12).fill(0); // opnames: zichtbaar bij uitgaven Spaarpotjes, maar niet in de totalen
-  const known=new Set(YEAR_LAYOUT.slice(1).flatMap(s=>s.rows));
+  const known=new Set(YEAR_LAYOUT.slice(1).flatMap(s=>s.rows||[]));
   const add=(o,k,a)=>{o[k]=(o[k]||0)+a};
   for(const t of S.tx){
     if(!t.date||+t.date.slice(0,4)!==y)continue; const m=+t.date.slice(5,7)-1, a=+t.amount||0;
     if(t.type==='inkomen'){add(inc[m],groupOf(t.category).kind==='inkomen'&&CAT_GROUP[t.category]?t.category:'Overige inkomsten',a)}
     else if(moveKind(t)==='opname'){add(inc[m],POT_ROW,a);potInfo[m]+=a}
-    else if(moveKind(t)==='storting')add(exp[m],SAVE_CAT,a);
+    else if(saveKey(t))add(exp[m],saveKey(t),a);
     else if(t.type==='uitgave'){
-      if(t.category!==SAVE_CAT&&t.potOut){add(exp[m],POT_ROW,a);add(inc[m],POT_ROW,a)}
+      if(t.potOut){add(exp[m],POT_ROW,a);add(inc[m],POT_ROW,a)}
       else add(exp[m],known.has(t.category)?t.category:'Overig',a);
     }
   }
@@ -872,12 +894,12 @@ function viewYear(){
   const cc=m=>m===curM?' cur':'';
   let h='<div class="head"><div><h1>Jaaroverzicht '+y+'</h1><div class="sub">Inkomsten en uitgaven per maand, automatisch uit je uitgavenlog</div></div><div class="monthnav"><button class="iconbtn" type="button" data-act="yprev" aria-label="Vorig jaar">'+ICON.left+'</button><label for="selYJ" style="position:absolute;left:-9999px">Jaar</label><select id="selYJ" class="sel" data-act="sety">'+ys.map(v=>'<option'+(v===y?' selected':'')+'>'+v+'</option>').join('')+'<option value="new">+ Nieuw jaar</option></select><button class="iconbtn" type="button" data-act="ynext" aria-label="Volgend jaar">'+ICON.right+'</button></div></div>';
   // totalen
-  const secTot=YEAR_LAYOUT.map(s=>Array.from({length:12},(_,m)=>s.rows.reduce((a,r)=>a+((s.id==='in'?d.inc:d.exp)[m][r]||0),0)));
+  const secTot=YEAR_LAYOUT.map(s=>Array.from({length:12},(_,m)=>rowsOf(s).reduce((a,r)=>a+((s.id==='in'?d.inc:d.exp)[m][r.key]||0),0)));
   const incM=secTot[0], expM=Array.from({length:12},(_,m)=>secTot.slice(1).reduce((a,s)=>a+s[m],0)), netM=incM.map((v,m)=>v-expM[m]);
   const sum=a=>a.reduce((x,v)=>x+v,0);
   // Het overgedragen bedrag telt per maand mee, maar niet in de jaartotalen (anders telt het dubbel).
   const cTot=sum(d.inc.map(o=>o[CARRY_ROW]||0)); const tIn=sum(incM)-cTot, tEx=sum(expM), tNet=tIn-tEx;
-  const tSave=sum(d.exp.map(o=>o[SAVE_CAT]||0)); const active=incM.filter((v,m)=>v||expM[m]).length;
+  const tSave=sum(secTot[YEAR_LAYOUT.findIndex(s=>s.id==='spaar')]); const active=incM.filter((v,m)=>v||expM[m]).length;
   h+='<div class="kpis">'+kpi('Totaal inkomsten',fmt(tIn),'','<span class="small muted">'+active+' maand'+(active===1?'':'en')+' met gegevens</span>')+kpi('Totaal uitgaven',fmt(tEx),'','<span class="small muted">inclusief sparen</span>')+(()=>{let km=curM;if(km<0){km=11;for(let i=11;i>=0;i--){if(incM[i]||expM[i]){km=i;break}}}const v=round2(netM[km]);return kpi('Netto saldo '+MONTHS[km].toLowerCase(),fmt(v),v<0?'neg':'pos','<span class="small muted">inkomsten − uitgaven deze maand</span>')})()+kpi('Spaarpercentage jaar',pct(tIn?tSave/tIn:0),'','<span class="small muted">'+fmt(tSave)+' gespaard</span>')+'</div>';
   h+='<section class="card"><h2>Inkomsten vs. uitgaven per maand</h2><div class="cap">'+y+', totale uitgaven inclusief sparen</div>'+barChart([incM.map(round2),expM.map(round2)],MSHORT,['--c3','--c2'],curM)+'<div class="legend"><span><i class="sw" style="background:var(--c3)"></i>Inkomsten</span><span><i class="sw" style="background:var(--c2)"></i>Uitgaven</span></div></section>';
   // tabel
@@ -885,8 +907,9 @@ function viewYear(){
   YEAR_LAYOUT.forEach((s,si)=>{
     const src=s.id==='in'?d.inc:d.exp;
     t+='<tr class="sec"><td colspan="14">'+esc(s.name)+'</td></tr>';
-    for(const r of s.rows){const vals=src.map((o,m)=>(o[r]||0)+(s.id==='dag'&&r===POT_ROW?d.potInfo[m]:0));
-      t+='<tr><td title="'+esc(r)+'">'+esc(r)+(r===POT_ROW?' <span class="small muted">(uit potjes)</span>':'')+'</td>'+vals.map((v,m)=>cell(v,cc(m),r===POT_ROW||r===CARRY_ROW?null:{m:m+1,c:r})).join('')+cell(r===CARRY_ROW?0:sum(vals),' yt')+'</tr>'}
+    for(const {key:r,label} of rowsOf(s)){const vals=src.map((o,m)=>(o[r]||0)+(s.id==='dag'&&r===POT_ROW?d.potInfo[m]:0));
+      const noDrill=r===POT_ROW||r===CARRY_ROW||r.startsWith('pot:');
+      t+='<tr><td title="'+esc(label)+'">'+esc(label)+(r===POT_ROW?' <span class="small muted">(uit potjes)</span>':'')+'</td>'+vals.map((v,m)=>cell(v,cc(m),noDrill?null:{m:m+1,c:r})).join('')+cell(r===CARRY_ROW?0:sum(vals),' yt')+'</tr>'}
     t+='<tr class="tot"><td>'+esc(s.total)+'</td>'+secTot[si].map((v,m)=>cell(v,cc(m))).join('')+cell(sum(secTot[si])-(si===0?cTot:0),' yt')+'</tr>';
   });
   t+='<tr class="sec"><td colspan="14">Totaal &amp; saldo</td></tr>';
@@ -1025,7 +1048,7 @@ function closeSheet(discard){
 }
 function drawSheet(){
   if(!F)return; const t=F.t; const r=F.removeReceipt?null:(F.newReceipt||F.origReceipt);
-  const isSave=t.type==='uitgave'&&t.category===SAVE_CAT;
+  const isSave=t.type==='uitgave'&&isSaveCat(t.category);
   let h='<div class="scrim" data-act="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="shT"><div class="shead"><h2 id="shT">'+(F.isNew?'Nieuwe transactie':'Transactie bewerken')+'</h2><button class="iconbtn" type="button" data-act="close" aria-label="Sluiten"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'+
   '<form id="txForm" style="display:flex;flex-direction:column;gap:14px" novalidate>'+
   '<div class="seg" role="group" aria-label="Type">'+Object.entries(TYPES).map(([k,n])=>'<button type="button" data-act="stype" data-v="'+k+'" aria-pressed="'+(t.type===k)+'">'+n+'</button>').join('')+'</div>'+
@@ -1062,8 +1085,8 @@ async function submitSheet(){
   const rec=F.removeReceipt?null:(F.newReceipt||F.origReceipt);
   const data={date:t.date,type:t.type,amount:round2(a),description:(t.description||'').trim(),note:(t.note||'').trim(),
     category:t.type==='overboeking'?'Overboeking':t.category,
-    potIn:t.type==='overboeking'?(t.potIn==='rekening'?'':t.potIn):(t.type==='uitgave'&&t.category===SAVE_CAT?(t.potIn||''):''),
-    potOut:t.type==='overboeking'?(t.potOut==='rekening'?'':t.potOut):(t.type==='uitgave'&&t.category!==SAVE_CAT?(t.potOut||''):''),
+    potIn:t.type==='overboeking'?(t.potIn==='rekening'?'':t.potIn):(t.type==='uitgave'&&isSaveCat(t.category)?(t.potIn||''):''),
+    potOut:t.type==='overboeking'?(t.potOut==='rekening'?'':t.potOut):(t.type==='uitgave'&&!isSaveCat(t.category)?(t.potOut||''):''),
     receipt:rec||null, created:t.created||Date.now(), updated:Date.now()};
   if(t.type==='overboeking'){data.from=t.potOut;data.to=t.potIn}
   const id=t.id||newId('tx');
@@ -1168,7 +1191,7 @@ document.addEventListener('change',async e=>{
     const patch={updated:Date.now()};
     if(k==='amount'){v=parseAmount(v);if(!isFinite(v)||v<=0){toast('Ongeldig bedrag');el.value=amtStr(t.amount);return}patch.amount=round2(v)}
     else if(k==='type'){patch.type=v; if(v==='inkomen'){patch.category=groupOf(t.category).kind==='inkomen'?t.category:'Overige inkomsten';patch.potIn='';patch.potOut=''} else if(v==='uitgave'){if(groupOf(t.category).kind!=='uitgave'||!CAT_GROUP[t.category])patch.category='Overig'} else {openSheet(Object.assign({},t,{type:'overboeking',potOut:'rekening',potIn:''}));el.value=t.type;return}}
-    else if(k==='category'){patch.category=v; if(v===SAVE_CAT)patch.potOut=''; else patch.potIn=''}
+    else if(k==='category'){patch.category=v; if(isSaveCat(v))patch.potOut=''; else patch.potIn=''}
     else if(k==='date'){if(!v){el.value=t.date;return}patch.date=v}
     else patch[k]=v.trim();
     ui.pendingRender=true; await save('tx',id,patch,true);return}
