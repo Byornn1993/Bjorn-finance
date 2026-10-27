@@ -1,5 +1,5 @@
 // Bjorn Finance service worker: bewaart de app zelf (niet je gegevens) zodat hij snel opent.
-const CACHE = 'bjorn-finance-v15';
+const CACHE = 'bjorn-finance-v16';
 const SHELL = ['./', 'index.html', 'supabase.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'favicon.png'];
 
 self.addEventListener('install', e => {

@@ -209,7 +209,9 @@ table.yr tr.tot td{font-weight:700;border-bottom:2px solid var(--line)}
 table.yr tr.grand td{font-weight:700;font-family:var(--font-display);background:var(--accent-soft)}
 table.yr tr.grand td:first-child{background:var(--accent-soft)}
 table.yr .z{color:var(--muted);opacity:.55}
-table.yr .cur{background:color-mix(in srgb,var(--accent) 7%,transparent)}
+table.yr .cur{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+table.yr th.cur{color:var(--accent);font-weight:800;box-shadow:inset 0 -3px 0 var(--accent)}
+table.yr th button{all:unset;cursor:pointer;padding:2px 4px;border-radius:6px} table.yr th button:hover{background:var(--surface-2)}
 table.yr .neg{color:var(--neg)} table.yr .pos{color:var(--pos)}
 table.yr td.yt{font-weight:700;border-left:1px solid var(--line-2)}
 table.yr button.cell{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-decoration:underline dotted var(--line);text-underline-offset:3px}
@@ -889,7 +891,7 @@ function yearData(y){
 }
 function viewYear(){
   const y=ui.y, d=yearData(y), ys=yearsAvailable();
-  const curM=(y===now.getFullYear())?now.getMonth():-1;
+  const curM=ui.m-1; // aangeduide maand: standaard de huidige, kies een andere door op de maand te tikken
   const cell=(v,cls,drill)=>{const r=round2(v);if(!r)return '<td class="z'+cls+'">–</td>';return '<td class="'+cls.trim()+'">'+(drill?'<button class="cell" type="button" data-act="drill" data-m="'+drill.m+'" data-c="'+esc(drill.c)+'">'+fmt(r)+'</button>':fmt(r))+'</td>'};
   const cc=m=>m===curM?' cur':'';
   let h='<div class="head"><div><h1>Jaaroverzicht '+y+'</h1><div class="sub">Inkomsten en uitgaven per maand, automatisch uit je uitgavenlog</div></div><div class="monthnav"><button class="iconbtn" type="button" data-act="yprev" aria-label="Vorig jaar">'+ICON.left+'</button><label for="selYJ" style="position:absolute;left:-9999px">Jaar</label><select id="selYJ" class="sel" data-act="sety">'+ys.map(v=>'<option'+(v===y?' selected':'')+'>'+v+'</option>').join('')+'<option value="new">+ Nieuw jaar</option></select><button class="iconbtn" type="button" data-act="ynext" aria-label="Volgend jaar">'+ICON.right+'</button></div></div>';
@@ -904,7 +906,7 @@ function viewYear(){
   // grafiek komt onder de tabel per categorie
   const chart='<section class="card"><h2>Inkomsten vs. uitgaven per maand</h2><div class="cap">'+y+', totale uitgaven inclusief sparen</div>'+barChart([incM.map(round2),expM.map(round2)],MSHORT,['--c3','--c2'],curM)+'<div class="legend"><span><i class="sw" style="background:var(--c3)"></i>Inkomsten</span><span><i class="sw" style="background:var(--c2)"></i>Uitgaven</span></div></section>';
   // tabel
-  let t='<div class="tablebox"><table class="yr"><thead><tr><th scope="col">Categorie</th>'+MSHORT.map((n,m)=>'<th scope="col" class="'+cc(m).trim()+'">'+n+'</th>').join('')+'<th scope="col">Totaal</th></tr></thead><tbody>';
+  let t='<div class="tablebox"><table class="yr"><thead><tr><th scope="col">Categorie</th>'+MSHORT.map((n,m)=>'<th scope="col" class="'+cc(m).trim()+'"><button type="button" data-act="pickm" data-m="'+(m+1)+'" title="Duid '+MONTHS[m].toLowerCase()+' aan">'+n+'</button></th>').join('')+'<th scope="col">Totaal</th></tr></thead><tbody>';
   YEAR_LAYOUT.forEach((s,si)=>{
     const src=s.id==='in'?d.inc:d.exp;
     t+='<tr class="sec"><td colspan="14">'+esc(s.name)+'</td></tr>';
@@ -1131,6 +1133,7 @@ document.addEventListener('click',async e=>{
     case 'impask': imp.confirm=true; render(); break;
     case 'impno': imp.confirm=false; render(); break;
     case 'impgo': runImport(); break;
+    case 'pickm': ui.m=+el.dataset.m; render(); break;
     case 'mprev': ui.m--; if(ui.m<1){ui.m=12;ui.y--} render(); break;
     case 'mnext': ui.m++; if(ui.m>12){ui.m=1;ui.y++} render(); break;
     case 'yprev': ui.y--; render(); break;
