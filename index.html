@@ -276,9 +276,8 @@ body.auth .side,body.auth .bottom{display:none!important}
 const SAVE_CAT='Sparen / beleggen';
 const GROUPS=[
   {id:'inkomen',name:'Inkomsten',kind:'inkomen',color:'--c3',cats:['Netto loon 1','Netto loon 2','Kindergeld / toelagen','Overige inkomsten']},
-  {id:'vast',name:'Vaste lasten',kind:'uitgave',color:'--c1',cats:['Huur / hypotheek','Energie (gas & elektriciteit)','Water','Internet & TV & GSM','Extra lening','Gemeentebelastingen','Zorgverzekering','Auto-/motorverzekering','Woon-/inboedelverzekering','Vervoer / brandstof','Onderhoud huis','Overige verzekeringen']},
-  {id:'dag',name:'Dagelijks leven',kind:'uitgave',color:'--c2',cats:['Boodschappen','Kleding','Gezondheid & persoonlijke verzorging']},
-  {id:'vrij',name:'Vrije tijd & overig',kind:'uitgave',color:'--c5',cats:['Uit eten & horeca','Abonnementen (streaming, sport, etc.)','Vakantie','Cadeaus','Goede doelen','Overig']},
+  {id:'vast',name:'Vaste lasten',kind:'uitgave',color:'--c1',cats:['Hypotheek','Extra lening','Boodschappen','Energie (gas/elektriciteit)','Water','Internet & TV & GSM','Belastingen','Zorgverzekering (BE&NL)','Auto verzekering','Woon en inboedelverzekering','Vervoer/brandstof','Onderhoud huis','Overige verzekeringen']},
+  {id:'vrij',name:'Vrije tijd & dagelijks leven',kind:'uitgave',color:'--c5',cats:['Kleding','Gezondheid & persoonlijke verzorging','Uit eten & horeca','Abonnementen (streaming, sport, etc.)','Vakantie','Cadeaus','Goede doelen','Overig']},
   {id:'spaar',name:'Sparen / beleggen',kind:'uitgave',color:'--c3',cats:['Crypto','Aandelen Argenta','Pensioensparen',SAVE_CAT]}
 ];
 const CAT_GROUP={}; GROUPS.forEach(g=>g.cats.forEach(c=>CAT_GROUP[c]=g));
@@ -323,7 +322,7 @@ function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
    inkomen       = transacties van type Inkomen
    sparen        = uitgaven in categorie Sparen / beleggen (incl. stortingen naar potjes)
    uit potje     = uitgaven die je uit een spaarpotje betaalde; zoals in Excel (rij Spaarpotjes)
-                   tellen die zowel als inkomen als als uitgave (Dagelijks leven)
+                   tellen die zowel als inkomen als als uitgave (Vrije tijd & dagelijks leven)
    inkomen       = inkomen + uit potje
    levenskosten  = alle uitgaven − sparen
    vrije cashflow= inkomen − levenskosten
@@ -357,7 +356,7 @@ function stats(y,m){
     r.uitgaven+=a;
     if(isSaveCat(t.category))r.sparen+=a; else if(t.potOut)r.uitPot+=a;
     const fromPot=!isSaveCat(t.category)&&t.potOut; const ck=fromPot?'Spaarpotjes':t.category;
-    const g=fromPot?'dag':groupOf(t.category).id; r.groups[g]=(r.groups[g]||0)+a; r.cats[ck]=(r.cats[ck]||0)+a;
+    const g=fromPot?'vrij':groupOf(t.category).id; r.groups[g]=(r.groups[g]||0)+a; r.cats[ck]=(r.cats[ck]||0)+a;
   }
   r.carry=carryIn(y,m);
   r.inkomenLoon=r.inkomen; r.inkomen+=r.uitPot+r.opname+r.carry;
@@ -865,8 +864,7 @@ const POT_ROW='Spaarpotjes';
 const YEAR_LAYOUT=[
   {id:'in',name:'Inkomsten',rows:['Netto loon 1','Netto loon 2','Kindergeld / toelagen','Overige inkomsten',POT_ROW,CARRY_ROW],total:'Totaal inkomsten'},
   {id:'vast',name:'Uitgaven — vaste lasten',rows:groupById('vast').cats,total:'Totaal vaste lasten'},
-  {id:'dag',name:'Uitgaven — dagelijks leven',rows:groupById('dag').cats.concat([POT_ROW]),total:'Totaal dagelijks leven'},
-  {id:'vrij',name:'Uitgaven — vrije tijd & overig',rows:['Uit eten & horeca','Abonnementen (streaming, sport, etc.)','Vakantie','Cadeaus','Goede doelen','Overig'],total:'Totaal vrije tijd & overig'},
+  {id:'vrij',name:'Uitgaven — vrije tijd & dagelijks leven',rows:groupById('vrij').cats.concat([POT_ROW]),total:'Totaal vrije tijd & dagelijks leven'},
   {id:'spaar',name:'Uitgaven — sparen & beleggen',rows:null,total:'Totaal sparen & beleggen'}
 ];
 // Spaarregels: één regel per potje (stortingen) plus de spaarcategorieën.
@@ -918,7 +916,7 @@ function viewYear(){
   YEAR_LAYOUT.forEach((s,si)=>{
     const src=s.id==='in'?d.inc:d.exp;
     t+='<tr class="sec"><td colspan="14">'+esc(s.name)+'</td></tr>';
-    for(const {key:r,label} of rowsOf(s)){const vals=src.map((o,m)=>(o[r]||0)+(s.id==='dag'&&r===POT_ROW?d.potInfo[m]:0));
+    for(const {key:r,label} of rowsOf(s)){const vals=src.map((o,m)=>(o[r]||0)+(s.id==='vrij'&&r===POT_ROW?d.potInfo[m]:0));
       const noDrill=r===POT_ROW||r===CARRY_ROW||r.startsWith('pot:');
       t+='<tr><td title="'+esc(label)+'">'+esc(label)+(r===POT_ROW?' <span class="small muted">(uit potjes)</span>':'')+'</td>'+vals.map((v,m)=>cell(v,cc(m),noDrill?null:{m:m+1,c:r})).join('')+cell(r===CARRY_ROW?0:sum(vals),' yt')+'</tr>'}
     t+='<tr class="tot"><td>'+esc(s.total)+'</td>'+secTot[si].map((v,m)=>cell(v,cc(m))).join('')+cell(sum(secTot[si])-(si===0?cTot:0),' yt')+'</tr>';
@@ -928,7 +926,7 @@ function viewYear(){
   t+='<tr class="grand"><td>Netto saldo (inkomsten − uitgaven)</td>'+netM.map((v,m)=>{const r=round2(v);return r?'<td class="'+(r<0?'neg':'pos')+cc(m)+'">'+fmt(r)+'</td>':'<td class="z'+cc(m)+'">–</td>'}).join('')+'<td class="yt '+(tNet<0?'neg':'pos')+'">'+fmt(tNet)+'</td></tr>';
   t+='</tbody></table></div>';
   h+='<section class="card" style="padding:0;overflow:hidden"><div style="padding:16px 18px 10px"><h2>Overzicht per categorie</h2><div class="cap" style="margin:0">Tik op een bedrag om de transacties te zien'+(isWide()?'':'. Veeg opzij voor alle maanden')+'</div></div>'+t+'</section>'+chart;
-  if(sum(d.potInfo))h+='<div class="note">Bij <b>Uitgaven — dagelijks leven</b> zie je in de rij Spaarpotjes ook wat je uit een potje naar je rekening haalde. Dat bedrag telt alleen mee als inkomen, niet in de totalen van de uitgaven.</div>';
+  if(sum(d.potInfo))h+='<div class="note">Bij <b>Uitgaven — vrije tijd & dagelijks leven</b> zie je in de rij Spaarpotjes ook wat je uit een potje naar je rekening haalde. Dat bedrag telt alleen mee als inkomen, niet in de totalen van de uitgaven.</div>';
   if(!active)h+='<div class="note">Voor '+y+' zijn nog geen transacties. Zodra je iets boekt met een datum in '+y+', vult dit overzicht zich vanzelf.</div>';
   return h;
 }
