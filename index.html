@@ -212,7 +212,6 @@ table.yr .z{color:var(--muted);opacity:.55}
 table.yr .cur{background:color-mix(in srgb,var(--accent) 14%,transparent)}
 table.yr th.cur{color:var(--accent);font-weight:800;box-shadow:inset 0 -3px 0 var(--accent)}
 table.yr th button{all:unset;cursor:pointer;padding:2px 4px;border-radius:6px} table.yr th button:hover{background:var(--surface-2)}
-table.yr tr.gap td{border-color:transparent;background:transparent}
 table.yr .neg{color:var(--neg)} table.yr .pos{color:var(--pos)}
 table.yr td.yt{font-weight:700;border-left:1px solid var(--line-2)}
 table.yr button.cell{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-decoration:underline dotted var(--line);text-underline-offset:3px}
@@ -919,7 +918,7 @@ function viewYear(){
     t+='<tr class="sec"><td colspan="14">'+esc(s.name)+'</td></tr>';
     for(const [ri,{key:r,label}] of rowsOf(s).entries()){const vals=src.map((o,m)=>(o[r]||0)+(s.id==='vrij'&&r===POT_ROW?d.potInfo[m]:0));
       const noDrill=r===POT_ROW||r===CARRY_ROW||r.startsWith('pot:');
-      t+='<tr><td title="'+esc(label)+'">'+esc(label)+(r===POT_ROW?' <span class="small muted">(uit potjes)</span>':'')+'</td>'+vals.map((v,m)=>cell(v,cc(m),noDrill?null:{m:m+1,c:r})).join('')+cell(r===CARRY_ROW?0:sum(vals),' yt')+'</tr>'+((s.gaps||[]).includes(ri+1)?'<tr class="gap"><td colspan="14">&nbsp;</td></tr>':'')}
+      t+='<tr><td title="'+esc(label)+'">'+esc(label)+(r===POT_ROW?' <span class="small muted">(uit potjes)</span>':'')+'</td>'+vals.map((v,m)=>cell(v,cc(m),noDrill?null:{m:m+1,c:r})).join('')+cell(r===CARRY_ROW?0:sum(vals),' yt')+'</tr>'+((s.gaps||[]).includes(ri+1)?'<tr class="gap"><td>&nbsp;</td>'+MSHORT.map((_,m)=>'<td class="'+cc(m).trim()+'"></td>').join('')+'<td class="yt"></td></tr>':'')}
     t+='<tr class="tot"><td>'+esc(s.total)+'</td>'+secTot[si].map((v,m)=>cell(v,cc(m))).join('')+cell(sum(secTot[si])-(si===0?cTot:0),' yt')+'</tr>';
   });
   t+='<tr class="sec"><td colspan="14">Totaal &amp; saldo</td></tr>';
