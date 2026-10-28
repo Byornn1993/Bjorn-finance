@@ -774,8 +774,9 @@ function viewDash(){
     (gt>0?'<div class="donutwrap">'+donut(parts,gt,fmt0(gt))+'<div class="dl">'+parts.map(p=>'<div><i class="sw" style="background:var('+p.color+')"></i><span>'+esc(p.label)+'</span><b class="num">'+fmt(p.v)+'</b><span class="pct num">'+Math.round(p.v/gt*100)+'%</span></div>').join('')+'</div></div>':'<div class="empty small">Nog geen uitgaven deze maand.</div>')+
     '</section></div>';
   // categorieën, potjes, vermogen
-  const cats=Object.entries(st.cats).filter(([c])=>!isSaveCat(c)).sort((a,b)=>b[1]-a[1]).slice(0,8); const cmax=cats.length?cats[0][1]:1;
-  h+='<div class="grid3"><section class="card"><h2>Uitgaven per categorie</h2><div class="cap">Top '+cats.length+', zonder sparen</div>'+
+  // alle spaarcategorieën samen als één regel Sparen / beleggen
+  const cats=Object.entries(st.cats).filter(([c])=>!isSaveCat(c)).concat(st.sparen?[[SAVE_CAT,st.sparen]]:[]).sort((a,b)=>b[1]-a[1]).slice(0,8); const cmax=cats.length?cats[0][1]:1;
+  h+='<div class="grid3"><section class="card"><h2>Uitgaven per categorie</h2><div class="cap">Top '+cats.length+', inclusief sparen</div>'+
     (cats.length?'<div class="hbar">'+cats.map(([c,v])=>'<div class="row"><div class="top"><span>'+esc(c)+'</span><b class="num">'+fmt(v)+'</b></div><div class="track"><div class="fill" style="width:'+(v/cmax*100).toFixed(1)+'%;background:var('+groupOf(c).color+')"></div></div></div>').join('')+'</div>':'<div class="empty small">Nog geen uitgaven.</div>')+
     '</section><section class="card"><div class="head" style="margin-bottom:10px"><div><h2>Spaarpotjes</h2><div class="cap" style="margin:0">'+fmt0(totPots)+' van '+fmt0(totGoal)+'</div></div><a class="btn small" href="#potjes">Alle potjes</a></div><div class="hbar">'+
     S.pots.map(p=>{const b=potBalance(p),g=+p.goal||0,pr=g?Math.min(b/g,1):0;return '<div class="row"><div class="top"><span>'+esc(p.name)+'</span><b class="num">'+fmt0(b)+' <span class="muted" style="font-weight:400">/ '+fmt0(g)+'</span></b></div><div class="track"><div class="fill" style="width:'+(pr*100).toFixed(1)+'%;background:'+potColor(p)+'"></div></div><span class="small muted num">'+Math.round(pr*100)+'%</span></div>'}).join('')+
