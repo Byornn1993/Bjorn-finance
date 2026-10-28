@@ -278,7 +278,7 @@ const GROUPS=[
   {id:'inkomen',name:'Inkomsten',kind:'inkomen',color:'--c3',cats:['Netto loon 1','Netto loon 2','Kindergeld / toelagen','Overige inkomsten']},
   {id:'vast',name:'Vaste lasten',kind:'uitgave',color:'--c1',cats:['Huur / hypotheek','Energie (gas & elektriciteit)','Water','Internet & TV & GSM','Extra lening','Gemeentebelastingen','Zorgverzekering','Auto-/motorverzekering','Woon-/inboedelverzekering','Vervoer / brandstof','Onderhoud huis','Overige verzekeringen']},
   {id:'dag',name:'Dagelijks leven',kind:'uitgave',color:'--c2',cats:['Boodschappen','Kleding','Gezondheid & persoonlijke verzorging']},
-  {id:'vrij',name:'Vrije tijd & overig',kind:'uitgave',color:'--c5',cats:['Uit eten & horeca','Abonnementen (streaming, sport, etc.)','Vakantie','Cadeaus','Goede doelen','Visa Argenta','Overig']},
+  {id:'vrij',name:'Vrije tijd & overig',kind:'uitgave',color:'--c5',cats:['Uit eten & horeca','Abonnementen (streaming, sport, etc.)','Vakantie','Cadeaus','Goede doelen','Overig']},
   {id:'spaar',name:'Sparen / beleggen',kind:'uitgave',color:'--c3',cats:['Crypto','Aandelen Argenta','Pensioensparen',SAVE_CAT]}
 ];
 const CAT_GROUP={}; GROUPS.forEach(g=>g.cats.forEach(c=>CAT_GROUP[c]=g));
@@ -376,7 +376,16 @@ function potBalance(p){
   return b;
 }
 function potTx(p){return S.tx.filter(t=>t.potIn===p.id||t.potOut===p.id).sort((a,b)=>b.date.localeCompare(a.date))}
-function balTotals(items){let a=0,s=0;for(const i of items){const v=+i.value||0;if(i.side==='schuld')s+=v;else a+=v}return{activa:a,schulden:s,netto:a-s}}
+// Bank- en spaarrekening rekent mee: potjes + eindsaldo van de huidige maand (zoals Saldo rekening op het dashboard).
+function accountSaldo(){const d=new Date();return S.pots.reduce((a,p)=>a+potBalance(p),0)+stats(d.getFullYear(),d.getMonth()+1).eindsaldo}
+// Een gekoppelde post (linkCat) telt elke uitgave in die categorie op na de stand van linkFrom, zodra haar datum er is.
+function balValue(b){
+  if(b.isAccount)return accountSaldo();
+  let v=+b.value||0;
+  if(b.linkCat){const today=todayStr();for(const t of S.tx)if(t.type==='uitgave'&&t.category===b.linkCat&&t.date>(b.linkFrom||'')&&t.date<=today)v+=+t.amount||0}
+  return v;
+}
+function balTotals(items){let a=0,s=0;for(const i of items){const v=balValue(i);if(i.side==='schuld')s+=v;else a+=v}return{activa:a,schulden:s,netto:a-s}}
 const potName=id=>(!id||id==='rekening')?'Rekening':(S.pots.find(p=>p.id===id)||{}).name||'Potje';
 const potColor=p=>'var('+(p.color||'--c3')+')';
 
@@ -857,7 +866,7 @@ const YEAR_LAYOUT=[
   {id:'in',name:'Inkomsten',rows:['Netto loon 1','Netto loon 2','Kindergeld / toelagen','Overige inkomsten',POT_ROW,CARRY_ROW],total:'Totaal inkomsten'},
   {id:'vast',name:'Uitgaven — vaste lasten',rows:groupById('vast').cats,total:'Totaal vaste lasten'},
   {id:'dag',name:'Uitgaven — dagelijks leven',rows:groupById('dag').cats.concat([POT_ROW]),total:'Totaal dagelijks leven'},
-  {id:'vrij',name:'Uitgaven — vrije tijd & overig',rows:['Uit eten & horeca','Abonnementen (streaming, sport, etc.)','Vakantie','Cadeaus','Goede doelen','Visa Argenta','Overig'],total:'Totaal vrije tijd & overig'},
+  {id:'vrij',name:'Uitgaven — vrije tijd & overig',rows:['Uit eten & horeca','Abonnementen (streaming, sport, etc.)','Vakantie','Cadeaus','Goede doelen','Overig'],total:'Totaal vrije tijd & overig'},
   {id:'spaar',name:'Uitgaven — sparen & beleggen',rows:null,total:'Totaal sparen & beleggen'}
 ];
 // Spaarregels: één regel per potje (stortingen) plus de spaarcategorieën.
@@ -1030,8 +1039,10 @@ function viewBalance(){
 }
 function balRow(b){
   const conf=ui.confirm===b.id;
-  return '<div class="brow" data-bid="'+esc(b.id)+'"><input aria-label="Naam" value="'+esc(b.name)+'" data-bedit="name"><input aria-label="Bedrag '+esc(b.name)+'" class="val" inputmode="decimal" value="'+esc(amtStr(b.value))+'" data-bedit="value">'+
+  return '<div class="brow" data-bid="'+esc(b.id)+'"><input aria-label="Naam" value="'+esc(b.name)+'" data-bedit="name"><input aria-label="Bedrag '+esc(b.name)+'" class="val" inputmode="decimal" value="'+esc(amtStr(round2(balValue(b))))+'"'+(b.isAccount?' readonly':'')+' data-bedit="value">'+
     (conf?'<button class="btn small danger" type="button" data-act="baldel" data-id="'+esc(b.id)+'" aria-label="Bevestig verwijderen" style="padding:0 6px">Ja</button>':'<button class="btn small ghost" type="button" data-act="askdel" data-id="'+esc(b.id)+'" aria-label="Verwijder '+esc(b.name)+'" style="padding:0 8px">'+ICON.trash+'</button>')+
+    (b.isAccount?'<span class="small muted" style="grid-column:1/-1;padding:0 8px">Rekent automatisch: potjes + eindsaldo '+MONTHS[new Date().getMonth()].toLowerCase()+' (zoals Saldo rekening op je dashboard)</span>':'')+
+    (b.linkCat?'<span class="small muted" style="grid-column:1/-1;padding:0 8px">Stand '+fmt(b.value)+' op '+fdate(b.linkFrom)+' + elke uitgave '+esc(b.linkCat)+' daarna</span>':'')+
     '</div>';
 }
 
@@ -1199,9 +1210,12 @@ document.addEventListener('change',async e=>{
     else patch[k]=v.trim();
     ui.pendingRender=true; await save('tx',id,patch,true);return}
   if(el.dataset.bedit){const row=el.closest('[data-bid]');const id=row&&row.dataset.bid;const b=S.balance.find(x=>x.id===id);if(!b)return;const k=el.dataset.bedit;
-    if(k==='value'){const v=parseAmount(el.value);if(!isFinite(v)||v<0){toast('Ongeldig bedrag');el.value=amtStr(b.value);return}
-      ui.pendingRender=true; await save('balance',id,{value:round2(v),updated:Date.now()},true);
-      await snapshotNetworth(S.balance.map(x=>x.id===id?Object.assign({},x,{value:round2(v)}):x)); toast('Balans bijgewerkt')}
+    if(k==='value'){const v=parseAmount(el.value);if(b.isAccount)return;
+      if(!isFinite(v)||v<0){toast('Ongeldig bedrag');el.value=amtStr(round2(balValue(b)));return}
+      // een nieuwe stand voor een gekoppelde post geldt vanaf vandaag
+      const patch=Object.assign({value:round2(v),updated:Date.now()},b.linkCat?{linkFrom:todayStr()}:{});
+      ui.pendingRender=true; await save('balance',id,patch,true);
+      await snapshotNetworth(S.balance.map(x=>x.id===id?Object.assign({},x,patch):x)); toast('Balans bijgewerkt')}
     else {ui.pendingRender=true; await save('balance',id,{name:el.value.trim()||b.name},true)}
     return}
 });
