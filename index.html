@@ -753,7 +753,7 @@ function viewDash(){
     (cats.length?'<div class="hbar">'+cats.map(([c,v])=>'<div class="row"><div class="top"><span>'+esc(c)+'</span><b class="num">'+fmt(v)+'</b></div><div class="track"><div class="fill" style="width:'+(v/cmax*100).toFixed(1)+'%;background:var('+groupOf(c).color+')"></div></div></div>').join('')+'</div>':'<div class="empty small">Nog geen uitgaven.</div>')+
     '</section><section class="card"><div class="head" style="margin-bottom:10px"><div><h2>Spaarpotjes</h2><div class="cap" style="margin:0">'+fmt0(totPots)+' van '+fmt0(totGoal)+'</div></div><a class="btn small" href="#potjes">Alle potjes</a></div><div class="hbar">'+
     S.pots.map(p=>{const b=potBalance(p),g=+p.goal||0,pr=g?Math.min(b/g,1):0;return '<div class="row"><div class="top"><span>'+esc(p.name)+'</span><b class="num">'+fmt0(b)+' <span class="muted" style="font-weight:400">/ '+fmt0(g)+'</span></b></div><div class="track"><div class="fill" style="width:'+(pr*100).toFixed(1)+'%;background:'+potColor(p)+'"></div></div><span class="small muted num">'+Math.round(pr*100)+'%</span></div>'}).join('')+
-    '</div></section>'+saveCard()+'<section class="card"><h2>Nettovermogen</h2><div class="cap">Stand per maand, uit je balans</div>'+lineChart(S.networth.map(n=>({label:MSHORT[+n.month.slice(5,7)-1]+' '+n.month.slice(2,4),v:+n.netto||0})))+'</section></div>';
+    '</div></section>'+saveCard()+'</div>';
   return h;
 }
 /* ---------- Prognose spaarpotjes (zelfde logica als Excel) ----------
