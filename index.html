@@ -276,8 +276,8 @@ body.auth .side,body.auth .bottom{display:none!important}
 const SAVE_CAT='Sparen / beleggen';
 const GROUPS=[
   {id:'inkomen',name:'Inkomsten',kind:'inkomen',color:'--c3',cats:['Netto loon 1','Netto loon 2','Kindergeld / toelagen','Overige inkomsten']},
-  {id:'vast',name:'Vaste lasten',kind:'uitgave',color:'--c1',cats:['Hypotheek','Extra lening','Boodschappen','Energie (gas/elektriciteit)','Water','Internet & TV & GSM','Belastingen','Zorgverzekering (BE&NL)','Auto verzekering','Woon en inboedelverzekering','Vervoer/brandstof','Onderhoud huis','Overige verzekeringen']},
-  {id:'vrij',name:'Vrije tijd & dagelijks leven',kind:'uitgave',color:'--c5',cats:['Kleding','Gezondheid & persoonlijke verzorging','Uit eten & horeca','Abonnementen (streaming, sport, etc.)','Vakantie','Cadeaus','Goede doelen','Overig']},
+  {id:'vast',name:'Vaste lasten',kind:'uitgave',color:'--c1',cats:['Hypotheek','Extra lening','Boodschappen','Energie (gas/elektriciteit)','Water','Internet & TV & GSM','Belastingen','Zorgverzekering (BE&NL)','Auto verzekering','Woon en inboedelverzekering','Vervoer/brandstof','Onderhoud huis','Overige verzekeringen','Abonnementen (streaming, sport, etc.)','Goede doelen']},
+  {id:'vrij',name:'Vrije tijd & dagelijks leven',kind:'uitgave',color:'--c5',cats:['Gezondheid & persoonlijke verzorging','Kleding','Uit eten & horeca','Vakantie','Cadeaus','Overig']},
   {id:'spaar',name:'Sparen / beleggen',kind:'uitgave',color:'--c3',cats:['Crypto','Aandelen Argenta','Pensioensparen',SAVE_CAT]}
 ];
 const CAT_GROUP={}; GROUPS.forEach(g=>g.cats.forEach(c=>CAT_GROUP[c]=g));
