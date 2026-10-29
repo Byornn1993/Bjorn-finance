@@ -252,6 +252,13 @@ html.pv .pvmini{color:var(--accent);border-color:var(--accent)}
 .cpt{display:flex;flex-direction:column;min-width:0;cursor:pointer}
 .cpt b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14.5px}
 .cpamt{text-align:right;font-variant-numeric:tabular-nums}
+.srow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:4px 18px;padding:10px 0;border-bottom:1px solid var(--line-2)}
+.srow.off{opacity:.55}
+.srow .nm{display:flex;flex-direction:column;min-width:0}
+.srow .nm b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.srow .v{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.srow .v span{display:block;font-size:11.5px;font-weight:400;color:var(--muted)}
+.subtot{display:flex;flex-wrap:wrap;gap:8px 24px;margin:4px 0 8px;font-size:14px}
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="pvBlur"><feGaussianBlur stdDeviation="4"/></filter></svg>
 
@@ -742,7 +749,7 @@ function render(){
   if(!COLS.every(c=>S.loaded[c])){main.innerHTML='<div class="empty">Je gegevens worden opgehaald…</div>';return}
   if(ui.view==='import'){main.innerHTML=viewImport();return}
   const v=ui.view;
-  main.innerHTML= v==='prognose'?viewPrognose(): v==='jaar'?viewYear(): v==='transacties'?viewTx(false): v==='inkomsten'?viewTx(true): v==='potjes'?viewPots(): v==='balans'?viewBalance(): viewDash();
+  main.innerHTML= v==='prognose'?viewPrognose(): v==='jaar'?viewYear(): v==='transacties'?viewTx(false): v==='inkomsten'?viewTx(true): v==='potjes'?viewPots(): v==='balans'?viewBalance(): v==='abonnementen'?viewSubs(): viewDash();
   const h1=main.querySelector('.head h1'); if(h1)h1.insertAdjacentHTML('beforeend',pvMini());
 }
 
@@ -762,6 +769,41 @@ function saveCard(){
   return '<section class="card"><h2>Gespaard in '+ui.y+'</h2><div class="cap">Totaal '+fmt(tot)+'</div>'+
     (rows.length?'<div class="hbar">'+rows.map(r=>'<div class="row"><div class="top"><span>'+esc(r.label)+'</span><b class="num">'+fmt(r.v)+'</b></div><div class="track"><div class="fill" style="width:'+(r.v/max*100).toFixed(1)+'%;background:'+r.color+'"></div></div></div>').join('')+'</div>':'<div class="empty small">Nog niets gespaard in '+ui.y+'.</div>')+
     '</section>';
+}
+/* ---------- Abonnementen ---------- */
+// Alles in Abonnementen en Internet & TV & GSM, één regel per omschrijving. Per maand = wat in de maand van de
+// laatste betaling betaald werd. Actief = betaald in de laatste maand waarin abonnementen staan (ook vooruit ingegeven);
+// anders lijkt het gestopt en telt het niet mee.
+const isSubCat=c=>(c||'').startsWith('Abonnementen')||c==='Internet & TV & GSM';
+let subsRef='';
+function subsList(){
+  const g={}; subsRef='';
+  for(const t of S.tx){if(t.type!=='uitgave'||!isSubCat(t.category)||!t.date)continue; const k=(t.description||t.category).trim().toLowerCase(); (g[k]=g[k]||[]).push(t); if(t.date.slice(0,7)>subsRef)subsRef=t.date.slice(0,7)}
+  return Object.values(g).map(L=>{L.sort((a,b)=>a.date.localeCompare(b.date)); const last=L[L.length-1], ym=last.date.slice(0,7);
+    const month=round2(L.filter(t=>t.date.startsWith(ym)).reduce((a,t)=>a+(+t.amount||0),0));
+    return {name:(last.description||last.category).trim(),cat:last.category,last,month,year:round2(month*12),n:L.length,active:ym===subsRef}})
+    .sort((a,b)=>b.active-a.active||b.month-a.month);
+}
+const refLabel=()=>subsRef?MONTHS[+subsRef.slice(5,7)-1].toLowerCase()+' '+subsRef.slice(0,4):'';
+const subTotals=L=>{const m=round2(L.filter(s=>s.active).reduce((a,s)=>a+s.month,0));return {m,y:round2(m*12),n:L.filter(s=>s.active).length}};
+const dmy=d=>d.slice(8,10)+'/'+d.slice(5,7)+'/'+d.slice(0,4);
+function subsCard(){
+  const L=subsList(), T=subTotals(L), top=L.filter(s=>s.active).slice(0,5), max=top.length?top[0].month:1;
+  return '<section class="card"><div class="head" style="margin-bottom:10px"><div><h2>Abonnementen</h2><div class="cap" style="margin:0">'+T.n+' actief · '+fmt(T.m)+' per maand · '+fmt(T.y)+' per jaar</div></div><a class="btn small" href="#abonnementen">Alle abonnementen</a></div>'+
+    (top.length?'<div class="hbar">'+top.map(s=>'<div class="row"><div class="top"><span>'+esc(s.name)+'</span><b class="num">'+fmt(s.month)+'</b></div><div class="track"><div class="fill" style="width:'+(s.month/max*100).toFixed(1)+'%;background:var(--c1)"></div></div></div>').join('')+'</div>':'<div class="empty small">Nog geen abonnementen gevonden.</div>')+
+    '</section>';
+}
+function viewSubs(){
+  const L=subsList(), T=subTotals(L);
+  const row=s=>'<div class="srow'+(s.active?'':' off')+'"><div class="nm"><b>'+esc(s.name)+'</b><span class="small muted">'+esc(s.cat)+' · laatst betaald '+dmy(s.last.date)+(s.active?'':' · lijkt gestopt')+'</span></div>'+
+    '<div class="v">'+fmt(s.month)+'<span>per maand</span></div><div class="v">'+fmt(s.year)+'<span>per jaar</span></div></div>';
+  const on=L.filter(s=>s.active), off=L.filter(s=>!s.active);
+  let h='<div class="head"><div><h1>Abonnementen</h1><div class="sub">Automatisch uit je uitgavenlog: Abonnementen en Internet &amp; TV &amp; GSM'+(L.length?' · actief = betaald in '+refLabel():'')+'</div></div><a class="btn" href="#dashboard">Naar het dashboard</a></div>';
+  h+='<section class="card"><div class="subtot"><span>Actief <b>'+T.n+'</b></span><span>Per maand <b class="num">'+fmt(T.m)+'</b></span><span>Per jaar <b class="num">'+fmt(T.y)+'</b></span></div>'+
+    (on.length?on.map(row).join(''):'<div class="empty small">Geen actieve abonnementen.</div>')+'</section>';
+  if(off.length)h+='<section class="card"><h2>Lijkt gestopt</h2><div class="cap">Niet betaald in '+refLabel()+', de laatste maand met abonnementen. Telt niet mee in het totaal.</div>'+off.map(row).join('')+'</section>';
+  h+='<p class="hint">Tip: geef een abonnement elke maand dezelfde omschrijving, dan komt het op één regel.</p>';
+  return h;
 }
 function viewDash(){
   const st=stats(ui.y,ui.m);
@@ -797,7 +839,7 @@ function viewDash(){
     (cats.length?'<div class="hbar">'+cats.map(([c,v])=>'<div class="row"><div class="top"><span>'+esc(c)+'</span><b class="num">'+fmt(v)+'</b></div><div class="track"><div class="fill" style="width:'+(v/cmax*100).toFixed(1)+'%;background:var('+groupOf(c).color+')"></div></div></div>').join('')+'</div>':'<div class="empty small">Nog geen uitgaven.</div>')+
     '</section><section class="card"><div class="head" style="margin-bottom:10px"><div><h2>Spaarpotjes</h2><div class="cap" style="margin:0">'+fmt0(totPots)+' van '+fmt0(totGoal)+'</div></div><a class="btn small" href="#potjes">Alle potjes</a></div><div class="hbar">'+
     S.pots.map(p=>{const b=potBalance(p),g=+p.goal||0,pr=g?Math.min(b/g,1):0;return '<div class="row"><div class="top"><span>'+esc(p.name)+'</span><b class="num">'+fmt0(b)+' <span class="muted" style="font-weight:400">/ '+fmt0(g)+'</span></b></div><div class="track"><div class="fill" style="width:'+(pr*100).toFixed(1)+'%;background:'+potColor(p)+'"></div></div><span class="small muted num">'+Math.round(pr*100)+'%</span></div>'}).join('')+
-    '</div></section>'+saveCard()+'</div>';
+    '</div></section>'+saveCard()+subsCard()+'</div>';
   return h;
 }
 /* ---------- Prognose spaarpotjes (zelfde logica als Excel) ----------
@@ -1170,7 +1212,9 @@ function copyRows(y,m){
     .sort((a,b)=>rank(a.t.category)-rank(b.t.category)||a.t.date.localeCompare(b.t.date));
 }
 function openCopy(){
+  // Loon komt rond de 26ste, dan boekt Bjorn de vaste lasten van de volgende maand al in: vanaf de 20ste opent het op volgende maand.
   const d=new Date(); let y=d.getFullYear(), m=d.getMonth()+1;
+  if(d.getDate()>=20){m++; if(m>12){m=1;y++}}
   if(ui.f.year!=='all'&&ui.f.month!=='all'){y=+ui.f.year;m=+ui.f.month}
   CP={y,m,rows:copyRows(y,m),err:'',busy:false}; drawCopy();
 }
@@ -1429,7 +1473,7 @@ if(lsGet('bf-pv')==='1')document.documentElement.classList.add('pv');
 renderPv();
 
 /* ---------- Routering ---------- */
-const VIEWS=['dashboard','transacties','inkomsten','jaar','potjes','prognose','balans','import'];
+const VIEWS=['dashboard','transacties','inkomsten','jaar','potjes','prognose','balans','import','abonnementen'];
 function route(){const h=(location.hash||'').slice(1);ui.view=VIEWS.includes(h)?h:'dashboard';ui.confirm=null;render();window.scrollTo(0,0)}
 window.addEventListener('hashchange',route);
 let wasWide=isWide();window.addEventListener('resize',()=>{const w=isWide();if(w!==wasWide){wasWide=w;render()}});
