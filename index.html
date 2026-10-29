@@ -238,7 +238,14 @@ body.auth .side,body.auth .bottom{display:none!important}
 .imp{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 16px;font-size:14px}
 .imp b{text-align:right;font-variant-numeric:tabular-nums}
 @media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(16px);opacity:.6}}}
+/* Bedragen verbergen: alleen een laag over het scherm, de gegevens blijven ongewijzigd */
+html.pv .pvb,html.pv input[inputmode="decimal"],html.pv input[aria-label^="Bedrag"]{filter:blur(7px);user-select:none}
+html.pv svg text.pvt{filter:url(#pvBlur)}
+.pvmini{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;margin-left:8px;vertical-align:middle;border:1px solid var(--line-2);border-radius:10px;background:var(--surface);color:var(--muted);cursor:pointer}
+.pvmini:hover{color:var(--fg)}
+html.pv .pvmini{color:var(--accent);border-color:var(--accent)}
 </style>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="pvBlur"><feGaussianBlur stdDeviation="4"/></filter></svg>
 
 <div class="app">
   <nav class="side" aria-label="Hoofdmenu">
@@ -252,6 +259,7 @@ body.auth .side,body.auth .bottom{display:none!important}
     <a href="#balans" data-nav="balans"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v18M5 7h14M3 14l2-6 2 6a2 2 0 0 1-4 0zM17 14l2-6 2 6a2 2 0 0 1-4 0z"/></svg>Balans</a>
     <button class="btn ghost" type="button" data-act="export" style="margin-top:12px;justify-content:flex-start"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Exporteren</button>
     <button class="btn ghost" id="themeBtn" type="button" style="margin-top:12px;justify-content:flex-start"></button>
+    <button class="btn ghost" id="pvBtn" type="button" data-act="pv" style="justify-content:flex-start"></button>
     <div class="acct" id="acctBox"></div>
   </nav>
 
@@ -727,6 +735,7 @@ function render(){
   if(ui.view==='import'){main.innerHTML=viewImport();return}
   const v=ui.view;
   main.innerHTML= v==='prognose'?viewPrognose(): v==='jaar'?viewYear(): v==='transacties'?viewTx(false): v==='inkomsten'?viewTx(true): v==='potjes'?viewPots(): v==='balans'?viewBalance(): viewDash();
+  const h1=main.querySelector('.head h1'); if(h1)h1.insertAdjacentHTML('beforeend',pvMini());
 }
 
 function monthNav(){
@@ -1214,6 +1223,7 @@ document.addEventListener('click',async e=>{
     case 'lay-save': await saveLayout(); break;
     case 'lay-show': ui.f={q:'',year:'all',month:'all',type:'all',cat:el.dataset.c}; location.hash='transacties'; toast('Je indeling staat nog open in het jaaroverzicht; vergeet niet te bewaren'); break;
     case 'export': exportData(); break;
+    case 'pv': togglePv(); break;
     case 'logout': await sb.auth.signOut(); break;
     case 'pwopen': openPw(); break;
     case 'reload': dbState='wachten'; render(); loadAll(); break;
@@ -1315,6 +1325,37 @@ function themePref(){return lsGet('bf-theme')||'system'}
 function applyTheme(){const p=themePref(); if(p==='system'){if(document.documentElement.dataset.bfTheme)document.documentElement.removeAttribute('data-theme');delete document.documentElement.dataset.bfTheme} else {document.documentElement.setAttribute('data-theme',p);document.documentElement.dataset.bfTheme=p}}
 function cycleTheme(){const o=['system','light','dark'];const p=o[(o.indexOf(themePref())+1)%3];lsSet('bf-theme',p);applyTheme();renderTheme();toast('Thema: '+({system:'zoals je toestel',light:'licht',dark:'donker'})[p])}
 function renderTheme(){const b=document.getElementById('themeBtn');if(b)b.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Thema: '+({system:'automatisch',light:'licht',dark:'donker'})[themePref()]}
+
+/* ---------- Bedragen verbergen ---------- */
+// Elk bedrag (€ …) en percentage op het scherm krijgt een wazige laag. Stand per toestel in localStorage.
+const PV_RE=/[-−]?€\s?[-−]?\d[\d.]*(?:,\d+)?k?|\d[\d.]*(?:,\d+)?\s?%/g;
+const EYE='<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>';
+const pvOn=()=>document.documentElement.classList.contains('pv');
+function pvIcon(n){return '<svg width="'+n+'" height="'+n+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">'+EYE+(pvOn()?'<path d="M3 3l18 18"/>':'')+'</svg>'}
+function pvMini(){const l=pvOn()?'Bedragen tonen':'Bedragen verbergen';return '<button class="pvmini" type="button" data-act="pv" aria-label="'+l+'" title="'+l+'">'+pvIcon(18)+'</button>'}
+function renderPv(){const b=document.getElementById('pvBtn');if(b)b.innerHTML=pvIcon(18)+(pvOn()?'Bedragen tonen':'Bedragen verbergen')}
+function pvMark(root){
+  if(!pvOn()||!root)return;
+  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT), list=[];
+  for(let n=w.nextNode();n;n=w.nextNode()){const p=n.parentNode; if(!p||!p.closest||p.closest('.pvb,.pvt,script,style,textarea'))continue; PV_RE.lastIndex=0; if(PV_RE.test(n.data))list.push(n)}
+  for(const n of list){
+    const p=n.parentNode;
+    if(p.tagName==='OPTION'){p.textContent=p.textContent.replace(PV_RE,'•••');continue}
+    if(p.namespaceURI==='http://www.w3.org/2000/svg'){if(p.tagName==='title')p.textContent=p.textContent.replace(PV_RE,'•••');else p.classList.add('pvt');continue}
+    const frag=document.createDocumentFragment(); let last=0;
+    n.data.replace(PV_RE,(m,i)=>{if(i>last)frag.append(n.data.slice(last,i));const s=document.createElement('span');s.className='pvb';s.textContent=m;frag.append(s);last=i+m.length;return m});
+    if(last<n.data.length)frag.append(n.data.slice(last));
+    p.replaceChild(frag,n);
+  }
+}
+new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes){if(n.nodeType===1)pvMark(n);else if(n.nodeType===3)pvMark(n.parentNode)}}).observe(document.body,{childList:true,subtree:true});
+function togglePv(){
+  const on=!pvOn(); document.documentElement.classList.toggle('pv',on); lsSet('bf-pv',on?'1':'');
+  render(); renderPv(); if(on)pvMark(document.body);
+  toast(on?'Bedragen verborgen':'Bedragen zichtbaar');
+}
+if(lsGet('bf-pv')==='1')document.documentElement.classList.add('pv');
+renderPv();
 
 /* ---------- Routering ---------- */
 const VIEWS=['dashboard','transacties','inkomsten','jaar','potjes','prognose','balans','import'];
