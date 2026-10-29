@@ -772,17 +772,19 @@ function saveCard(){
 }
 /* ---------- Abonnementen ---------- */
 // Alles in Abonnementen en Internet & TV & GSM, één regel per omschrijving. Per maand = wat in de maand van de
-// laatste betaling betaald werd. Niet meer betaald in de laatste 45 dagen = lijkt gestopt (telt niet mee).
+// laatste betaling betaald werd. Actief = betaald in de laatste maand waarin abonnementen staan (ook vooruit ingegeven);
+// anders lijkt het gestopt en telt het niet mee.
 const isSubCat=c=>(c||'').startsWith('Abonnementen')||c==='Internet & TV & GSM';
+let subsRef='';
 function subsList(){
-  const g={}, d=new Date(); d.setDate(d.getDate()-45);
-  const cut=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'), today=todayStr();
-  for(const t of S.tx){if(t.type!=='uitgave'||!isSubCat(t.category)||!t.date||t.date>today)continue; const k=(t.description||t.category).trim().toLowerCase(); (g[k]=g[k]||[]).push(t)}
+  const g={}; subsRef='';
+  for(const t of S.tx){if(t.type!=='uitgave'||!isSubCat(t.category)||!t.date)continue; const k=(t.description||t.category).trim().toLowerCase(); (g[k]=g[k]||[]).push(t); if(t.date.slice(0,7)>subsRef)subsRef=t.date.slice(0,7)}
   return Object.values(g).map(L=>{L.sort((a,b)=>a.date.localeCompare(b.date)); const last=L[L.length-1], ym=last.date.slice(0,7);
     const month=round2(L.filter(t=>t.date.startsWith(ym)).reduce((a,t)=>a+(+t.amount||0),0));
-    return {name:(last.description||last.category).trim(),cat:last.category,last,month,year:round2(month*12),n:L.length,active:last.date>=cut}})
+    return {name:(last.description||last.category).trim(),cat:last.category,last,month,year:round2(month*12),n:L.length,active:ym===subsRef}})
     .sort((a,b)=>b.active-a.active||b.month-a.month);
 }
+const refLabel=()=>subsRef?MONTHS[+subsRef.slice(5,7)-1].toLowerCase()+' '+subsRef.slice(0,4):'';
 const subTotals=L=>{const m=round2(L.filter(s=>s.active).reduce((a,s)=>a+s.month,0));return {m,y:round2(m*12),n:L.filter(s=>s.active).length}};
 const dmy=d=>d.slice(8,10)+'/'+d.slice(5,7)+'/'+d.slice(0,4);
 function subsCard(){
@@ -796,10 +798,10 @@ function viewSubs(){
   const row=s=>'<div class="srow'+(s.active?'':' off')+'"><div class="nm"><b>'+esc(s.name)+'</b><span class="small muted">'+esc(s.cat)+' · laatst betaald '+dmy(s.last.date)+(s.active?'':' · lijkt gestopt')+'</span></div>'+
     '<div class="v">'+fmt(s.month)+'<span>per maand</span></div><div class="v">'+fmt(s.year)+'<span>per jaar</span></div></div>';
   const on=L.filter(s=>s.active), off=L.filter(s=>!s.active);
-  let h='<div class="head"><div><h1>Abonnementen</h1><div class="sub">Automatisch uit je uitgavenlog: Abonnementen en Internet &amp; TV &amp; GSM</div></div><a class="btn" href="#dashboard">Naar het dashboard</a></div>';
+  let h='<div class="head"><div><h1>Abonnementen</h1><div class="sub">Automatisch uit je uitgavenlog: Abonnementen en Internet &amp; TV &amp; GSM'+(L.length?' · actief = betaald in '+refLabel():'')+'</div></div><a class="btn" href="#dashboard">Naar het dashboard</a></div>';
   h+='<section class="card"><div class="subtot"><span>Actief <b>'+T.n+'</b></span><span>Per maand <b class="num">'+fmt(T.m)+'</b></span><span>Per jaar <b class="num">'+fmt(T.y)+'</b></span></div>'+
     (on.length?on.map(row).join(''):'<div class="empty small">Geen actieve abonnementen.</div>')+'</section>';
-  if(off.length)h+='<section class="card"><h2>Lijkt gestopt</h2><div class="cap">Niet meer betaald in de laatste 45 dagen. Telt niet mee in het totaal.</div>'+off.map(row).join('')+'</section>';
+  if(off.length)h+='<section class="card"><h2>Lijkt gestopt</h2><div class="cap">Niet betaald in '+refLabel()+', de laatste maand met abonnementen. Telt niet mee in het totaal.</div>'+off.map(row).join('')+'</section>';
   h+='<p class="hint">Tip: geef een abonnement elke maand dezelfde omschrijving, dan komt het op één regel.</p>';
   return h;
 }
