@@ -1157,13 +1157,16 @@ const COPY_VAR=['Boodschappen','Vervoer/brandstof','Onderhoud huis'];
 const ymKey=(y,m)=>y+'-'+String(m).padStart(2,'0');
 function copyRows(y,m){
   const src=m===1?ymKey(y-1,12):ymKey(y,m-1), dst=ymKey(y,m), last=new Date(y,m,0).getDate();
-  const key=t=>t.type+'|'+t.category+'|'+(t.description||'').trim().toLowerCase();
-  const have=new Set(S.tx.filter(t=>(t.date||'').startsWith(dst)).map(key));
+  // Dubbel = zelfde categorie met dezelfde omschrijving of hetzelfde bedrag. Staat er al iets anders in die categorie,
+  // dan komt de regel er zonder vinkje bij, zodat je zelf beslist.
+  const inDst=S.tx.filter(t=>(t.date||'').startsWith(dst));
+  const key=t=>t.type+'|'+t.category+'|'+(t.description||'').trim().toLowerCase(), keyA=t=>t.type+'|'+t.category+'|'+round2(+t.amount||0);
+  const have=new Set(inDst.map(key).concat(inDst.map(keyA))), cats=new Set(inDst.map(t=>t.type+'|'+t.category));
   const rank=c=>{const g=CAT_GROUP[c];return g?GROUPS.indexOf(g)*100+g.cats.indexOf(c):999};
   return S.tx.filter(t=>(t.date||'').startsWith(src)&&((t.type==='inkomen'&&/^Netto loon/.test(t.category))||
       (t.type==='uitgave'&&!t.potOut&&(groupOf(t.category).id==='vast'||(isSaveCat(t.category)&&!t.potIn)))))
-    .map(t=>{const loon=t.type==='inkomen', vari=COPY_VAR.includes(t.category), dup=have.has(key(t));
-      return {t,loon,vari,dup,on:!dup&&!loon&&!vari,amount:amtStr(t.amount),date:dst+'-'+String(Math.min(+t.date.slice(8,10)||1,last)).padStart(2,'0')}})
+    .map(t=>{const loon=t.type==='inkomen', vari=COPY_VAR.includes(t.category), dup=have.has(key(t))||have.has(keyA(t)), maybe=!dup&&cats.has(t.type+'|'+t.category);
+      return {t,loon,vari,dup,maybe,on:!dup&&!maybe&&!loon&&!vari,amount:amtStr(t.amount),date:dst+'-'+String(Math.min(+t.date.slice(8,10)||1,last)).padStart(2,'0')}})
     .sort((a,b)=>rank(a.t.category)-rank(b.t.category)||a.t.date.localeCompare(b.t.date));
 }
 function openCopy(){
@@ -1177,7 +1180,7 @@ function drawCopy(){
   const c=CP, pm=c.m===1?12:c.m-1;
   const row=(r,i)=>{const nm=r.t.description||r.t.category;
     return '<div class="cprow'+(r.dup?' dup':'')+'"><input type="checkbox" id="cp'+i+'" data-cp="'+i+'"'+(r.on?' checked':'')+(r.dup?' disabled':'')+'>'+
-      '<label class="cpt" for="cp'+i+'"><b>'+esc(nm)+'</b><span class="small muted">'+esc(r.t.category)+' · '+r.date.slice(8,10)+'/'+r.date.slice(5,7)+(r.dup?' · staat er al':'')+'</span></label>'+
+      '<label class="cpt" for="cp'+i+'"><b>'+esc(nm)+'</b><span class="small muted">'+esc(r.t.category)+' · '+r.date.slice(8,10)+'/'+r.date.slice(5,7)+(r.dup?' · staat er al':r.maybe?' · deze categorie heeft al een boeking':'')+'</span></label>'+
       '<input class="cpamt" inputmode="decimal" aria-label="Bedrag '+esc(nm)+'" value="'+esc(r.amount)+'" data-cpa="'+i+'"'+(r.dup?' disabled':'')+'></div>'};
   const part=(title,f)=>{const L=c.rows.map((r,i)=>[r,i]).filter(([r])=>f(r));return L.length?'<div class="cphead">'+title+'</div>'+L.map(([r,i])=>row(r,i)).join(''):''};
   let h='<div class="scrim" data-act="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="cpT"><div class="shead"><h2 id="cpT">Vaste lasten overnemen</h2><button class="iconbtn" type="button" data-act="close" aria-label="Sluiten"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'+
