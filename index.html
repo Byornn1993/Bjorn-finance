@@ -1175,7 +1175,7 @@ function viewBalance(){
   h+='<section class="card"><h2>Schulden</h2><div class="cap">Openstaand saldo</div><div class="btable">'+sch.map(balRow).join('')+'<div class="btotal"><span>Totaal schulden</span><span class="num">'+fmt(bt.schulden)+'</span></div><div class="btotal" style="color:var(--accent)"><span>Eigen vermogen</span><span class="num">'+fmt(bt.netto)+'</span></div><div class="btotal"><span>Totaal passiva</span><span class="num">'+fmt(bt.schulden+bt.netto)+'</span></div></div><div class="actions" style="margin-top:10px"><button class="btn small" type="button" data-act="baladd" data-side="schuld" data-group="Schulden">'+ICON.plus+'Schuld</button></div></section></div>';
   h+='<section class="card"><h2>Evolutie nettovermogen</h2><div class="cap">Eén meting per maand. De app bewaart die automatisch telkens je hier een waarde aanpast.</div>'+lineChart(S.networth.map(n=>({label:MSHORT[+n.month.slice(5,7)-1]+' '+n.month.slice(2,4),v:+n.netto||0})))+
     (S.networth.length?'<div class="minilist" style="margin-top:10px">'+S.networth.slice().reverse().map(n=>'<div><span>'+MONTHS[+n.month.slice(5,7)-1]+' '+n.month.slice(0,4)+'</span><span class="num">'+fmt0(n.activa)+' − '+fmt0(n.schulden)+' = <b>'+fmt0(n.netto)+'</b></span></div>').join('')+'</div>':'')+'</section>';
-  h+='<section class="card"><h2>Gegevens en account</h2><div class="cap">Eén bestand met al je transacties, potjes, balans, vermogensmetingen en prognose. Bewaar het als back-up.</div><div class="actions"><button class="btn primary" type="button" data-act="export"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Exporteren</button><a class="btn" href="#import">Importeren</a><button class="btn ghost" type="button" data-act="logout">Afmelden</button></div></section>';
+  h+='<section class="card"><h2>Gegevens en account</h2><div class="cap">Eén bestand met al je transacties, potjes, balans, vermogensmetingen en prognose. Bewaar het als back-up.</div><div class="actions"><button class="btn primary" type="button" data-act="export"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Exporteren</button><a class="btn" href="#import">Importeren</a><button class="btn" type="button" data-act="theme">'+themeLabel()+'</button><button class="btn ghost" type="button" data-act="logout">Afmelden</button></div></section>';
   h+='<div class="note">Een hogere waarde van je woning, crypto of belegging pas je hier aan. Dat verandert je vermogen, maar het is geen inkomen. Geld dat je stort, boek je in het uitgavenlog onder Sparen / beleggen.</div>';
   return h;
 }
@@ -1386,7 +1386,7 @@ document.addEventListener('click',async e=>{
     case 'sdelask': readSheet(); F.confirmDel=true; drawSheet(); break;
     case 'sdelno': readSheet(); F.confirmDel=false; drawSheet(); break;
     case 'sdel': {const t=F.t; const rec=F.origReceipt; if(F.newReceipt&&assets)assets.delete(F.newReceipt.id).catch(()=>{}); if(rec&&assets)assets.delete(rec.id).catch(()=>{}); F=null; document.getElementById('sheetRoot').innerHTML=''; await remove('tx',t.id); toast('Transactie verwijderd')} break;
-    case 'theme': cycleTheme(); break;
+    case 'theme': cycleTheme(); render(); break;
   }
 });
 document.getElementById('fab').addEventListener('click',()=>openSheet(null,ui.view==='inkomsten'?{type:'inkomen',category:'Netto loon 1'}:null));
@@ -1449,7 +1449,8 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 function themePref(){return lsGet('bf-theme')||'dark'}
 function applyTheme(){const p=themePref(); if(p==='system'){if(document.documentElement.dataset.bfTheme)document.documentElement.removeAttribute('data-theme');delete document.documentElement.dataset.bfTheme} else {document.documentElement.setAttribute('data-theme',p);document.documentElement.dataset.bfTheme=p}}
 function cycleTheme(){const o=['system','light','dark'];const p=o[(o.indexOf(themePref())+1)%3];lsSet('bf-theme',p);applyTheme();renderTheme();toast('Thema: '+({system:'zoals je toestel',light:'licht',dark:'donker'})[p])}
-function renderTheme(){const b=document.getElementById('themeBtn');if(b)b.innerHTML='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Thema: '+({system:'automatisch',light:'licht',dark:'donker'})[themePref()]}
+function themeLabel(){return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Thema: '+({system:'automatisch',light:'licht',dark:'donker'})[themePref()]}
+function renderTheme(){const b=document.getElementById('themeBtn');if(b)b.innerHTML=themeLabel();}
 
 /* ---------- Bedragen verbergen ---------- */
 // Elk bedrag (€ …) en percentage op het scherm krijgt een wazige laag. Stand per toestel in localStorage.
