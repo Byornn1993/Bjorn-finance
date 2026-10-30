@@ -941,7 +941,7 @@ function viewPrognose(){
       rowCalc(fc,r).map(x=>'<td class="pc">'+x+'</td>').join('')+'</tr>';
   });
   t+='</tbody></table></div>';
-  h+='<section class="card" style="padding:0;overflow:hidden"><div style="padding:16px 18px 10px"><h2>Prognose per maand</h2><div class="cap" style="margin:0">Pas de blauwe bedragen aan, de rest rekent automatisch'+(isWide()?'':'. Veeg opzij voor alle kolommen')+'.</div></div>'+t+
+  h+='<section class="card" style="padding:0;overflow:hidden"><div style="padding:16px 18px 10px"><h2>Prognose per maand</h2><div class="cap" style="margin:0">Pas de goudkleurige bedragen aan, de rest rekent automatisch'+(isWide()?'':'. Veeg opzij voor alle kolommen')+'.</div></div>'+t+
     '<div class="actions" style="padding:12px 18px 16px"><button class="btn small" type="button" data-act="paddm">'+ICON.plus+'Maand toevoegen</button>'+
     (rows.length?(ui.confirm==='plast'?'<span class="small">'+mlabel(last.month)+' verwijderen?</span><button class="btn small danger" type="button" data-act="pdelm">Ja, verwijderen</button><button class="btn small ghost" type="button" data-act="nodel">Annuleer</button>':'<button class="btn small ghost" type="button" data-act="pdelask">Laatste maand verwijderen</button>'):'')+'</div></section>';
   return h;
