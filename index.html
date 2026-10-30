@@ -1,4 +1,4 @@
-<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Bjorn Finance</title><meta name="theme-color" content="#101418"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Finance"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=5"><link rel="icon" type="image/png" href="favicon.png?v=5"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#101418;color:#FBF6EE}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Bjorn Finance</title><meta name="theme-color" content="#101418"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Finance"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=6"><link rel="icon" type="image/png" href="favicon.png?v=6"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#101418;color:#FBF6EE}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <style>
@@ -274,7 +274,7 @@ html.pv .pvmini{color:var(--accent);border-color:var(--accent)}
 
 <div class="app">
   <nav class="side" aria-label="Hoofdmenu">
-    <div class="brand"><img class="brand-mark" src="apple-touch-icon.png?v=5" alt=""><div><b>Bjorn Finance</b><span class="small muted">Mijn financieel overzicht</span></div></div>
+    <div class="brand"><img class="brand-mark" src="apple-touch-icon.png?v=6" alt=""><div><b>Bjorn Finance</b><span class="small muted">Mijn financieel overzicht</span></div></div>
     <a href="#dashboard" data-nav="dashboard"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>Dashboard</a>
     <a href="#transacties" data-nav="transacties"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Uitgavenlog</a>
     <a href="#inkomsten" data-nav="inkomsten"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>Inkomsten</a>
@@ -608,7 +608,7 @@ async function runImport(){
 /* ---------- Aanmelden ---------- */
 function viewLogin(){
   const nw=loginUi.mode==='nieuw';
-  let h='<div class="login"><div class="brand"><img class="brand-mark" src="apple-touch-icon.png?v=5" alt=""><div><b>Bjorn Finance</b><span class="small muted">Mijn financieel overzicht</span></div></div>';
+  let h='<div class="login"><div class="brand"><img class="brand-mark" src="apple-touch-icon.png?v=6" alt=""><div><b>Bjorn Finance</b><span class="small muted">Mijn financieel overzicht</span></div></div>';
   h+='<section class="card" style="display:flex;flex-direction:column;gap:14px">';
   h+='<h2>'+(nw?'Account aanmaken':'Aanmelden')+'</h2>';
   if(nw)h+='<p class="muted small" style="margin:0">Dit doe je maar één keer. Kies een wachtwoord van minstens 8 tekens en laat je iPhone of laptop het bewaren.</p>';
