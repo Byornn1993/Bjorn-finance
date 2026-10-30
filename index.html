@@ -881,7 +881,7 @@ async function savePlan(p){
 const PCOLORS={safety:'--c3',onderhoud:'--c5',fun:'--c1'};
 const zf=v=>Math.abs(v)<0.005?'<span class="z">–</span>':fmt(v);
 function progKpis(fc){const last=fc.rows[fc.rows.length-1];
-  return '<div class="kpis">'+fc.order.map(id=>{const f=fc.full[id];return kpi(esc(potName(id))+' vol',f?mlabel(f):'Buiten prognose',f?'':'neg','<span class="small muted">doel '+fmt0(fc.goal(id))+'</span>')}).join('')+
+  return '<div class="kpis">'+fc.order.map(id=>{const f=fc.full[id];return kpi(esc(potName(id))+' vol',f?'25 '+mlabel(f):'Buiten prognose',f?'':'neg','<span class="small muted">doel '+fmt0(fc.goal(id))+'</span>')}).join('')+
     kpi('Extra na alle doelen',fmt0(fc.cum),'','<span class="small" style="opacity:.85">eind prognose'+(last?', '+mlabel(last.month):'')+'</span>',true)+'</div>'}
 function progChart(fc){return lineMulti(fc.order.map(id=>({name:potName(id),color:PCOLORS[id]||'--c4',goal:fc.goal(id),vals:[+fc.start[id]||0].concat(fc.rows.map(r=>r.sal[id]))})),['start'].concat(fc.rows.map(r=>mlabel(r.month))))}
 function rowCalc(fc,r){return [zf(r.tot)].concat(fc.order.map(id=>zf(r.to[id])),[zf(r.over)],fc.order.map(id=>fmt(r.sal[id])+(fc.full[id]===r.month?'<span class="fulltag">vol</span>':'')),[zf(r.cum)])}
