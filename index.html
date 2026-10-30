@@ -222,6 +222,14 @@ table.yr button.cell:hover{color:var(--accent)}
 .row3{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
 .pin{width:96px;height:32px;border:1px solid var(--line);border-radius:8px;background:var(--surface);text-align:right;padding:0 8px;font-variant-numeric:tabular-nums;color:var(--accent);font-weight:600}
 .pin:focus{border-color:var(--accent)}
+@media (min-width:700px){
+  table.pt th:nth-child(-n+3),table.pt td:nth-child(-n+3){position:sticky;background:var(--surface);z-index:1;box-sizing:border-box}
+  table.pt th:nth-child(-n+3){background:var(--surface-2);z-index:2}
+  table.pt th:nth-child(1),table.pt td:nth-child(1){left:0;width:215px;min-width:215px;max-width:215px;border-right:0}
+  table.pt th:nth-child(2),table.pt td:nth-child(2){left:215px;width:114px;min-width:114px}
+  table.pt th:nth-child(3),table.pt td:nth-child(3){left:329px;width:114px;min-width:114px;border-right:1px solid var(--line-2)}
+  table.pt tr.cur td:nth-child(-n+3){background:linear-gradient(color-mix(in srgb,var(--accent) 14%,transparent),color-mix(in srgb,var(--accent) 14%,transparent)),var(--surface)}
+}
 .fulltag{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:99px;background:var(--pos-soft);color:var(--pos);font-family:var(--font-body);letter-spacing:.02em}
 .bulk{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
 .bulk .field{flex:1 1 150px}
@@ -922,7 +930,7 @@ function viewPrognose(){
     '<section class="card"><h2>Spaarbedrag snel aanpassen</h2><div class="cap">Zet hetzelfde geplande bedrag voor een maand en alle maanden erna.</div><form class="bulk" data-form="pbulk"><label class="field">Vanaf maand<select id="pbFrom" name="from">'+rows.map((r,i)=>'<option value="'+i+'"'+(r.month===curK?' selected':'')+'>'+mlabel(r.month)+'</option>').join('')+'</select></label><label class="field">Gepland per maand<input id="pbAmt" name="amt" inputmode="decimal" placeholder="1500"></label><button class="btn primary" type="submit">Toepassen</button></form></section></div>';
   const cc=k=>k===curK?' class="cur"':'';
   const z=v=>Math.abs(v)<0.005?'<span class="z">–</span>':fmt(v);
-  let t='<div class="tablebox"><table class="yr" style="min-width:1180px"><thead><tr><th scope="col">Maand</th><th scope="col">Gepland</th><th scope="col">Extra storting</th><th scope="col">Totaal</th>'+fc.order.map(id=>'<th scope="col">→ '+esc(potName(id).replace(/ ?\(.*\)/,''))+'</th>').join('')+'<th scope="col">Overtollig</th>'+fc.order.map(id=>'<th scope="col">Saldo '+esc(potName(id).replace(/ ?\(.*\)/,''))+'</th>').join('')+'<th scope="col">Cumulatief overtollig</th></tr></thead><tbody>';
+  let t='<div class="tablebox"><table class="yr pt" style="min-width:1180px"><thead><tr><th scope="col">Maand</th><th scope="col">Gepland</th><th scope="col">Extra storting</th><th scope="col">Totaal</th>'+fc.order.map(id=>'<th scope="col">→ '+esc(potName(id).replace(/ ?\(.*\)/,''))+'</th>').join('')+'<th scope="col">Overtollig</th>'+fc.order.map(id=>'<th scope="col">Saldo '+esc(potName(id).replace(/ ?\(.*\)/,''))+'</th>').join('')+'<th scope="col">Cumulatief overtollig</th></tr></thead><tbody>';
   t+='<tr class="tot"><td>'+esc(plan.startLabel)+'</td><td></td><td></td><td></td>'+fc.order.map(()=>'<td></td>').join('')+'<td></td>'+fc.order.map(id=>'<td class="ps">'+fmt(+fc.start[id]||0)+'</td>').join('')+'<td>'+fmt(0)+'</td></tr>';
   rows.forEach((r,i)=>{
     t+='<tr data-pr="'+i+'"'+cc(r.month)+'><td>25 '+mlabel(r.month)+'</td>'+
