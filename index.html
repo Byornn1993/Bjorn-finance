@@ -363,7 +363,8 @@ function parseAmount(s){
   if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');
   return parseFloat(s);
 }
-const amtStr=v=>(v==null||v==='')?'':String(round2(v)).replace('.',',');
+// Getypte tekst (bijv. "12,50" na het wisselen van categorie) blijft zoals hij is; alleen echte getallen worden opgemaakt.
+const amtStr=v=>(v==null||v==='')?'':typeof v==='string'?v:String(round2(v)).replace('.',',');
 function fdate(d){if(!d)return'';const [y,m,dd]=d.split('-');return dd+'/'+m+'/'+y}
 function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
