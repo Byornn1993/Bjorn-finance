@@ -839,7 +839,7 @@ function viewDash(){
     kpi('Vrije cashflow',fmt(st.cashflow),st.cashflow<0?'neg':'',hasPrev?deltaChip(st.cashflow,pst.cashflow,true):'',true)+
     kpi('Gespaard & belegd',fmt(st.sparen),'pos',hasPrev?deltaChip(st.sparen,pst.sparen,true):'')+
     kpi('Spaarpercentage',pct(st.spaarPct),'','<span class="small muted">levenskosten '+pct(st.levPct)+'</span>')+
-    kpi('Eindsaldo maand',fmt(st.eindsaldo),st.eindsaldo<0?'neg':'','<span class="small muted">na sparen</span>')+
+    kpi('Eindsaldo maand',fmt(st.eindsaldo),st.eindsaldo<0?'neg':'','<span class="small muted">na sparen</span>','saldo')+
     // Saldo rekening = alle spaarpotjes samen + eindsaldo van de gekozen maand; verandert mee met elke transactie.
     kpi('Saldo rekening',fmt(totPots+st.eindsaldo),totPots+st.eindsaldo<0?'neg':'','<span class="small muted">potjes '+fmt(totPots)+' + eindsaldo '+fmt(st.eindsaldo)+'</span>')+
     kpi('Netto vermogen',fmt0(bt.netto),'','<span class="small muted">'+fmt0(bt.activa)+' bezit · '+fmt0(bt.schulden)+' schuld</span>')+
@@ -1087,7 +1087,7 @@ function viewYear(){
   return h;
 }
 
-function kpi(label,val,cls,extra,hero){return '<div class="kpi'+(hero?' hero':'')+'"><span class="label">'+label+'</span><span class="v '+(hero?'':cls)+'">'+val+'</span>'+(extra||'')+'</div>'}
+function kpi(label,val,cls,extra,hero){return '<div class="kpi'+(hero?' hero':'')+'"><span class="label">'+label+'</span><span class="v '+(hero===true?'':cls)+'">'+val+'</span>'+(extra||'')+'</div>'}
 
 function filteredTx(incomeOnly){
   const f=ui.f; const q=f.q.trim().toLowerCase();
