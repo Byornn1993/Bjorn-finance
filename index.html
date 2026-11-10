@@ -211,6 +211,8 @@ table.tx tfoot td{font-weight:600;background:var(--surface-2);padding:10px 8px}
 .err{color:var(--neg);font-size:13.5px}
 .hint{font-size:12.5px;color:var(--muted)}
 .empty{padding:28px;text-align:center;color:var(--muted)}
+.qcats{display:flex;flex-wrap:wrap;gap:6px;margin-top:-4px}
+.qcats .chip{height:32px;font-size:13px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;z-index:60;font-size:14px}
 @media (min-width:900px){.toast{bottom:28px}}
 table.yr{border-collapse:separate;border-spacing:0;font-size:13.5px;width:100%;min-width:1100px}
@@ -422,11 +424,13 @@ function stats(y,m){
     const fromPot=!isSaveCat(t.category)&&t.potOut; const ck=fromPot?'Spaarpotjes':t.category;
     const g=fromPot?'vrij':groupOf(t.category).id; r.groups[g]=(r.groups[g]||0)+a; r.cats[ck]=(r.cats[ck]||0)+a;
   }
-  r.carry=carryIn(y,m);
+  for(const k of ['inkomen','uitgaven','sparen','uitPot','opname'])r[k]=round2(r[k]);
+  r.carry=round2(carryIn(y,m));
   r.inkomenLoon=r.inkomen; r.inkomen+=r.uitPot+r.opname+r.carry;
-  r.levenskosten=r.uitgaven-r.sparen;
-  r.cashflow=r.inkomen-r.levenskosten;
-  r.eindsaldo=r.inkomen-r.levenskosten-r.sparen;
+  r.inkomen=round2(r.inkomen);
+  r.levenskosten=round2(r.uitgaven-r.sparen);
+  r.cashflow=round2(r.inkomen-r.levenskosten);
+  r.eindsaldo=round2(r.inkomen-r.levenskosten-r.sparen);
   const inkNieuw=r.inkomen-r.carry; // percentages zonder het overgedragen bedrag
   r.spaarPct=inkNieuw?r.sparen/inkNieuw:0;
   r.levPct=inkNieuw?r.levenskosten/inkNieuw:0;
@@ -536,10 +540,10 @@ async function save(col,id,data,merge){
   putLocal(col,id,full); scheduleRender(); return true;
 }
 async function remove(col,id){
-  if(!session)return;
+  if(!session)return false;
   const {error}=await sb.from('items').delete().eq('soort',col).eq('id',id);
-  if(error){toast('Verwijderen mislukt.');return}
-  S[col]=S[col].filter(x=>x.id!==id); scheduleRender();
+  if(error){toast(navigator.onLine===false?'Geen internet. Er is niets verwijderd.':'Verwijderen mislukt.');return false}
+  S[col]=S[col].filter(x=>x.id!==id); scheduleRender(); return true;
 }
 function newId(){const a=new Uint8Array(12);crypto.getRandomValues(a);return Array.from(a,b=>'0123456789abcdefghijklmnopqrstuvwxyz'[b%36]).join('')}
 async function snapshotNetworth(items){
@@ -547,6 +551,28 @@ async function snapshotNetworth(items){
   await save('networth',k,{month:k,date:d,activa:round2(t.activa),schulden:round2(t.schulden),netto:round2(t.netto)});
 }
 
+function csvCell(v){v=String(v==null?'':v);return /[;"\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
+function txSign(t){return isPlus(t)?1:(t.type==='uitgave'||moveKind(t)==='storting')?-1:1}
+async function exportCsv(list,label){
+  if(dbState!=='ok'){toast('Je gegevens zijn nog niet geladen. Probeer zo opnieuw.');return}
+  const L=list.slice().sort((a,b)=>(a.date||'').localeCompare(b.date||'')||(a.created||0)-(b.created||0));
+  const rows=[['Datum','Type','Categorie','Omschrijving','Bedrag','Potje','Notitie']];
+  for(const t of L){
+    const pot=t.type==='overboeking'?potName(t.potOut)+' → '+potName(t.potIn):t.potIn?'naar '+potName(t.potIn):t.potOut?'uit '+potName(t.potOut):'';
+    rows.push([fdate(t.date),TYPES[t.type]||t.type,t.type==='overboeking'?'Overboeking':t.category,t.description||'',(txSign(t)*(+t.amount||0)).toFixed(2).replace('.',','),pot,t.note||'']);
+  }
+  const name='bjorn-finance-'+label+'-'+todayStr()+'.csv';
+  await shareOrDownload(new Blob(['\ufeff'+rows.map(r=>r.map(csvCell).join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'}),name,'text/csv');
+  toast('Excel-bestand bewaard: '+L.length+' transacties');
+}
+async function shareOrDownload(blob,name,type){
+  try{
+    const file=new File([blob],name,{type});
+    if(!isWide()&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});return}
+  }catch(e){ if(e&&e.name==='AbortError')return }
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
+  document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+}
 async function exportData(){
   if(dbState!=='ok'){toast('Je gegevens zijn nog niet geladen. Probeer zo opnieuw.');return}
   const data={}; for(const c of COLS)data[c]=JSON.parse(JSON.stringify(S[c]));
@@ -710,6 +736,7 @@ function deltaChip(cur,prev,goodUp){
   const rel=prev?Math.abs(d/prev):null;
   return '<span class="delta '+(good?'up':'down')+'">'+(up?'↑':'↓')+' '+fmt0(Math.abs(d))+(rel!=null&&isFinite(rel)?' ('+Math.round(rel*100)+'%)':'')+' t.o.v. vorige maand</span>';
 }
+const ICON_XLS='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 3v18"/></svg>';
 const ICON={
   edit:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
   clip:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M21.4 11 12.2 20.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg>',
@@ -1143,7 +1170,7 @@ function viewTx(incomeOnly){
   const L=filteredTx(incomeOnly); const f=ui.f;
   let tin=0,tout=0,tmove=0; L.forEach(t=>{const a=+t.amount||0; if(t.type==='inkomen')tin+=a; else if(t.type==='uitgave')tout+=a; else tmove+=a});
   const ys=yearsAvailable();
-  let h='<div class="head"><div><h1>'+(incomeOnly?'Inkomsten':'Uitgavenlog')+'</h1><div class="sub">'+(incomeOnly?'Loon en andere ontvangen bedragen':'Al je inkomsten, uitgaven en overboekingen')+'</div></div><div class="actions">'+(incomeOnly?'':'<button class="btn" type="button" data-act="cp-open">Vaste lasten overnemen</button>')+'<button class="btn primary" type="button" data-act="add"'+(incomeOnly?' data-preset="inkomen"':'')+'>'+ICON.plus+(incomeOnly?'Nieuw inkomen':'Nieuwe transactie')+'</button></div></div>';
+  let h='<div class="head"><div><h1>'+(incomeOnly?'Inkomsten':'Uitgavenlog')+'</h1><div class="sub">'+(incomeOnly?'Loon en andere ontvangen bedragen':'Al je inkomsten, uitgaven en overboekingen')+'</div></div><div class="actions"><button class="btn" type="button" data-act="csv-list"'+(incomeOnly?' data-income="1"':'')+'>'+ICON_XLS+'Excel</button>'+(incomeOnly?'':'<button class="btn" type="button" data-act="cp-open">Vaste lasten overnemen</button>')+'<button class="btn primary" type="button" data-act="add"'+(incomeOnly?' data-preset="inkomen"':'')+'>'+ICON.plus+(incomeOnly?'Nieuw inkomen':'Nieuwe transactie')+'</button></div></div>';
   h+='<div class="toolbar"><div class="search">'+ICON.search+'<label for="fq" style="position:absolute;left:-9999px">Zoeken</label><input id="fq" type="search" placeholder="Zoek op omschrijving of categorie" value="'+esc(f.q)+'" data-act="fq"></div>'+
     '<select class="sel" id="fy" data-act="fy" aria-label="Jaar"><option value="all"'+(f.year==='all'?' selected':'')+'>Alle jaren</option>'+ys.map(y=>'<option'+(String(y)===f.year?' selected':'')+'>'+y+'</option>').join('')+'</select>'+
     '<select class="sel" id="fm" data-act="fm" aria-label="Maand"><option value="all">Alle maanden</option>'+MONTHS.map((n,i)=>'<option value="'+(i+1)+'"'+(String(i+1)===f.month?' selected':'')+'>'+n+'</option>').join('')+'</select>'+
@@ -1223,7 +1250,7 @@ function viewBalance(){
   h+='<section class="card"><h2>Schulden</h2><div class="cap">Openstaand saldo</div><div class="btable">'+sch.map(balRow).join('')+'<div class="btotal"><span>Totaal schulden</span><span class="num">'+fmt(bt.schulden)+'</span></div><div class="btotal" style="color:var(--accent)"><span>Eigen vermogen</span><span class="num">'+fmt(bt.netto)+'</span></div><div class="btotal"><span>Totaal passiva</span><span class="num">'+fmt(bt.schulden+bt.netto)+'</span></div></div><div class="actions" style="margin-top:10px"><button class="btn small" type="button" data-act="baladd" data-side="schuld" data-group="Schulden">'+ICON.plus+'Schuld</button></div></section></div>';
   h+='<section class="card"><h2>Evolutie nettovermogen</h2><div class="cap">Eén meting per maand. De app bewaart die automatisch telkens je hier een waarde aanpast.</div>'+lineChart(S.networth.map(n=>({label:MSHORT[+n.month.slice(5,7)-1]+' '+n.month.slice(2,4),v:+n.netto||0})))+
     (S.networth.length?'<div class="minilist" style="margin-top:10px">'+S.networth.slice().reverse().map(n=>'<div><span>'+MONTHS[+n.month.slice(5,7)-1]+' '+n.month.slice(0,4)+'</span><span class="num">'+fmt0(n.activa)+' − '+fmt0(n.schulden)+' = <b>'+fmt0(n.netto)+'</b></span></div>').join('')+'</div>':'')+'</section>';
-  h+='<section class="card"><h2>Gegevens en account</h2><div class="cap">Eén bestand met al je transacties, potjes, balans, vermogensmetingen en prognose. Bewaar het als back-up.</div><div class="actions"><button class="btn primary" type="button" data-act="export"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Exporteren</button><a class="btn" href="#import">Importeren</a><button class="btn" type="button" data-act="theme">'+themeLabel()+'</button><button class="btn ghost" type="button" data-act="logout">Afmelden</button></div></section>';
+  h+='<section class="card"><h2>Gegevens en account</h2><div class="cap">Eén bestand met al je transacties, potjes, balans, vermogensmetingen en prognose. Bewaar het als back-up.</div><div class="actions"><button class="btn primary" type="button" data-act="export"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Exporteren</button><button class="btn" type="button" data-act="csv-all">'+ICON_XLS+'Excel (alle transacties)</button><a class="btn" href="#import">Importeren</a><button class="btn" type="button" data-act="theme">'+themeLabel()+'</button><button class="btn ghost" type="button" data-act="logout">Afmelden</button></div></section>';
   h+='<div class="note">Een hogere waarde van je woning, crypto of belegging pas je hier aan. Dat verandert je vermogen, maar het is geen inkomen. Geld dat je stort, boek je in het uitgavenlog onder Sparen / beleggen.</div>';
   return h;
 }
@@ -1242,8 +1269,26 @@ function openSheet(tx,preset){
   const t=tx?JSON.parse(JSON.stringify(tx)):Object.assign({type:'uitgave',date:todayStr(),category:'Boodschappen',amount:'',description:'',note:'',potIn:'',potOut:''},preset||{});
   if(!tx&&t.type==='inkomen'&&!preset?.category)t.category='Netto loon 1';
   F={t,isNew:!tx,origReceipt:tx&&tx.receipt?tx.receipt:null,newReceipt:null,removeReceipt:false,confirmDel:false,err:'',busy:false};
-  drawSheet();
-  setTimeout(()=>{const a=document.getElementById('sAmount');a&&a.focus()},30);
+  drawSheet(); F.start=formSnap();
+  const a=document.getElementById('sAmount'); if(a)a.focus();
+  setTimeout(()=>{const b=document.getElementById('sAmount');if(b&&document.activeElement!==b)b.focus()},30);
+}
+// Q2: een ingevuld formulier verdwijnt niet zonder te vragen
+function formSnap(){const o={type:F.t.type};document.querySelectorAll('#txForm [data-f]').forEach(el=>{o[el.dataset.f]=el.value});return JSON.stringify(o)}
+function askCloseSheet(){
+  if(F&&document.getElementById('txForm')&&(formSnap()!==F.start||F.newReceipt||F.removeReceipt)&&!confirm('Wat je invulde is nog niet bewaard. Weggooien?'))return;
+  closeSheet(true);
+}
+// Q3: de categorieën die je het laatst gebruikte, als knopjes
+function recentCats(type){
+  const seen=[]; const L=S.tx.filter(t=>t.type===type&&t.category&&(type!=='uitgave'||CAT_GROUP[t.category])).sort((a,b)=>(b.created||0)-(a.created||0)||(b.date||'').localeCompare(a.date||''));
+  for(const t of L){if(!seen.includes(t.category))seen.push(t.category); if(seen.length>=5)break}
+  return seen;
+}
+function quickCats(t){
+  if(t.type==='overboeking')return '';
+  const L=recentCats(t.type); if(!L.length)return '';
+  return '<div class="qcats" role="group" aria-label="Recent gebruikte categorieën">'+L.map(c=>'<button type="button" class="chip" data-act="qcat" data-v="'+esc(c)+'" aria-pressed="'+(c===t.category)+'">'+esc(c===SAVE_CAT?'Sparen / beleggen':c.replace(/\s*\(.*\)$/,''))+'</button>').join('')+'</div>';
 }
 function closeSheet(discard){
   if(discard&&F&&F.newReceipt&&assets){assets.delete(F.newReceipt.id).catch(()=>{})}
@@ -1318,7 +1363,7 @@ function drawSheet(){
   '<div class="seg" role="group" aria-label="Type">'+Object.entries(TYPES).map(([k,n])=>'<button type="button" data-act="stype" data-v="'+k+'" aria-pressed="'+(t.type===k)+'">'+n+'</button>').join('')+'</div>'+
   '<label class="field">Bedrag<input id="sAmount" class="amount num" inputmode="decimal" placeholder="0,00" value="'+esc(amtStr(t.amount))+'" data-f="amount"></label>'+
   '<div class="row2"><label class="field">Datum<input id="sDate" type="date" value="'+esc(t.date)+'" data-f="date"></label>'+
-  (t.type==='overboeking'?'<span></span>':'<label class="field">Categorie<select id="sCat" data-f="category">'+catOptions(t.type,t.category)+'</select></label>')+'</div>';
+  (t.type==='overboeking'?'<span></span>':'<label class="field">Categorie<select id="sCat" data-f="category">'+catOptions(t.type,t.category)+'</select></label>')+'</div>'+quickCats(t);
   if(t.type==='overboeking')h+='<div class="row2"><label class="field">Van<select id="sFrom" data-f="potOut">'+potOptions(t.potOut||'',true,'Kies…')+'</select></label><label class="field">Naar<select id="sTo" data-f="potIn">'+potOptions(t.potIn||'',true,'Kies…')+'</select></label></div><span class="hint">Rekening naar potje telt als sparen, potje naar rekening als inkomen uit potjes. Tussen twee potjes telt het niet mee.</span>';
   else if(isSave)h+='<label class="field">Naar spaarpotje<select id="sPotIn" data-f="potIn">'+potOptions(t.potIn||'',false,'Geen potje (beleggen of pensioen)')+'</select></label>';
   else if(t.type==='uitgave')h+='<label class="field">Betaald uit potje<select id="sPotOut" data-f="potOut">'+potOptions(t.potOut||'',false,'Nee, gewoon van mijn rekening')+'</select></label>';
@@ -1332,7 +1377,7 @@ function drawSheet(){
     h+='<input id="sFile" type="file" accept="image/*,application/pdf" hidden></div>'+(F.busy?'<span class="hint">Bezig met uploaden…</span>':'')+'</div>';
   }
   if(F.err)h+='<div class="err" role="alert">'+esc(F.err)+'</div>';
-  h+='<button class="btn primary" type="submit" style="height:50px;justify-content:center;font-size:16px"'+(F.busy?' disabled':'')+'>Opslaan</button>';
+  h+='<button class="btn primary" type="submit" style="height:50px;justify-content:center;font-size:16px"'+(F.busy||F.saving?' disabled':'')+'>'+(F.saving?'Bezig met bewaren…':'Opslaan')+'</button>';
   if(!F.isNew)h+=F.confirmDel?'<div class="actions" style="justify-content:center"><span class="small">Deze transactie definitief verwijderen?</span><button class="btn small danger" type="button" data-act="sdel">Ja, verwijderen</button><button class="btn small" type="button" data-act="sdelno">Nee</button></div>':'<button class="btn ghost danger" type="button" data-act="sdelask" style="justify-content:center;border:0">Transactie verwijderen</button>';
   h+='</form></div></div>';
   document.getElementById('sheetRoot').innerHTML=h;
@@ -1342,6 +1387,7 @@ function readSheet(){
   if(!F)return; document.querySelectorAll('#txForm [data-f]').forEach(el=>{F.t[el.dataset.f]=el.value});
 }
 async function submitSheet(){
+  if(!F||F.saving||F.busy)return;
   readSheet(); const t=F.t; const a=parseAmount(t.amount);
   if(!isFinite(a)||a<=0){F.err='Vul een bedrag groter dan 0 in, bijvoorbeeld 42,50.';drawSheet();return}
   if(!t.date){F.err='Kies een datum.';drawSheet();return}
@@ -1354,8 +1400,11 @@ async function submitSheet(){
     receipt:rec||null, created:t.created||Date.now(), updated:Date.now()};
   if(t.type==='overboeking'){data.from=t.potOut;data.to=t.potIn}
   const id=t.id||newId('tx');
+  F.saving=true; F.err=''; drawSheet();
   const ok=await save('tx',id,data);
-  if(!ok)return;
+  if(!F)return;
+  F.saving=false;
+  if(!ok){drawSheet();return}
   const old=F.origReceipt; if(old&&(!rec||rec.id!==old.id)&&assets)assets.delete(old.id).catch(()=>{});
   const wasNew=F.isNew; F.newReceipt=null; closeSheet(false);
   toast(wasNew?'Transactie toegevoegd':'Wijziging opgeslagen');
@@ -1388,7 +1437,7 @@ document.addEventListener('drop',e=>{const d=e.target.closest&&e.target.closest(
 document.addEventListener('dragend',()=>{dragKey=null;document.querySelectorAll('.dk.dragging,.dk.over').forEach(x=>x.classList.remove('dragging','over'))});
 document.addEventListener('click',async e=>{
   const el=e.target.closest('[data-act]'); if(!el)return; const act=el.dataset.act;
-  if(act==='scrim'){if(e.target===el)closeSheet(true);return}
+  if(act==='scrim'){if(e.target===el){if(F)askCloseSheet(); else closeSheet(true)}return}
   if(['setm','sety','fy','fm','fc','fs','fq','lay-move'].includes(act))return;
   if(act.startsWith('lay-')&&ui.lay&&!['lay-save','lay-cancel','lay-show'].includes(act)){await layAction(act,el);return}
   switch(act){
@@ -1402,6 +1451,8 @@ document.addEventListener('click',async e=>{
     case 'lay-save': await saveLayout(); break;
     case 'lay-show': ui.f={q:'',year:'all',month:'all',type:'all',cat:el.dataset.c}; location.hash='transacties'; toast('Je indeling staat nog open in het jaaroverzicht; vergeet niet te bewaren'); break;
     case 'export': exportData(); break;
+    case 'csv-list': exportCsv(filteredTx(!!el.dataset.income),el.dataset.income?'inkomsten':'transacties'); break;
+    case 'csv-all': exportCsv(S.tx,'alle-transacties'); break;
     case 'pv': togglePv(); break;
     case 'cp-open': openCopy(); break;
     case 'cp-prev': copyStep(-1); break;
@@ -1428,7 +1479,7 @@ document.addEventListener('click',async e=>{
     case 'edit': {const t=S.tx.find(x=>x.id===el.dataset.id); if(t)openSheet(Object.assign({},t,{potIn:t.type==='overboeking'?(t.to||t.potIn||'rekening'):t.potIn,potOut:t.type==='overboeking'?(t.from||t.potOut||'rekening'):t.potOut}));} break;
     case 'askdel': ui.confirm=el.dataset.id; render(); break;
     case 'nodel': ui.confirm=null; render(); break;
-    case 'del': {const t=S.tx.find(x=>x.id===el.dataset.id); ui.confirm=null; if(t){if(t.receipt&&assets)assets.delete(t.receipt.id).catch(()=>{}); await remove('tx',t.id); toast('Transactie verwijderd')} } break;
+    case 'del': {const t=S.tx.find(x=>x.id===el.dataset.id); ui.confirm=null; if(t&&await remove('tx',t.id)){if(t.receipt&&assets)assets.delete(t.receipt.id).catch(()=>{}); toast('Transactie verwijderd')} else render()} break;
     case 'viewrc': {const t=S.tx.find(x=>x.id===el.dataset.id); t&&showReceipt(t.receipt)} break;
     case 'sort': {const k=el.dataset.k; ui.sort=ui.sort.k===k?{k,d:ui.sort.d==='asc'?'desc':'asc'}:{k,d:'desc'}; render()} break;
     case 'ft': ui.f.type=el.dataset.v; render(); break;
@@ -1437,13 +1488,14 @@ document.addEventListener('click',async e=>{
     case 'potedit': ui.potEdit=ui.potEdit===el.dataset.id?null:el.dataset.id; render(); break;
     case 'baladd': {const id=newId('balance'); const order=Math.max(0,...S.balance.map(b=>b.order||0))+1; await save('balance',id,{side:el.dataset.side,group:el.dataset.group,name:el.dataset.side==='schuld'?'Nieuwe schuld':'Nieuw bezit',value:0,order}); } break;
     case 'baldel': {const id=el.dataset.id; ui.confirm=null; const rest=S.balance.filter(b=>b.id!==id); await remove('balance',id); await snapshotNetworth(rest); toast('Post verwijderd')} break;
-    case 'close': closeSheet(true); break;
+    case 'close': if(F)askCloseSheet(); else closeSheet(true); break;
+    case 'qcat': readSheet(); F.t.category=el.dataset.v; if(isSaveCat(F.t.category))F.t.potOut=''; else F.t.potIn=''; drawSheet(); break;
     case 'stype': readSheet(); F.t.type=el.dataset.v; if(F.t.type==='inkomen'&&groupOf(F.t.category).kind!=='inkomen')F.t.category='Netto loon 1'; if(F.t.type==='uitgave'&&(groupOf(F.t.category).kind!=='uitgave'||!CAT_GROUP[F.t.category]))F.t.category='Boodschappen'; if(F.t.type==='overboeking'){F.t.potOut=F.t.potOut||'rekening';F.t.potIn=F.t.potIn||''} F.err=''; drawSheet(); break;
     case 'rmrc': readSheet(); F.removeReceipt=true; if(F.newReceipt){assets&&assets.delete(F.newReceipt.id).catch(()=>{});F.newReceipt=null} drawSheet(); break;
     case 'viewnew': showReceipt(F.removeReceipt?null:(F.newReceipt||F.origReceipt)); break;
     case 'sdelask': readSheet(); F.confirmDel=true; drawSheet(); break;
     case 'sdelno': readSheet(); F.confirmDel=false; drawSheet(); break;
-    case 'sdel': {const t=F.t; const rec=F.origReceipt; if(F.newReceipt&&assets)assets.delete(F.newReceipt.id).catch(()=>{}); if(rec&&assets)assets.delete(rec.id).catch(()=>{}); F=null; document.getElementById('sheetRoot').innerHTML=''; await remove('tx',t.id); toast('Transactie verwijderd')} break;
+    case 'sdel': {const t=F.t; const rec=F.origReceipt; if(!await remove('tx',t.id))break; if(F&&F.newReceipt&&assets)assets.delete(F.newReceipt.id).catch(()=>{}); if(rec&&assets)assets.delete(rec.id).catch(()=>{}); F=null; document.getElementById('sheetRoot').innerHTML=''; toast('Transactie verwijderd')} break;
     case 'theme': cycleTheme(); render(); break;
   }
 });
@@ -1495,7 +1547,7 @@ document.addEventListener('input',e=>{const el=e.target;if(el.dataset&&(el.datas
 document.addEventListener('keydown',e=>{const el=e.target;if(e.key==='Enter'&&el.dataset&&el.dataset.pedit){e.preventDefault();const n=document.querySelector('#main [data-pedit="'+el.dataset.pedit+'"][data-i="'+(+el.dataset.i+1)+'"]');if(n){n.focus();n.select()}else el.blur()}});
 let qT=null;
 document.addEventListener('input',e=>{if(e.target.dataset.act==='fq'){ui.f.q=e.target.value;clearTimeout(qT);qT=setTimeout(()=>{const pos=e.target.selectionStart;render();const n=document.getElementById('fq');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(_){}}},250)}});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.querySelector('.viewer')){document.querySelector('.viewer').remove();return} if(F)closeSheet(true)}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.querySelector('.viewer')){document.querySelector('.viewer').remove();return} if(F)askCloseSheet()}});
 
 document.addEventListener('submit',e=>{
   if(e.target.id==='loginForm'){e.preventDefault();sendCode()}
