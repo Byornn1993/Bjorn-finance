@@ -6,7 +6,7 @@
    Alle kleuren lopen via deze tokens; donker is de standaard, licht via de themaknop of het toestel. */
 :root{
   --bg:#101418; --surface:#2C3E50; --surface-2:#243445; --input:#22313F; --line:rgba(220,201,166,.17); --line-2:rgba(220,201,166,.09);
-  --fg:#FBF6EE; --muted:#CBB994; --champ:#DCC9A6; --accent:#B08D57; --accent-fg:#101418; --accent-soft:rgba(176,141,87,.18);
+  --fg:#FBF6EE; --muted:#CBB994; --champ:#DCC9A6; --accent:#B08D57; --accent-text:#D4B47F; --accent-fg:#101418; --accent-soft:rgba(176,141,87,.18);
   --pos:#8DBF98; --neg:#E0907E; --warn:#D9AE63; --pos-soft:rgba(141,191,152,.15); --neg-soft:rgba(224,144,126,.15);
   --c1:#8FA9C2; --c2:#DCC9A6; --c3:#B08D57; --c4:#7C8FA3; --c5:#9DB59A; --c6:#D08A78;
   --shadow:0 1px 2px rgba(0,0,0,.22); --side:#101418; color-scheme:dark;
@@ -16,13 +16,13 @@
 }
 @media (prefers-color-scheme: light){:root:not([data-theme]){
   --bg:#F6F1E8; --surface:#FFFDF9; --surface-2:#F3ECE0; --input:#FFFFFF; --line:#E4D9C6; --line-2:#EEE6D8;
-  --fg:#101418; --muted:#6E6253; --champ:#B08D57; --accent:#8E6E3E; --accent-fg:#FBF6EE; --accent-soft:#F1E7D4;
+  --fg:#101418; --muted:#6E6253; --champ:#B08D57; --accent:#8E6E3E; --accent-text:#8E6E3E; --accent-fg:#FFFFFF; --accent-soft:#F1E7D4;
   --pos:#4E7F5A; --neg:#A9503E; --warn:#A57524; --pos-soft:#E4EFE4; --neg-soft:#F6E2DC;
   --c1:#2C3E50; --c2:#C9AE7E; --c3:#B08D57; --c4:#7C8FA3; --c5:#7E9A7A; --c6:#B5654F;
   --shadow:0 1px 2px rgba(16,20,24,.05),0 4px 14px rgba(16,20,24,.04); --side:#FBF6EE; color-scheme:light }}
 :root[data-theme="light"]{
   --bg:#F6F1E8; --surface:#FFFDF9; --surface-2:#F3ECE0; --input:#FFFFFF; --line:#E4D9C6; --line-2:#EEE6D8;
-  --fg:#101418; --muted:#6E6253; --champ:#B08D57; --accent:#8E6E3E; --accent-fg:#FBF6EE; --accent-soft:#F1E7D4;
+  --fg:#101418; --muted:#6E6253; --champ:#B08D57; --accent:#8E6E3E; --accent-text:#8E6E3E; --accent-fg:#FFFFFF; --accent-soft:#F1E7D4;
   --pos:#4E7F5A; --neg:#A9503E; --warn:#A57524; --pos-soft:#E4EFE4; --neg-soft:#F6E2DC;
   --c1:#2C3E50; --c2:#C9AE7E; --c3:#B08D57; --c4:#7C8FA3; --c5:#7E9A7A; --c6:#B5654F;
   --shadow:0 1px 2px rgba(16,20,24,.05),0 4px 14px rgba(16,20,24,.04); --side:#FBF6EE; color-scheme:light }
@@ -45,7 +45,12 @@ h2{font-size:15.5px;font-weight:600;letter-spacing:-.01em}
 .main{flex:1;min-width:0;padding-block:20px 120px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px;max-width:1320px;margin:0 auto;width:100%}
 .bottom{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--side);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(6,minmax(0,1fr));padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 .bottom a,.bottom button.navbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:60px;font-size:11px;color:var(--muted);text-decoration:none;background:none;border:0;cursor:pointer}
-.bottom a[aria-current="page"]{color:var(--fg);font-weight:600}.bottom a[aria-current="page"] svg{color:var(--accent)}
+.bottom a[aria-current="page"],.bottom button.navbtn.on{color:var(--fg);font-weight:600}.bottom button.navbtn.on svg{color:var(--accent)}
+.morelist{display:flex;flex-direction:column;gap:2px}
+.morelist button{display:flex;align-items:center;gap:12px;width:100%;min-height:50px;padding:0 6px;background:none;border:0;border-bottom:1px solid var(--line-2);color:var(--fg);font:inherit;font-size:16px;text-align:left;cursor:pointer}
+.morelist button svg{color:var(--accent);flex:none}
+.morelist button.cur{font-weight:700}
+.morelist .sep{height:10px}.bottom a[aria-current="page"] svg{color:var(--accent)}
 .fab{width:56px;height:56px;border-radius:28px;border:0;background:var(--accent);color:var(--accent-fg);display:flex;align-items:center;justify-content:center;margin:-22px auto 0;box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 35%,transparent);cursor:pointer}
 @media (min-width:900px){
   .side{display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;width:240px;flex:none;background:var(--side);border-right:1px solid var(--line-2);padding:24px 14px}
@@ -65,6 +70,7 @@ h2{font-size:15.5px;font-weight:600;letter-spacing:-.01em}
 .head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
 .head .sub{color:var(--muted);font-size:14px;margin-top:2px}
 .monthnav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+@media (max-width:699px){.monthnav{flex-wrap:nowrap;width:100%}.monthnav .sel{flex:1}}
 .iconbtn{width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .iconbtn:hover{border-color:var(--accent)}
 .sel{height:42px;border-radius:12px;border:1px solid var(--line);background:var(--input);padding:0 10px;min-width:0}
@@ -74,7 +80,7 @@ h2{font-size:15.5px;font-weight:600;letter-spacing:-.01em}
 .btn.danger{color:var(--neg);border-color:var(--neg)}
 .btn.small{height:34px;padding:0 10px;font-size:13px;border-radius:10px}
 .btn.ghost{border-color:transparent;background:transparent}
-a{color:var(--accent)} a.btn{color:var(--fg);text-decoration:none} a.btn.primary{color:var(--accent-fg)}
+a{color:var(--accent-text)} a.btn{color:var(--fg);text-decoration:none} a.btn.primary{color:var(--accent-fg)}
 
 /* Cards & grids */
 .card{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);min-width:0}
@@ -87,7 +93,7 @@ a{color:var(--accent)} a.btn{color:var(--fg);text-decoration:none} a.btn.primary
 @media (min-width:700px){.kpi .v{font-size:25px}}
 .kpi .v.pos{color:var(--accent)} .kpi .v.neg{color:var(--neg)}
 .kpi.hero{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 14%,var(--surface)),var(--surface) 70%);border-color:color-mix(in srgb,var(--accent) 50%,transparent);box-shadow:inset 0 2px 0 var(--accent)}.kpi.hero .v{color:var(--accent)}.kpi.hero .v.neg{color:var(--neg)}
-.kpi.hero .label{color:var(--accent)}
+.kpi.hero .label{color:var(--accent-text)}
 .delta{font-size:12px;font-weight:600;display:inline-flex;gap:4px;align-items:center;padding:2px 8px;border-radius:99px;width:max-content;max-width:100%}
 .delta.up{background:var(--pos-soft);color:var(--pos)} .delta.down{background:var(--neg-soft);color:var(--neg)} .delta.flat{background:var(--surface-2);color:var(--muted)}
 
@@ -137,7 +143,7 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
 .pot .meta b{display:block;font-size:14px;font-variant-numeric:tabular-nums}
 .ptrack{height:10px;border-radius:99px;background:color-mix(in srgb,var(--champ) 12%,transparent);overflow:hidden}
 .actions{display:flex;flex-wrap:wrap;gap:8px}
-details summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:13.5px;min-height:32px;display:flex;align-items:center}
+details summary{cursor:pointer;color:var(--accent-text);font-weight:600;font-size:13.5px;min-height:32px;display:flex;align-items:center}
 .minilist{display:flex;flex-direction:column;font-size:13.5px}
 .minilist div{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line-2)}
 .minilist div span:first-child{min-width:0}
@@ -163,7 +169,7 @@ table.tx .amt input{text-align:right;font-variant-numeric:tabular-nums;font-weig
 table.tx tfoot td{font-weight:600;background:var(--surface-2);padding:10px 8px}
 .amt-in{color:var(--pos)} .amt-out{color:var(--fg)}
 .amtwrap{display:flex;align-items:center;gap:2px} .amtwrap b{font-weight:700}
-.tag{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent);font-weight:600;white-space:nowrap}
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent-text);font-weight:600;white-space:nowrap}
 .list{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r);overflow:hidden}
 .li{display:flex;align-items:center;gap:12px;padding:12px 14px;border:0;border-bottom:1px solid var(--line-2);background:none;text-align:left;width:100%;cursor:pointer}
 .li:last-child{border-bottom:0}
@@ -199,7 +205,7 @@ table.tx tfoot td{font-weight:600;background:var(--surface-2);padding:10px 8px}
 .sheet .shead{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;background:var(--surface-2);padding:4px;border-radius:14px}
 .seg button{height:40px;border:0;border-radius:11px;background:transparent;cursor:pointer;font-weight:500}
-.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:var(--shadow);font-weight:700;color:var(--accent)}
+.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:var(--shadow);font-weight:700;color:var(--accent-text)}
 .field{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted);font-weight:500}
 .field input,.field select,.field textarea{height:46px;border:1px solid var(--line);border-radius:12px;background:var(--input);padding:0 12px;color:var(--fg);font-size:15px;width:100%;min-width:0}
 .field textarea{height:72px;padding:10px 12px;resize:vertical}
@@ -211,6 +217,15 @@ table.tx tfoot td{font-weight:600;background:var(--surface-2);padding:10px 8px}
 .err{color:var(--neg);font-size:13.5px}
 .hint{font-size:12.5px;color:var(--muted)}
 .empty{padding:28px;text-align:center;color:var(--muted)}
+.msum{display:none}
+@media (max-width:699px){.msum{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}}
+.msum3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.msum3 span{display:block;font-size:12px;color:var(--muted)}
+.msum3 b{display:block;white-space:nowrap;font-size:19px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.msum3 b.over{color:var(--accent)} .msum3 b.neg{color:var(--neg)}
+.nbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.toast{display:flex;align-items:center;gap:14px}
+.toast button{background:none;border:0;color:inherit;font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;padding:4px 0}
 .qcats{display:flex;flex-wrap:wrap;gap:6px;margin-top:-4px}
 .qcats .chip{height:32px;font-size:13px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;z-index:60;font-size:14px}
@@ -227,7 +242,7 @@ table.yr tr.grand td{font-weight:700;font-family:var(--font-display);background:
 table.yr tr.grand td:first-child{background:var(--accent-soft)}
 table.yr .z{color:var(--muted);opacity:.55}
 table.yr .cur{background:color-mix(in srgb,var(--accent) 14%,transparent)}
-table.yr th.cur{color:var(--accent);font-weight:800;box-shadow:inset 0 -3px 0 var(--accent)}
+table.yr th.cur{color:var(--accent-text);font-weight:800;box-shadow:inset 0 -3px 0 var(--accent)}
 table.yr th button{all:unset;cursor:pointer;padding:2px 4px;border-radius:6px} table.yr th button:hover{background:var(--surface-2)}
 .laylist .layrow{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--line)}
 .laylist .layrow .nm{flex:1;min-width:0;overflow-wrap:anywhere} .laylist .layrow.gap .nm{color:var(--muted);font-style:italic}
@@ -313,7 +328,7 @@ html.pv .pvmini{color:var(--accent);border-color:var(--accent)}
     <div style="display:flex;align-items:flex-start"><button class="fab" type="button" id="fab" aria-label="Transactie toevoegen"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div>
     <a href="#jaar" data-nav="jaar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Jaar</a>
     <a href="#potjes" data-nav="potjes"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 9h14l-1.2 11H6.2zM9 9V7a3 3 0 0 1 6 0v2"/></svg>Potjes</a>
-    <a href="#balans" data-nav="balans"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v18M5 7h14M3 14l2-6 2 6a2 2 0 0 1-4 0zM17 14l2-6 2 6a2 2 0 0 1-4 0z"/></svg>Balans</a>
+    <button class="navbtn" type="button" data-act="more" data-navmore aria-label="Meer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>Meer</button>
   </nav>
 </div>
 <div id="sheetRoot"></div>
@@ -411,7 +426,14 @@ const isPlus=t=>t.type==='inkomen'||moveKind(t)==='opname';
 // Vanaf deze maand neemt elke maand het eindsaldo van de vorige maand mee (oktober 2026 boekte dat nog met de hand).
 const CARRY_FROM=2026*12+11, CARRY_ROW='Over van vorige maand';
 function carryIn(y,m){if(y*12+m<CARRY_FROM)return 0;return m===1?stats(y-1,12).eindsaldo:stats(y,m-1).eindsaldo}
+const statCache=new Map();
+function clearStats(){statCache.clear()}
 function stats(y,m){
+  const key=y*13+(m||0); let r=statCache.get(key);
+  if(!r){r=calcStats(y,m);statCache.set(key,r)}
+  return r;
+}
+function calcStats(y,m){
   const L=txIn(y,m); const r={inkomen:0,uitgaven:0,sparen:0,uitPot:0,opname:0,count:L.length,groups:{},cats:{}};
   for(const t of L){const a=+t.amount||0;
     if(t.type==='inkomen'){r.inkomen+=a;continue}
@@ -456,6 +478,53 @@ function balTotals(items){let a=0,s=0;for(const i of items){const v=balValue(i);
 const potName=id=>(!id||id==='rekening')?'Rekening':(S.pots.find(p=>p.id===id)||{}).name||'Potje';
 const potColor=p=>'var('+(p.color||'--c3')+')';
 
+/* ---------- Offline ----------
+   Laatst opgehaalde gegevens staan per account in localStorage, zodat de app ook zonder internet opent.
+   Wijzigingen zonder internet komen in een wachtrij (outbox) en worden verstuurd zodra je weer online bent. */
+const NET_RE=/fetch|network|load failed|offline|timed? ?out/i;
+const isNetErr=e=>navigator.onLine===false||NET_RE.test(String(e&&(e.message||e)));
+const cacheKey=()=>'bf-data-'+(session?session.user.id:'');
+const outKey=()=>'bf-outbox-'+(session?session.user.id:'');
+function getOutbox(){try{return JSON.parse(lsGet(outKey())||'[]')}catch(e){return []}}
+function setOutbox(L){lsSet(outKey(),JSON.stringify(L))}
+function queueOp(op){op.at=Date.now()+Math.random();const L=getOutbox().filter(o=>!(o.col===op.col&&o.id===op.id));L.push(op);setOutbox(L)}
+function dropQueued(col,id){const L=getOutbox();const R=L.filter(o=>!(o.col===col&&o.id===id));if(R.length!==L.length)setOutbox(R)}
+let cacheT=null;
+function saveCache(){clearTimeout(cacheT);cacheT=setTimeout(()=>{if(!session||dbState!=='ok')return;const d={};for(const c of COLS)d[c]=S[c];lsSet(cacheKey(),JSON.stringify({at:ui.loadedAt||Date.now(),d}))},400)}
+function loadCache(){
+  try{const j=JSON.parse(lsGet(cacheKey())||'null'); if(!j||!j.d)return false;
+    for(const c of COLS){S[c]=(j.d[c]||[]).slice();sortCol(c);S.loaded[c]=true} ui.loadedAt=j.at; return true}catch(e){return false}
+}
+function applyOutbox(){for(const o of getOutbox()){if(o.op==='delete')S[o.col]=S[o.col].filter(x=>x.id!==o.id);else putLocal(o.col,o.id,o.full)}}
+async function runOp(o){
+  const go=()=>o.op==='delete'?sb.from('items').delete().eq('soort',o.col).eq('id',o.id):sb.from('items').upsert({user_id:session.user.id,soort:o.col,id:o.id,gegevens:o.full},{onConflict:'user_id,soort,id'});
+  let r=await go();
+  if(r.error&&/jwt|token/i.test(String(r.error.message||''))){await sb.auth.refreshSession().catch(()=>{});r=await go()}
+  return r.error||null;
+}
+let flushing=false;
+async function flushOutbox(){
+  if(flushing||!session)return; const L=getOutbox(); if(!L.length)return;
+  flushing=true; let sent=0, failed=false;
+  try{for(const o of L){const err=await runOp(o); if(err){failed=!isNetErr(err);break} sent++; setOutbox(getOutbox().filter(x=>x.at!==o.at))}}
+  finally{flushing=false}
+  if(failed)toast('Een wijziging kon niet verstuurd worden. Probeer het later opnieuw.');
+  if(sent){toast(sent===1?'1 wijziging verstuurd':sent+' wijzigingen verstuurd');loadAll(true)} else render();
+}
+function offlineBar(){
+  const n=getOutbox().length; if(!ui.offline&&!n)return '';
+  const when=ui.loadedAt?new Date(ui.loadedAt).toLocaleString('nl-BE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+  return '<div class="note nbar"><span>'+(ui.offline?'<b>Geen internet.</b> Je ziet je gegevens van '+when+'. ':'')+(n?n+(n===1?' wijziging wacht':' wijzigingen wachten')+' om verstuurd te worden.':'Wat je nu invoert, wordt verstuurd zodra je weer online bent.')+'</span>'+(n&&!ui.offline?'<button class="btn small" type="button" data-act="flush">Nu versturen</button>':'')+'</div>';
+}
+async function logout(){
+  const n=getOutbox().length;
+  if(n&&!confirm(n+(n===1?' wijziging is':' wijzigingen zijn')+' nog niet verstuurd. Als je afmeldt, gaan ze verloren. Toch afmelden?'))return;
+  const k1=cacheKey(),k2=outKey(); await sb.auth.signOut();
+  try{localStorage.removeItem(k1);localStorage.removeItem(k2)}catch(e){}
+}
+window.addEventListener('online',()=>{if(session){ui.offline=false;flushOutbox().then(()=>loadAll(true))}});
+window.addEventListener('offline',()=>{ui.offline=true;scheduleRender()});
+
 /* ---------- Opslag (Supabase) ---------- */
 const SB_URL='https://xznredbjdxkneqggnlwx.supabase.co';
 const SB_KEY='sb_publishable_bwZnqzg04BZTDgTumCxogw_4njJoLK8';
@@ -485,9 +554,15 @@ async function loadAll(quiet){
       for(const c of COLS)S[c]=[];
       for(const r of rows){ if(S[r.soort])S[r.soort].push(Object.assign({},r.gegevens,{id:r.id})) }
       for(const c of COLS){sortCol(c);S.loaded[c]=true}
-      applyLayout();
-      dbState='ok';
-    }catch(e){ if(!quiet||dbState!=='ok')dbState='fout' }
+      applyOutbox(); applyLayout(); clearStats();
+      dbState='ok'; ui.offline=false; ui.loadedAt=Date.now(); saveCache();
+      if(getOutbox().length)setTimeout(flushOutbox,0);
+    }catch(e){
+      const net=isNetErr(e);
+      if(dbState!=='ok'&&net&&loadCache()){applyOutbox();applyLayout();clearStats();dbState='ok';ui.offline=true}
+      else if(dbState==='ok'&&net)ui.offline=true;
+      else if(!quiet||dbState!=='ok')dbState='fout';
+    }
     loading=null; scheduleRender();
   })();
   return loading;
@@ -525,7 +600,7 @@ function scheduleRender(){
 }
 document.addEventListener('focusout',()=>{if(ui.pendingRender){setTimeout(()=>{const ae=document.activeElement;if(!(ae&&document.getElementById('main').contains(ae)&&/INPUT|SELECT|TEXTAREA/.test(ae.tagName))){ui.pendingRender=false;render()}},0)}});
 function putLocal(col,id,full){
-  const doc=Object.assign({},full,{id});
+  clearStats(); const doc=Object.assign({},full,{id});
   const i=S[col].findIndex(x=>x.id===id);
   if(i>=0)S[col][i]=doc; else S[col].push(doc);
   sortCol(col);
@@ -536,14 +611,17 @@ async function save(col,id,data,merge){
   const base=merge&&cur?Object.assign({},cur):{}; delete base.id;
   const full=JSON.parse(JSON.stringify(Object.assign(base,data)));
   const {error}=await sb.from('items').upsert({user_id:session.user.id,soort:col,id,gegevens:full},{onConflict:'user_id,soort,id'});
-  if(error){toast(navigator.onLine===false?'Geen internet. Je wijziging is niet bewaard.':'Opslaan mislukt. Probeer het opnieuw.');return false}
-  putLocal(col,id,full); scheduleRender(); return true;
+  if(error&&isNetErr(error)){putLocal(col,id,full);queueOp({op:'upsert',col,id,full});ui.offline=true;saveCache();scheduleRender();setTimeout(()=>toast('Geen internet: bewaard op dit toestel. Wordt verstuurd zodra je online bent.'),50);return true}
+  if(error){toast('Opslaan mislukt. Probeer het opnieuw.');return false}
+  dropQueued(col,id); putLocal(col,id,full); saveCache(); scheduleRender(); return true;
 }
 async function remove(col,id){
   if(!session)return false;
   const {error}=await sb.from('items').delete().eq('soort',col).eq('id',id);
-  if(error){toast(navigator.onLine===false?'Geen internet. Er is niets verwijderd.':'Verwijderen mislukt.');return false}
-  S[col]=S[col].filter(x=>x.id!==id); scheduleRender(); return true;
+  if(error&&isNetErr(error)){queueOp({op:'delete',col,id});ui.offline=true}
+  else if(error){toast('Verwijderen mislukt.');return false}
+  else dropQueued(col,id);
+  S[col]=S[col].filter(x=>x.id!==id); clearStats(); saveCache(); scheduleRender(); return true;
 }
 function newId(){const a=new Uint8Array(12);crypto.getRandomValues(a);return Array.from(a,b=>'0123456789abcdefghijklmnopqrstuvwxyz'[b%36]).join('')}
 async function snapshotNetworth(items){
@@ -568,13 +646,16 @@ async function exportCsv(list,label){
 async function shareOrDownload(blob,name,type){
   try{
     const file=new File([blob],name,{type});
-    if(!isWide()&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});return}
-  }catch(e){ if(e&&e.name==='AbortError')return }
+    if(!isWide()&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});return 'ok'}
+  }catch(e){ if(e&&e.name==='AbortError')return 'cancel' }
+  downloadBlob(blob,name); return 'ok';
+}
+function downloadBlob(blob,name){
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
   document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
 }
-async function exportData(){
-  if(dbState!=='ok'){toast('Je gegevens zijn nog niet geladen. Probeer zo opnieuw.');return}
+async function exportData(silent){
+  if(dbState!=='ok'){toast('Je gegevens zijn nog niet geladen. Probeer zo opnieuw.');return false}
   const data={}; for(const c of COLS)data[c]=JSON.parse(JSON.stringify(S[c]));
   const out={app:'Bjorn Finance',versie:1,geexporteerd:new Date().toISOString(),
     aantallen:Object.fromEntries(COLS.map(c=>[c,data[c].length])),
@@ -582,13 +663,10 @@ async function exportData(){
     gegevens:data};
   const name='bjorn-finance-export-'+todayStr()+'.json';
   const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
-  try{
-    const file=new File([blob],name,{type:'application/json'});
-    if(!isWide()&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});return}
-  }catch(e){ if(e&&e.name==='AbortError')return }
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
-  document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
-  toast('Export bewaard: '+data.tx.length+' transacties');
+  if(silent)downloadBlob(blob,name); else if(await shareOrDownload(blob,name,'application/json')==='cancel')return false;
+  await save('prognose','backup',{last:todayStr(),updated:Date.now()});
+  if(!silent)toast('Back-up bewaard: '+data.tx.length+' transacties');
+  return true;
 }
 
 /* ---------- Importeren ---------- */
@@ -607,7 +685,7 @@ function viewImport(){
     h+='<div class="imp">'+COLS.map(c=>'<span>'+labels[c]+'</span><b>'+(g[c]||[]).length+'</b>').join('')+'</div>';
     h+='<div class="hint">Geëxporteerd op '+esc(new Date(imp.data.geexporteerd).toLocaleString('nl-BE'))+'.</div>';
     const have=COLS.reduce((n,c)=>n+S[c].length,0);
-    if(have)h+='<div class="note">Er staan al '+have+' items in deze app. Bij importeren worden die eerst gewist en vervangen door de inhoud van dit bestand.</div>';
+    if(have)h+='<div class="note">Er staan al '+have+' items in deze app. Bij importeren worden die eerst gewist en vervangen door de inhoud van dit bestand. De app downloadt vooraf automatisch een back-up van wat er nu in staat.</div>';
     const rc=(g.tx||[]).filter(t=>t.receipt).length;
     if(rc)h+='<div class="note">'+rc+' transactie'+(rc===1?' heeft':'s hebben')+' een bonnetje. De foto zelf zit niet in het bestand: open die transactie na het importeren en voeg het bonnetje opnieuw toe.</div>';
     if(have&&!imp.confirm)h+='<button class="btn primary" type="button" data-act="impask">Importeren</button>';
@@ -636,6 +714,8 @@ async function runImport(){
       if(g.receipt&&!isStoredReceipt(g.receipt))g.receipt=Object.assign({},g.receipt,{legacy:true});
       rows.push({user_id:uid,soort:c,id:String(d.id),gegevens:g});
     }
+    // eerst een back-up van wat er nu in de app staat, zodat er bij een fout niets verloren gaat
+    if(COLS.some(c=>S[c].length)&&!await exportData(true))throw 0;
     const del=await sb.from('items').delete().eq('user_id',uid); if(del.error)throw del.error;
     for(let i=0;i<rows.length;i+=500){const {error}=await sb.from('items').insert(rows.slice(i,i+500)); if(error)throw error}
     await loadAll();
@@ -713,7 +793,16 @@ async function submitPw(){
 
 /* ---------- UI-hulpjes ---------- */
 let toastT=null;
-function toast(msg){const r=document.getElementById('toastRoot');r.innerHTML='<div class="toast" role="status">'+esc(msg)+'</div>';clearTimeout(toastT);toastT=setTimeout(()=>r.innerHTML='',2600)}
+let undoFn=null;
+function toast(msg,undo){const r=document.getElementById('toastRoot');undoFn=undo||null;r.innerHTML='<div class="toast" role="status"><span>'+esc(msg)+'</span>'+(undo?'<button type="button" data-act="undo">Ongedaan maken</button>':'')+'</div>';clearTimeout(toastT);toastT=setTimeout(()=>{r.innerHTML='';undoFn=null},undo?6000:2600)}
+// Verwijdert een transactie; 6 seconden lang kan je dat ongedaan maken. Het bonnetje verdwijnt pas daarna.
+async function deleteTx(t){
+  if(!await remove('tx',t.id))return false;
+  const data=Object.assign({},t); delete data.id; let undone=false;
+  toast('Transactie verwijderd',async()=>{undone=true; if(await save('tx',t.id,data))toast('Transactie teruggezet')});
+  setTimeout(()=>{if(!undone&&t.receipt&&assets)assets.delete(t.receipt.id).catch(()=>{})},6500);
+  return true;
+}
 const isWide=()=>window.matchMedia('(min-width:900px)').matches;
 function catOptions(type,sel){
   const gs=GROUPS.filter(g=>type==='inkomen'?g.kind==='inkomen':g.kind==='uitgave');
@@ -790,8 +879,10 @@ function lineChart(points){
 
 /* ---------- Weergaven ---------- */
 function render(){
+  clearStats();
   const main=document.getElementById('main');
-  document.querySelectorAll('[data-nav]').forEach(a=>{const on=a.dataset.nav===ui.view||(ui.view==='inkomsten'&&a.dataset.nav==='transacties'&&a.closest('.bottom'))||(ui.view==='prognose'&&a.dataset.nav==='potjes'&&a.closest('.bottom'));on?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current')});
+  document.querySelectorAll('[data-nav]').forEach(a=>{const on=a.dataset.nav===ui.view;on?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current')});
+  const mb=document.querySelector('[data-navmore]'); if(mb)mb.classList.toggle('on',['inkomsten','prognose','abonnementen','balans','import'].includes(ui.view));
   renderTheme();
   document.body.classList.toggle('auth',authState!=='in'); renderAcct();
   if(authState==='laden'){main.innerHTML='<div class="empty">Bjorn Finance wordt geladen…</div>';return}
@@ -800,7 +891,7 @@ function render(){
   if(!COLS.every(c=>S.loaded[c])){main.innerHTML='<div class="empty">Je gegevens worden opgehaald…</div>';return}
   if(ui.view==='import'){main.innerHTML=viewImport();return}
   const v=ui.view;
-  main.innerHTML= v==='prognose'?viewPrognose(): v==='jaar'?viewYear(): v==='transacties'?viewTx(false): v==='inkomsten'?viewTx(true): v==='potjes'?viewPots(): v==='balans'?viewBalance(): v==='abonnementen'?viewSubs(): viewDash();
+  main.innerHTML= offlineBar()+(v==='prognose'?viewPrognose(): v==='jaar'?viewYear(): v==='transacties'?viewTx(false): v==='inkomsten'?viewTx(true): v==='potjes'?viewPots(): v==='balans'?viewBalance(): v==='abonnementen'?viewSubs(): viewDash());
   const h1=main.querySelector('.head h1'); if(h1)h1.insertAdjacentHTML('beforeend',pvMini());
 }
 
@@ -864,6 +955,11 @@ function viewDash(){
   const E=ui.dash;
   let h='<div class="head"><div><h1>Dashboard</h1><div class="sub">'+MONTHS[ui.m-1]+' '+ui.y+' · '+st.count+' transacties</div></div>'+(E?'':'<button class="btn small dashbtn" type="button" data-act="dash-edit">'+ICON_GRID+'Indeling aanpassen</button>')+monthNav()+'</div>';
   if(E)h+='<div class="dkhelp"><span>'+(isWide()?'Sleep de vakjes en blokken naar de plek die je wil, of gebruik de pijltjes.':'Gebruik de pijltjes om een vakje of blok te verplaatsen.')+'</span><div class="actions"><button class="btn small ghost" type="button" data-act="dash-reset">Standaard herstellen</button><button class="btn small" type="button" data-act="dash-cancel">Annuleren</button><button class="btn small primary" type="button" data-act="dash-save">Klaar</button></div></div>';
+  // M1: op de iPhone eerst één kaart met het belangrijkste van de maand
+  const ratio=st.inkomen>0?Math.min(st.uitgaven/st.inkomen,1):0;
+  h+='<section class="card msum"><span class="label">'+MONTHS[ui.m-1]+' in één oogopslag</span><div class="msum3"><div><span>Binnen</span><b>'+fmt0(st.inkomen)+'</b></div><div><span>Uit</span><b>'+fmt0(st.uitgaven)+'</b></div><div><span>Over</span><b class="'+(st.eindsaldo<0?'neg':'over')+'">'+fmt0(st.eindsaldo)+'</b></div></div>'+
+    '<div class="track"><div class="fill" style="width:'+(ratio*100).toFixed(1)+'%;background:var(--accent)"></div></div><span class="small muted">'+(st.inkomen>0?Math.round(st.uitgaven/st.inkomen*100)+'% van wat binnenkwam is uitgegeven of gespaard':'Nog geen inkomen deze maand')+(st.sparen?' · waarvan '+fmt(st.sparen)+' gespaard':'')+'</span></section>';
+  h+=dashNotes();
   const K={
     netto:kpi('Netto inkomen',fmt(st.inkomen),'',(hasPrev?deltaChip(st.inkomen,pst.inkomen,true):'')+(st.uitPot?'<span class="small muted">incl. '+fmt(st.uitPot)+' uit potjes</span>':'')+(st.carry?'<span class="small muted">incl. '+fmt(st.carry)+' over van vorige maand</span>':'')),
     leven:kpi('Levenskosten',fmt(st.levenskosten),'',hasPrev?deltaChip(st.levenskosten,pst.levenskosten,false):'<span class="small muted">'+pct(st.levPct)+' van je inkomen</span>'),
@@ -898,6 +994,20 @@ function viewDash(){
     '</div></section>';
   B.gespaard=saveCard(); B.abonnementen=subsCard();
   h+='<div class="dgrid">'+dashItems('blok',B)+'</div>';
+  return h;
+}
+/* ---------- Meldingen op het dashboard ---------- */
+// Vaste lasten: vanaf de 20ste kijkt de app naar volgende maand (loon komt rond de 25ste).
+function copyTarget(){const d=new Date(); let y=d.getFullYear(), m=d.getMonth()+1; if(d.getDate()>=20){m++; if(m>12){m=1;y++}} return {y,m}}
+function dashNotes(){
+  if(ui.dash)return '';
+  let h='';
+  const ct=copyTarget(), ck=ymKey(ct.y,ct.m);
+  const n=lsGet('bf-cp-skip')===ck?0:copyRows(ct.y,ct.m).filter(r=>r.on&&!r.dup).length;
+  if(n>=3)h+='<div class="note nbar"><span>De vaste lasten van <b>'+MONTHS[ct.m-1].toLowerCase()+'</b> zijn nog niet overgenomen ('+n+' posten).</span><div class="actions"><button class="btn small primary" type="button" data-act="cp-open" data-y="'+ct.y+'" data-m="'+ct.m+'">Overnemen</button><button class="btn small ghost" type="button" data-act="cp-skip" data-k="'+ck+'">Niet nu</button></div></div>';
+  const bk=(S.prognose.find(x=>x.id==='backup')||{}).last;
+  const days=bk?Math.floor((Date.now()-new Date(bk+'T12:00:00'))/864e5):null;
+  if(!bk||days>=30)h+='<div class="note nbar"><span>'+(bk?'Je laatste back-up is van '+fdate(bk)+'.':'Je hebt nog geen back-up gemaakt.')+' Maak er nu één, zo ben je nooit iets kwijt.</span><button class="btn small primary" type="button" data-act="export">Back-up maken</button></div>';
   return h;
 }
 /* ---------- Indeling dashboard ----------
@@ -1292,7 +1402,29 @@ function quickCats(t){
 }
 function closeSheet(discard){
   if(discard&&F&&F.newReceipt&&assets){assets.delete(F.newReceipt.id).catch(()=>{})}
-  F=null;PW=null;CP=null;document.getElementById('sheetRoot').innerHTML='';
+  F=null;PW=null;CP=null;MORE=false;document.getElementById('sheetRoot').innerHTML='';
+}
+
+/* ---------- Menu Meer (iPhone) ---------- */
+let MORE=false;
+function drawMore(){
+  MORE=true;
+  const I=p=>'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">'+p+'</svg>';
+  const go=(v,label,icon)=>'<button type="button" data-act="more-go" data-h="'+v+'"'+(ui.view===v?' class="cur" aria-current="page"':'')+'>'+I(icon)+label+'</button>';
+  const act=(a,label,icon)=>'<button type="button" data-act="'+a+'">'+I(icon)+label+'</button>';
+  document.getElementById('sheetRoot').innerHTML='<div class="scrim" data-act="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="moreT"><div class="shead"><h2 id="moreT">Meer</h2><button class="iconbtn" type="button" data-act="close" aria-label="Sluiten"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div class="morelist">'+
+    go('inkomsten','Inkomsten','<path d="M12 19V5M5 12l7-7 7 7"/>')+
+    go('prognose','Prognose potjes','<path d="M3 20h18M5 16l4-5 4 3 6-8"/><path d="M15 6h4v4"/>')+
+    go('abonnementen','Abonnementen','<path d="M4 7h16M4 12h16M4 17h10"/>')+
+    go('balans','Balans','<path d="M12 3v18M5 7h14M3 14l2-6 2 6a2 2 0 0 1-4 0zM17 14l2-6 2 6a2 2 0 0 1-4 0z"/>')+
+    '<div class="sep"></div>'+
+    act('more-export','Back-up maken','<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>')+
+    act('more-csv','Excel (alle transacties)','<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 3v18"/>')+
+    act('more-theme',themeLabel().replace(/<svg[\s\S]*?<\/svg>/,'').trim(),'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>')+
+    act('more-pv',pvOn()?'Bedragen tonen':'Bedragen verbergen',EYE)+
+    act('pwopen','Wachtwoord wijzigen','<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>')+
+    act('logout','Afmelden','<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>')+
+    '</div></div></div>';
 }
 
 /* ---------- Vaste lasten van vorige maand overnemen ---------- */
@@ -1314,11 +1446,11 @@ function copyRows(y,m){
       return {t,loon,vari,dup,maybe,on:!dup&&!maybe&&!loon&&!vari,amount:amtStr(t.amount),date:dst+'-'+String(Math.min(+t.date.slice(8,10)||1,last)).padStart(2,'0')}})
     .sort((a,b)=>rank(a.t.category)-rank(b.t.category)||a.t.date.localeCompare(b.t.date));
 }
-function openCopy(){
+function openCopy(fy,fm){
   // Loon komt rond de 26ste, dan boekt Bjorn de vaste lasten van de volgende maand al in: vanaf de 20ste opent het op volgende maand.
   const d=new Date(); let y=d.getFullYear(), m=d.getMonth()+1;
   if(d.getDate()>=20){m++; if(m>12){m=1;y++}}
-  if(ui.f.year!=='all'&&ui.f.month!=='all'){y=+ui.f.year;m=+ui.f.month}
+  if(fy){y=fy;m=fm} else if(ui.f.year!=='all'&&ui.f.month!=='all'){y=+ui.f.year;m=+ui.f.month}
   CP={y,m,rows:copyRows(y,m),err:'',busy:false}; drawCopy();
 }
 function copyStep(d){let m=CP.m+d,y=CP.y; if(m<1){m=12;y--} if(m>12){m=1;y++} CP={y,m,rows:copyRows(y,m),err:'',busy:false}; drawCopy()}
@@ -1451,15 +1583,24 @@ document.addEventListener('click',async e=>{
     case 'lay-save': await saveLayout(); break;
     case 'lay-show': ui.f={q:'',year:'all',month:'all',type:'all',cat:el.dataset.c}; location.hash='transacties'; toast('Je indeling staat nog open in het jaaroverzicht; vergeet niet te bewaren'); break;
     case 'export': exportData(); break;
+    case 'more': drawMore(); break;
+    case 'more-go': closeSheet(false); if(location.hash==='#'+el.dataset.h)route(); else location.hash=el.dataset.h; break;
+    case 'more-export': closeSheet(false); exportData(); break;
+    case 'more-csv': closeSheet(false); exportCsv(S.tx,'alle-transacties'); break;
+    case 'more-theme': cycleTheme(); render(); drawMore(); break;
+    case 'more-pv': togglePv(); drawMore(); break;
+    case 'flush': flushOutbox(); break;
     case 'csv-list': exportCsv(filteredTx(!!el.dataset.income),el.dataset.income?'inkomsten':'transacties'); break;
     case 'csv-all': exportCsv(S.tx,'alle-transacties'); break;
     case 'pv': togglePv(); break;
-    case 'cp-open': openCopy(); break;
+    case 'cp-open': openCopy(el.dataset.y?+el.dataset.y:null,el.dataset.m?+el.dataset.m:null); break;
+    case 'cp-skip': lsSet('bf-cp-skip',el.dataset.k); render(); break;
+    case 'undo': {const fn=undoFn; undoFn=null; clearTimeout(toastT); document.getElementById('toastRoot').innerHTML=''; if(fn)await fn()} break;
     case 'cp-prev': copyStep(-1); break;
     case 'cp-next': copyStep(1); break;
     case 'cp-save': await saveCopy(); break;
-    case 'logout': await sb.auth.signOut(); break;
-    case 'pwopen': openPw(); break;
+    case 'logout': await logout(); break;
+    case 'pwopen': MORE=false; openPw(); break;
     case 'reload': dbState='wachten'; render(); loadAll(); break;
     case 'lgmode': loginUi.mode=loginUi.mode==='nieuw'?'in':'nieuw'; loginUi.err=''; render(); break;
     case 'impask': imp.confirm=true; render(); break;
@@ -1479,7 +1620,7 @@ document.addEventListener('click',async e=>{
     case 'edit': {const t=S.tx.find(x=>x.id===el.dataset.id); if(t)openSheet(Object.assign({},t,{potIn:t.type==='overboeking'?(t.to||t.potIn||'rekening'):t.potIn,potOut:t.type==='overboeking'?(t.from||t.potOut||'rekening'):t.potOut}));} break;
     case 'askdel': ui.confirm=el.dataset.id; render(); break;
     case 'nodel': ui.confirm=null; render(); break;
-    case 'del': {const t=S.tx.find(x=>x.id===el.dataset.id); ui.confirm=null; if(t&&await remove('tx',t.id)){if(t.receipt&&assets)assets.delete(t.receipt.id).catch(()=>{}); toast('Transactie verwijderd')} else render()} break;
+    case 'del': {const t=S.tx.find(x=>x.id===el.dataset.id); ui.confirm=null; if(!t||!await deleteTx(t))render()} break;
     case 'viewrc': {const t=S.tx.find(x=>x.id===el.dataset.id); t&&showReceipt(t.receipt)} break;
     case 'sort': {const k=el.dataset.k; ui.sort=ui.sort.k===k?{k,d:ui.sort.d==='asc'?'desc':'asc'}:{k,d:'desc'}; render()} break;
     case 'ft': ui.f.type=el.dataset.v; render(); break;
@@ -1495,7 +1636,7 @@ document.addEventListener('click',async e=>{
     case 'viewnew': showReceipt(F.removeReceipt?null:(F.newReceipt||F.origReceipt)); break;
     case 'sdelask': readSheet(); F.confirmDel=true; drawSheet(); break;
     case 'sdelno': readSheet(); F.confirmDel=false; drawSheet(); break;
-    case 'sdel': {const t=F.t; const rec=F.origReceipt; if(!await remove('tx',t.id))break; if(F&&F.newReceipt&&assets)assets.delete(F.newReceipt.id).catch(()=>{}); if(rec&&assets)assets.delete(rec.id).catch(()=>{}); F=null; document.getElementById('sheetRoot').innerHTML=''; toast('Transactie verwijderd')} break;
+    case 'sdel': {const t=S.tx.find(x=>x.id===F.t.id); if(!t||!await deleteTx(t))break; if(F&&F.newReceipt&&assets)assets.delete(F.newReceipt.id).catch(()=>{}); F=null; document.getElementById('sheetRoot').innerHTML=''} break;
     case 'theme': cycleTheme(); render(); break;
   }
 });
@@ -1553,7 +1694,7 @@ document.addEventListener('submit',e=>{
   if(e.target.id==='loginForm'){e.preventDefault();sendCode()}
 });
 document.addEventListener('change',e=>{if(e.target.id==='impFile'&&e.target.files[0])readImportFile(e.target.files[0])});
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&session&&!F&&!ui.pendingRender)loadAll(true)});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&session&&!F&&!ui.pendingRender){if(getOutbox().length)flushOutbox();else loadAll(true)}});
 
 /* ---------- Thema ---------- */
 function themePref(){return lsGet('bf-theme')||'dark'}
