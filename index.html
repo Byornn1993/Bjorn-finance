@@ -312,7 +312,7 @@ html.pv .pvmini{color:var(--accent);border-color:var(--accent)}
     <a href="#potjes" data-nav="potjes"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 9h14l-1.2 11H6.2zM9 9V7a3 3 0 0 1 6 0v2"/></svg>Spaarpotjes</a>
     <a href="#prognose" data-nav="prognose"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 20h18M5 16l4-5 4 3 6-8"/><path d="M15 6h4v4"/></svg>Prognose potjes</a>
     <a href="#balans" data-nav="balans"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v18M5 7h14M3 14l2-6 2 6a2 2 0 0 1-4 0zM17 14l2-6 2 6a2 2 0 0 1-4 0z"/></svg>Balans</a>
-    <button class="btn ghost" type="button" data-act="export" style="margin-top:12px;justify-content:flex-start"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Exporteren</button>
+    <button class="btn ghost" type="button" data-act="export" style="margin-top:12px;justify-content:flex-start"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Back-up maken</button>
     <button class="btn ghost" id="themeBtn" type="button" style="margin-top:12px;justify-content:flex-start"></button>
     <button class="btn ghost" id="pvBtn" type="button" data-act="pv" style="justify-content:flex-start"></button>
     <div class="acct" id="acctBox"></div>
@@ -531,7 +531,7 @@ const SB_KEY='sb_publishable_bwZnqzg04BZTDgTumCxogw_4njJoLK8';
 const BUCKET='bonnetjes';
 const COLS=['tx','pots','balance','networth','prognose'];
 const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-let session=null, authState='laden', loginUi={email:lsGet('bf-email')||'',mode:lsGet('bf-email')?'in':'nieuw',busy:false,err:''};
+let session=null, authState='laden', loginUi={email:lsGet('bf-email')||'',busy:false,err:''};
 function sortCol(c){
   if(c==='pots')S.pots.sort((a,b)=>(a.order||0)-(b.order||0));
   if(c==='balance')S.balance.sort((a,b)=>(a.order||0)-(b.order||0));
@@ -672,13 +672,13 @@ async function exportData(silent){
 /* ---------- Importeren ---------- */
 const imp={file:null,data:null,err:'',busy:false,done:null,confirm:false};
 function viewImport(){
-  let h='<div class="head"><div><h1>Gegevens importeren</h1><div class="sub">Zet je exportbestand uit de oude Bjorn Finance over naar deze app.</div></div></div>';
+  let h='<div class="head"><div><h1>Back-up terugzetten</h1><div class="sub">Zet een back-upbestand van Bjorn Finance terug in de app.</div></div></div>';
   h+='<section class="card" style="display:flex;flex-direction:column;gap:14px;max-width:640px">';
   if(imp.done){
     h+='<h2>Klaar</h2><p>'+imp.done+'</p><div class="actions"><a class="btn primary" href="#dashboard">Naar het dashboard</a><a class="btn" href="#jaar">Jaaroverzicht controleren</a></div>';
     return h+'</section>';
   }
-  h+='<label class="field">Exportbestand (.json)<input type="file" id="impFile" accept=".json,application/json"></label>';
+  h+='<label class="field">Back-upbestand (.json)<input type="file" id="impFile" accept=".json,application/json"></label>';
   if(imp.err)h+='<div class="err" role="alert">'+esc(imp.err)+'</div>';
   if(imp.data){
     const g=imp.data.gegevens, labels={tx:'Transacties',pots:'Spaarpotjes',balance:'Balansposten',networth:'Vermogensmetingen',prognose:'Prognose'};
@@ -702,7 +702,7 @@ async function readImportFile(file){
     if(j.app!=='Bjorn Finance'||!j.gegevens)throw 0;
     for(const c of COLS)if(j.gegevens[c]&&!Array.isArray(j.gegevens[c]))throw 0;
     imp.data=j;
-  }catch(e){imp.err='Dit is geen exportbestand van Bjorn Finance. Kies het bestand dat begint met bjorn-finance-export.'}
+  }catch(e){imp.err='Dit is geen back-upbestand van Bjorn Finance. Kies het bestand dat begint met bjorn-finance-export.'}
   render();
 }
 async function runImport(){
@@ -727,38 +727,25 @@ async function runImport(){
 
 /* ---------- Aanmelden ---------- */
 function viewLogin(){
-  const nw=loginUi.mode==='nieuw';
   let h='<div class="login"><div class="brand"><img class="brand-mark" src="apple-touch-icon.png?v=6" alt=""><div><b>Bjorn Finance</b><span class="small muted">Mijn financieel overzicht</span></div></div>';
-  h+='<section class="card" style="display:flex;flex-direction:column;gap:14px">';
-  h+='<h2>'+(nw?'Account aanmaken':'Aanmelden')+'</h2>';
-  if(nw)h+='<p class="muted small" style="margin:0">Dit doe je maar één keer. Kies een wachtwoord van minstens 8 tekens en laat je iPhone of laptop het bewaren.</p>';
+  h+='<section class="card" style="display:flex;flex-direction:column;gap:14px"><h2>Aanmelden</h2>';
   h+='<form id="loginForm" style="display:flex;flex-direction:column;gap:12px" novalidate>'+
     '<label class="field">E-mailadres<input id="lgEmail" name="email" type="email" autocomplete="username" inputmode="email" value="'+esc(loginUi.email)+'" placeholder="jij@voorbeeld.be"></label>'+
-    '<label class="field">Wachtwoord<input id="lgPass" name="password" type="password" autocomplete="'+(nw?'new-password':'current-password')+'" minlength="8"></label>'+
+    '<label class="field">Wachtwoord<input id="lgPass" name="password" type="password" autocomplete="current-password"></label>'+
     (loginUi.err?'<div class="err" role="alert">'+esc(loginUi.err)+'</div>':'')+
-    '<button class="btn primary" type="submit"'+(loginUi.busy?' disabled':'')+'>'+(loginUi.busy?'Bezig…':(nw?'Account aanmaken':'Aanmelden'))+'</button></form>'+
-    '<button class="btn ghost" type="button" data-act="lgmode">'+(nw?'Ik heb al een account':'Nog geen account? Account aanmaken')+'</button>';
+    '<button class="btn primary" type="submit"'+(loginUi.busy?' disabled':'')+'>'+(loginUi.busy?'Bezig…':'Aanmelden')+'</button></form>';
   return h+'</section></div>';
 }
-async function sendCode(){
+async function signIn(){
   const email=(document.getElementById('lgEmail').value||'').trim().toLowerCase();
   const password=document.getElementById('lgPass').value||'';
   loginUi.email=email;
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){loginUi.err='Vul een geldig e-mailadres in.';render();return}
-  if(password.length<8){loginUi.err='Je wachtwoord moet minstens 8 tekens hebben.';render();return}
+  if(!password){loginUi.err='Vul je wachtwoord in.';render();return}
   loginUi.busy=true;loginUi.err='';render();
-  const nw=loginUi.mode==='nieuw';
-  const {data,error}=nw?await sb.auth.signUp({email,password}):await sb.auth.signInWithPassword({email,password});
+  const {error}=await sb.auth.signInWithPassword({email,password});
   loginUi.busy=false; lsSet('bf-email',email);
-  if(error){
-    const m=String(error.message||'');
-    loginUi.err=/already registered|already exists/i.test(m)?'Er bestaat al een account met dit e-mailadres. Kies Aanmelden.':
-      /invalid login|invalid credentials/i.test(m)?'E-mailadres of wachtwoord klopt niet.':
-      /not confirmed/i.test(m)?'Je e-mailadres is nog niet bevestigd. Klik eerst op de link in de mail van Supabase.':
-      /signups not allowed|signup.*disabled/i.test(m)?'Nieuwe accounts zijn uitgeschakeld.':
-      /weak|password/i.test(m)?'Kies een sterker wachtwoord (minstens 8 tekens, met letters en cijfers).':
-      'Dat lukte niet. Controleer je internet en probeer opnieuw.';
-  } else if(nw&&!data.session){loginUi.err='Account gemaakt. Bevestig eerst je e-mailadres via de mail van Supabase en meld je daarna hier aan.';loginUi.mode='in'}
+  if(error)loginUi.err=/invalid login|invalid credentials/i.test(String(error.message||''))?'E-mailadres of wachtwoord klopt niet.':'Dat lukte niet. Controleer je internet en probeer opnieuw.';
   render();
 }
 function renderAcct(){
@@ -997,8 +984,9 @@ function viewDash(){
   return h;
 }
 /* ---------- Meldingen op het dashboard ---------- */
-// Vaste lasten: vanaf de 20ste kijkt de app naar volgende maand (loon komt rond de 25ste).
-function copyTarget(){const d=new Date(); let y=d.getFullYear(), m=d.getMonth()+1; if(d.getDate()>=20){m++; if(m>12){m=1;y++}} return {y,m}}
+// Vaste lasten: vanaf de 25ste (loondag) gaat het over volgende maand, zowel voor de melding als voor Vaste lasten overnemen.
+const COPY_DAY=25;
+function copyTarget(){const d=new Date(); let y=d.getFullYear(), m=d.getMonth()+1; if(d.getDate()>=COPY_DAY){m++; if(m>12){m=1;y++}} return {y,m}}
 function dashNotes(){
   if(ui.dash)return '';
   let h='';
@@ -1360,7 +1348,7 @@ function viewBalance(){
   h+='<section class="card"><h2>Schulden</h2><div class="cap">Openstaand saldo</div><div class="btable">'+sch.map(balRow).join('')+'<div class="btotal"><span>Totaal schulden</span><span class="num">'+fmt(bt.schulden)+'</span></div><div class="btotal" style="color:var(--accent)"><span>Eigen vermogen</span><span class="num">'+fmt(bt.netto)+'</span></div><div class="btotal"><span>Totaal passiva</span><span class="num">'+fmt(bt.schulden+bt.netto)+'</span></div></div><div class="actions" style="margin-top:10px"><button class="btn small" type="button" data-act="baladd" data-side="schuld" data-group="Schulden">'+ICON.plus+'Schuld</button></div></section></div>';
   h+='<section class="card"><h2>Evolutie nettovermogen</h2><div class="cap">Eén meting per maand. De app bewaart die automatisch telkens je hier een waarde aanpast.</div>'+lineChart(S.networth.map(n=>({label:MSHORT[+n.month.slice(5,7)-1]+' '+n.month.slice(2,4),v:+n.netto||0})))+
     (S.networth.length?'<div class="minilist" style="margin-top:10px">'+S.networth.slice().reverse().map(n=>'<div><span>'+MONTHS[+n.month.slice(5,7)-1]+' '+n.month.slice(0,4)+'</span><span class="num">'+fmt0(n.activa)+' − '+fmt0(n.schulden)+' = <b>'+fmt0(n.netto)+'</b></span></div>').join('')+'</div>':'')+'</section>';
-  h+='<section class="card"><h2>Gegevens en account</h2><div class="cap">Eén bestand met al je transacties, potjes, balans, vermogensmetingen en prognose. Bewaar het als back-up.</div><div class="actions"><button class="btn primary" type="button" data-act="export"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Exporteren</button><button class="btn" type="button" data-act="csv-all">'+ICON_XLS+'Excel (alle transacties)</button><a class="btn" href="#import">Importeren</a><button class="btn" type="button" data-act="theme">'+themeLabel()+'</button><button class="btn ghost" type="button" data-act="logout">Afmelden</button></div></section>';
+  h+='<section class="card"><h2>Gegevens en account</h2><div class="cap">Eén bestand met al je transacties, potjes, balans, vermogensmetingen en prognose. Bewaar het als back-up.</div><div class="actions"><button class="btn primary" type="button" data-act="export"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Back-up maken</button><button class="btn" type="button" data-act="csv-all">'+ICON_XLS+'Excel (alle transacties)</button><a class="btn" href="#import">Back-up terugzetten</a><button class="btn" type="button" data-act="theme">'+themeLabel()+'</button><button class="btn ghost" type="button" data-act="logout">Afmelden</button></div></section>';
   h+='<div class="note">Een hogere waarde van je woning, crypto of belegging pas je hier aan. Dat verandert je vermogen, maar het is geen inkomen. Geld dat je stort, boek je in het uitgavenlog onder Sparen / beleggen.</div>';
   return h;
 }
@@ -1447,9 +1435,7 @@ function copyRows(y,m){
     .sort((a,b)=>rank(a.t.category)-rank(b.t.category)||a.t.date.localeCompare(b.t.date));
 }
 function openCopy(fy,fm){
-  // Loon komt rond de 26ste, dan boekt Bjorn de vaste lasten van de volgende maand al in: vanaf de 20ste opent het op volgende maand.
-  const d=new Date(); let y=d.getFullYear(), m=d.getMonth()+1;
-  if(d.getDate()>=20){m++; if(m>12){m=1;y++}}
+  let {y,m}=copyTarget();
   if(fy){y=fy;m=fm} else if(ui.f.year!=='all'&&ui.f.month!=='all'){y=+ui.f.year;m=+ui.f.month}
   CP={y,m,rows:copyRows(y,m),err:'',busy:false}; drawCopy();
 }
@@ -1503,8 +1489,8 @@ function drawSheet(){
   '<label class="field">Notitie (optioneel)<textarea id="sNote" data-f="note">'+esc(t.note)+'</textarea></label>';
   if(assets){
     h+='<div class="field">Bonnetje of factuur<div class="receipt">';
-    if(r){h+=(r.legacy||!isStoredReceipt(r))?'<span class="pdf" title="Nog niet overgezet">?</span>':(r.type==='application/pdf'?'<a class="pdf" data-rc="'+esc(r.id)+'" href="#" target="_blank" rel="noopener">PDF</a>':'<button type="button" data-act="viewnew" style="padding:0;border:0;background:none;cursor:zoom-in"><img data-rc="'+esc(r.id)+'" alt="Bonnetje"></button>')+
-      '<div style="display:flex;flex-direction:column;gap:6px"><span class="small" style="color:var(--fg)">'+esc(r.name||'Bijlage')+((r.legacy||!isStoredReceipt(r))?'<br><span class="hint">Staat nog in de oude app. Klik op Vervangen om het opnieuw toe te voegen.</span>':'')+'</span><div class="actions"><label class="btn small" for="sFile">Vervangen</label><button class="btn small danger" type="button" data-act="rmrc">Verwijderen</button></div></div>'}
+    if(r){h+=(r.legacy||!isStoredReceipt(r))?'<span class="pdf" title="Niet beschikbaar">?</span>':(r.type==='application/pdf'?'<a class="pdf" data-rc="'+esc(r.id)+'" href="#" target="_blank" rel="noopener">PDF</a>':'<button type="button" data-act="viewnew" style="padding:0;border:0;background:none;cursor:zoom-in"><img data-rc="'+esc(r.id)+'" alt="Bonnetje"></button>')+
+      '<div style="display:flex;flex-direction:column;gap:6px"><span class="small" style="color:var(--fg)">'+esc(r.name||'Bijlage')+((r.legacy||!isStoredReceipt(r))?'<br><span class="hint">Dit bestand is niet meer beschikbaar. Klik op Vervangen om het opnieuw toe te voegen.</span>':'')+'</span><div class="actions"><label class="btn small" for="sFile">Vervangen</label><button class="btn small danger" type="button" data-act="rmrc">Verwijderen</button></div></div>'}
     else h+='<label class="btn small" for="sFile">'+ICON.clip+'Foto of bestand toevoegen</label><span class="hint">Foto met je gsm, afbeelding of PDF</span>';
     h+='<input id="sFile" type="file" accept="image/*,application/pdf" hidden></div>'+(F.busy?'<span class="hint">Bezig met uploaden…</span>':'')+'</div>';
   }
@@ -1531,7 +1517,7 @@ async function submitSheet(){
     potOut:t.type==='overboeking'?(t.potOut==='rekening'?'':t.potOut):(t.type==='uitgave'&&!isSaveCat(t.category)?(t.potOut||''):''),
     receipt:rec||null, created:t.created||Date.now(), updated:Date.now()};
   if(t.type==='overboeking'){data.from=t.potOut;data.to=t.potIn}
-  const id=t.id||newId('tx');
+  const id=t.id||newId();
   F.saving=true; F.err=''; drawSheet();
   const ok=await save('tx',id,data);
   if(!F)return;
@@ -1553,7 +1539,7 @@ async function handleFile(file){
 }
 async function showReceipt(r){
   if(!r)return;
-  if(r.legacy||!isStoredReceipt(r)){toast('Dit bonnetje staat nog in de oude app. Voeg het opnieuw toe bij de transactie.');return}
+  if(r.legacy||!isStoredReceipt(r)){toast('Dit bonnetje is niet meer beschikbaar. Voeg het opnieuw toe bij de transactie.');return}
   const u=await receiptUrl(r); if(!u){toast('Bonnetje openen mislukt.');return}
   const v=document.createElement('div');v.className='viewer';v.setAttribute('role','dialog');v.setAttribute('aria-label','Bonnetje');
   v.innerHTML=(r.type==='application/pdf'?'<a class="btn primary" href="'+u+'" target="_blank" rel="noopener">PDF openen</a>':'<img src="'+u+'" alt="Bonnetje">')+'<button class="btn" type="button">Sluiten</button>';
@@ -1602,7 +1588,6 @@ document.addEventListener('click',async e=>{
     case 'logout': await logout(); break;
     case 'pwopen': MORE=false; openPw(); break;
     case 'reload': dbState='wachten'; render(); loadAll(); break;
-    case 'lgmode': loginUi.mode=loginUi.mode==='nieuw'?'in':'nieuw'; loginUi.err=''; render(); break;
     case 'impask': imp.confirm=true; render(); break;
     case 'impno': imp.confirm=false; render(); break;
     case 'impgo': runImport(); break;
@@ -1627,7 +1612,7 @@ document.addEventListener('click',async e=>{
     case 'potin': openSheet(null,{type:'uitgave',category:SAVE_CAT,potIn:el.dataset.id,description:'Storting '+potName(el.dataset.id)}); break;
     case 'potout': openSheet(null,{type:'overboeking',potOut:el.dataset.id,potIn:'rekening',category:'Overboeking',description:'Opname '+potName(el.dataset.id)}); break;
     case 'potedit': ui.potEdit=ui.potEdit===el.dataset.id?null:el.dataset.id; render(); break;
-    case 'baladd': {const id=newId('balance'); const order=Math.max(0,...S.balance.map(b=>b.order||0))+1; await save('balance',id,{side:el.dataset.side,group:el.dataset.group,name:el.dataset.side==='schuld'?'Nieuwe schuld':'Nieuw bezit',value:0,order}); } break;
+    case 'baladd': {const id=newId(); const order=Math.max(0,...S.balance.map(b=>b.order||0))+1; await save('balance',id,{side:el.dataset.side,group:el.dataset.group,name:el.dataset.side==='schuld'?'Nieuwe schuld':'Nieuw bezit',value:0,order}); } break;
     case 'baldel': {const id=el.dataset.id; ui.confirm=null; const rest=S.balance.filter(b=>b.id!==id); await remove('balance',id); await snapshotNetworth(rest); toast('Post verwijderd')} break;
     case 'close': if(F)askCloseSheet(); else closeSheet(true); break;
     case 'qcat': readSheet(); F.t.category=el.dataset.v; if(isSaveCat(F.t.category))F.t.potOut=''; else F.t.potIn=''; drawSheet(); break;
@@ -1643,6 +1628,7 @@ document.addEventListener('click',async e=>{
 document.getElementById('fab').addEventListener('click',()=>openSheet(null,ui.view==='inkomsten'?{type:'inkomen',category:'Netto loon 1'}:null));
 document.getElementById('themeBtn').addEventListener('click',cycleTheme);
 document.addEventListener('submit',e=>{e.preventDefault();
+  if(e.target.id==='loginForm'){signIn();return}
   if(e.target.id==='txForm'){submitSheet();return}
   if(e.target.id==='pwForm'){submitPw();return}
   if(e.target.dataset.form==='pbulk'){const p=getPlan();if(!p)return;const fd=new FormData(e.target);const from=+fd.get('from');const a=parseAmount(fd.get('amt'));if(!isFinite(a)||a<0){toast('Vul een geldig bedrag in, bijvoorbeeld 1500.');return}
@@ -1688,11 +1674,8 @@ document.addEventListener('input',e=>{const el=e.target;if(el.dataset&&(el.datas
 document.addEventListener('keydown',e=>{const el=e.target;if(e.key==='Enter'&&el.dataset&&el.dataset.pedit){e.preventDefault();const n=document.querySelector('#main [data-pedit="'+el.dataset.pedit+'"][data-i="'+(+el.dataset.i+1)+'"]');if(n){n.focus();n.select()}else el.blur()}});
 let qT=null;
 document.addEventListener('input',e=>{if(e.target.dataset.act==='fq'){ui.f.q=e.target.value;clearTimeout(qT);qT=setTimeout(()=>{const pos=e.target.selectionStart;render();const n=document.getElementById('fq');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(_){}}},250)}});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.querySelector('.viewer')){document.querySelector('.viewer').remove();return} if(F)askCloseSheet()}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.querySelector('.viewer')){document.querySelector('.viewer').remove();return} if(F)askCloseSheet(); else if(document.getElementById('sheetRoot').firstChild)closeSheet(true)}});
 
-document.addEventListener('submit',e=>{
-  if(e.target.id==='loginForm'){e.preventDefault();sendCode()}
-});
 document.addEventListener('change',e=>{if(e.target.id==='impFile'&&e.target.files[0])readImportFile(e.target.files[0])});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&session&&!F&&!ui.pendingRender){if(getOutbox().length)flushOutbox();else loadAll(true)}});
 
