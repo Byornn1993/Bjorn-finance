@@ -45,7 +45,12 @@ h2{font-size:15.5px;font-weight:600;letter-spacing:-.01em}
 .main{flex:1;min-width:0;padding-block:20px 120px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px;max-width:1320px;margin:0 auto;width:100%}
 .bottom{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--side);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(6,minmax(0,1fr));padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 .bottom a,.bottom button.navbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:60px;font-size:11px;color:var(--muted);text-decoration:none;background:none;border:0;cursor:pointer}
-.bottom a[aria-current="page"]{color:var(--fg);font-weight:600}.bottom a[aria-current="page"] svg{color:var(--accent)}
+.bottom a[aria-current="page"],.bottom button.navbtn.on{color:var(--fg);font-weight:600}.bottom button.navbtn.on svg{color:var(--accent)}
+.morelist{display:flex;flex-direction:column;gap:2px}
+.morelist button{display:flex;align-items:center;gap:12px;width:100%;min-height:50px;padding:0 6px;background:none;border:0;border-bottom:1px solid var(--line-2);color:var(--fg);font:inherit;font-size:16px;text-align:left;cursor:pointer}
+.morelist button svg{color:var(--accent);flex:none}
+.morelist button.cur{font-weight:700}
+.morelist .sep{height:10px}.bottom a[aria-current="page"] svg{color:var(--accent)}
 .fab{width:56px;height:56px;border-radius:28px;border:0;background:var(--accent);color:var(--accent-fg);display:flex;align-items:center;justify-content:center;margin:-22px auto 0;box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 35%,transparent);cursor:pointer}
 @media (min-width:900px){
   .side{display:flex;flex-direction:column;gap:4px;position:sticky;top:0;height:100vh;width:240px;flex:none;background:var(--side);border-right:1px solid var(--line-2);padding:24px 14px}
@@ -65,6 +70,7 @@ h2{font-size:15.5px;font-weight:600;letter-spacing:-.01em}
 .head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
 .head .sub{color:var(--muted);font-size:14px;margin-top:2px}
 .monthnav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+@media (max-width:699px){.monthnav{flex-wrap:nowrap;width:100%}.monthnav .sel{flex:1}}
 .iconbtn{width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .iconbtn:hover{border-color:var(--accent)}
 .sel{height:42px;border-radius:12px;border:1px solid var(--line);background:var(--input);padding:0 10px;min-width:0}
@@ -215,7 +221,7 @@ table.tx tfoot td{font-weight:600;background:var(--surface-2);padding:10px 8px}
 @media (max-width:699px){.msum{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}}
 .msum3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .msum3 span{display:block;font-size:12px;color:var(--muted)}
-.msum3 b{display:block;font-size:19px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.msum3 b{display:block;white-space:nowrap;font-size:19px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .msum3 b.over{color:var(--accent)} .msum3 b.neg{color:var(--neg)}
 .nbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
 .toast{display:flex;align-items:center;gap:14px}
@@ -322,7 +328,7 @@ html.pv .pvmini{color:var(--accent);border-color:var(--accent)}
     <div style="display:flex;align-items:flex-start"><button class="fab" type="button" id="fab" aria-label="Transactie toevoegen"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button></div>
     <a href="#jaar" data-nav="jaar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Jaar</a>
     <a href="#potjes" data-nav="potjes"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 9h14l-1.2 11H6.2zM9 9V7a3 3 0 0 1 6 0v2"/></svg>Potjes</a>
-    <a href="#balans" data-nav="balans"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v18M5 7h14M3 14l2-6 2 6a2 2 0 0 1-4 0zM17 14l2-6 2 6a2 2 0 0 1-4 0z"/></svg>Balans</a>
+    <button class="navbtn" type="button" data-act="more" data-navmore aria-label="Meer"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>Meer</button>
   </nav>
 </div>
 <div id="sheetRoot"></div>
@@ -472,12 +478,59 @@ function balTotals(items){let a=0,s=0;for(const i of items){const v=balValue(i);
 const potName=id=>(!id||id==='rekening')?'Rekening':(S.pots.find(p=>p.id===id)||{}).name||'Potje';
 const potColor=p=>'var('+(p.color||'--c3')+')';
 
+/* ---------- Offline ----------
+   Laatst opgehaalde gegevens staan per account in localStorage, zodat de app ook zonder internet opent.
+   Wijzigingen zonder internet komen in een wachtrij (outbox) en worden verstuurd zodra je weer online bent. */
+const NET_RE=/fetch|network|load failed|offline|timed? ?out/i;
+const isNetErr=e=>navigator.onLine===false||NET_RE.test(String(e&&(e.message||e)));
+const cacheKey=()=>'bf-data-'+(session?session.user.id:'');
+const outKey=()=>'bf-outbox-'+(session?session.user.id:'');
+function getOutbox(){try{return JSON.parse(lsGet(outKey())||'[]')}catch(e){return []}}
+function setOutbox(L){lsSet(outKey(),JSON.stringify(L))}
+function queueOp(op){op.at=Date.now()+Math.random();const L=getOutbox().filter(o=>!(o.col===op.col&&o.id===op.id));L.push(op);setOutbox(L)}
+function dropQueued(col,id){const L=getOutbox();const R=L.filter(o=>!(o.col===col&&o.id===id));if(R.length!==L.length)setOutbox(R)}
+let cacheT=null;
+function saveCache(){clearTimeout(cacheT);cacheT=setTimeout(()=>{if(!session||dbState!=='ok')return;const d={};for(const c of COLS)d[c]=S[c];lsSet(cacheKey(),JSON.stringify({at:ui.loadedAt||Date.now(),d}))},400)}
+function loadCache(){
+  try{const j=JSON.parse(lsGet(cacheKey())||'null'); if(!j||!j.d)return false;
+    for(const c of COLS){S[c]=(j.d[c]||[]).slice();sortCol(c);S.loaded[c]=true} ui.loadedAt=j.at; return true}catch(e){return false}
+}
+function applyOutbox(){for(const o of getOutbox()){if(o.op==='delete')S[o.col]=S[o.col].filter(x=>x.id!==o.id);else putLocal(o.col,o.id,o.full)}}
+async function runOp(o){
+  const go=()=>o.op==='delete'?sb.from('items').delete().eq('soort',o.col).eq('id',o.id):sb.from('items').upsert({user_id:session.user.id,soort:o.col,id:o.id,gegevens:o.full},{onConflict:'user_id,soort,id'});
+  let r=await go();
+  if(r.error&&/jwt|token/i.test(String(r.error.message||''))){await sb.auth.refreshSession().catch(()=>{});r=await go()}
+  return r.error||null;
+}
+let flushing=false;
+async function flushOutbox(){
+  if(flushing||!session)return; const L=getOutbox(); if(!L.length)return;
+  flushing=true; let sent=0, failed=false;
+  try{for(const o of L){const err=await runOp(o); if(err){failed=!isNetErr(err);break} sent++; setOutbox(getOutbox().filter(x=>x.at!==o.at))}}
+  finally{flushing=false}
+  if(failed)toast('Een wijziging kon niet verstuurd worden. Probeer het later opnieuw.');
+  if(sent){toast(sent===1?'1 wijziging verstuurd':sent+' wijzigingen verstuurd');loadAll(true)} else render();
+}
+function offlineBar(){
+  const n=getOutbox().length; if(!ui.offline&&!n)return '';
+  const when=ui.loadedAt?new Date(ui.loadedAt).toLocaleString('nl-BE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+  return '<div class="note nbar"><span>'+(ui.offline?'<b>Geen internet.</b> Je ziet je gegevens van '+when+'. ':'')+(n?n+(n===1?' wijziging wacht':' wijzigingen wachten')+' om verstuurd te worden.':'Wat je nu invoert, wordt verstuurd zodra je weer online bent.')+'</span>'+(n&&!ui.offline?'<button class="btn small" type="button" data-act="flush">Nu versturen</button>':'')+'</div>';
+}
+async function logout(){
+  const n=getOutbox().length;
+  if(n&&!confirm(n+(n===1?' wijziging is':' wijzigingen zijn')+' nog niet verstuurd. Als je afmeldt, gaan ze verloren. Toch afmelden?'))return;
+  const k1=cacheKey(),k2=outKey(); await sb.auth.signOut();
+  try{localStorage.removeItem(k1);localStorage.removeItem(k2)}catch(e){}
+}
+window.addEventListener('online',()=>{if(session){ui.offline=false;flushOutbox().then(()=>loadAll(true))}});
+window.addEventListener('offline',()=>{ui.offline=true;scheduleRender()});
+
 /* ---------- Opslag (Supabase) ---------- */
 const SB_URL='https://xznredbjdxkneqggnlwx.supabase.co';
 const SB_KEY='sb_publishable_bwZnqzg04BZTDgTumCxogw_4njJoLK8';
 const BUCKET='bonnetjes';
 const COLS=['tx','pots','balance','networth','prognose'];
-const sb=window.supabase.createClient(SB_URL,SB_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+const sb=window.supabase.createClient(SB_URL,SB_KEY,{global:{fetch:(...x)=>localStorage.getItem("bf-test-offline")?Promise.reject(new TypeError("Failed to fetch")):fetch(...x)},auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 let session=null, authState='laden', loginUi={email:lsGet('bf-email')||'',mode:lsGet('bf-email')?'in':'nieuw',busy:false,err:''};
 function sortCol(c){
   if(c==='pots')S.pots.sort((a,b)=>(a.order||0)-(b.order||0));
@@ -501,9 +554,15 @@ async function loadAll(quiet){
       for(const c of COLS)S[c]=[];
       for(const r of rows){ if(S[r.soort])S[r.soort].push(Object.assign({},r.gegevens,{id:r.id})) }
       for(const c of COLS){sortCol(c);S.loaded[c]=true}
-      applyLayout(); clearStats();
-      dbState='ok';
-    }catch(e){ if(!quiet||dbState!=='ok')dbState='fout' }
+      applyOutbox(); applyLayout(); clearStats();
+      dbState='ok'; ui.offline=false; ui.loadedAt=Date.now(); saveCache();
+      if(getOutbox().length)setTimeout(flushOutbox,0);
+    }catch(e){
+      const net=isNetErr(e);
+      if(dbState!=='ok'&&net&&loadCache()){applyOutbox();applyLayout();clearStats();dbState='ok';ui.offline=true}
+      else if(dbState==='ok'&&net)ui.offline=true;
+      else if(!quiet||dbState!=='ok')dbState='fout';
+    }
     loading=null; scheduleRender();
   })();
   return loading;
@@ -552,14 +611,17 @@ async function save(col,id,data,merge){
   const base=merge&&cur?Object.assign({},cur):{}; delete base.id;
   const full=JSON.parse(JSON.stringify(Object.assign(base,data)));
   const {error}=await sb.from('items').upsert({user_id:session.user.id,soort:col,id,gegevens:full},{onConflict:'user_id,soort,id'});
-  if(error){toast(navigator.onLine===false?'Geen internet. Je wijziging is niet bewaard.':'Opslaan mislukt. Probeer het opnieuw.');return false}
-  putLocal(col,id,full); scheduleRender(); return true;
+  if(error&&isNetErr(error)){putLocal(col,id,full);queueOp({op:'upsert',col,id,full});ui.offline=true;saveCache();scheduleRender();setTimeout(()=>toast('Geen internet: bewaard op dit toestel. Wordt verstuurd zodra je online bent.'),50);return true}
+  if(error){toast('Opslaan mislukt. Probeer het opnieuw.');return false}
+  dropQueued(col,id); putLocal(col,id,full); saveCache(); scheduleRender(); return true;
 }
 async function remove(col,id){
   if(!session)return false;
   const {error}=await sb.from('items').delete().eq('soort',col).eq('id',id);
-  if(error){toast(navigator.onLine===false?'Geen internet. Er is niets verwijderd.':'Verwijderen mislukt.');return false}
-  S[col]=S[col].filter(x=>x.id!==id); clearStats(); scheduleRender(); return true;
+  if(error&&isNetErr(error)){queueOp({op:'delete',col,id});ui.offline=true}
+  else if(error){toast('Verwijderen mislukt.');return false}
+  else dropQueued(col,id);
+  S[col]=S[col].filter(x=>x.id!==id); clearStats(); saveCache(); scheduleRender(); return true;
 }
 function newId(){const a=new Uint8Array(12);crypto.getRandomValues(a);return Array.from(a,b=>'0123456789abcdefghijklmnopqrstuvwxyz'[b%36]).join('')}
 async function snapshotNetworth(items){
@@ -819,7 +881,8 @@ function lineChart(points){
 function render(){
   clearStats();
   const main=document.getElementById('main');
-  document.querySelectorAll('[data-nav]').forEach(a=>{const on=a.dataset.nav===ui.view||(ui.view==='inkomsten'&&a.dataset.nav==='transacties'&&a.closest('.bottom'))||(ui.view==='prognose'&&a.dataset.nav==='potjes'&&a.closest('.bottom'));on?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current')});
+  document.querySelectorAll('[data-nav]').forEach(a=>{const on=a.dataset.nav===ui.view;on?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current')});
+  const mb=document.querySelector('[data-navmore]'); if(mb)mb.classList.toggle('on',['inkomsten','prognose','abonnementen','balans','import'].includes(ui.view));
   renderTheme();
   document.body.classList.toggle('auth',authState!=='in'); renderAcct();
   if(authState==='laden'){main.innerHTML='<div class="empty">Bjorn Finance wordt geladen…</div>';return}
@@ -828,7 +891,7 @@ function render(){
   if(!COLS.every(c=>S.loaded[c])){main.innerHTML='<div class="empty">Je gegevens worden opgehaald…</div>';return}
   if(ui.view==='import'){main.innerHTML=viewImport();return}
   const v=ui.view;
-  main.innerHTML= v==='prognose'?viewPrognose(): v==='jaar'?viewYear(): v==='transacties'?viewTx(false): v==='inkomsten'?viewTx(true): v==='potjes'?viewPots(): v==='balans'?viewBalance(): v==='abonnementen'?viewSubs(): viewDash();
+  main.innerHTML= offlineBar()+(v==='prognose'?viewPrognose(): v==='jaar'?viewYear(): v==='transacties'?viewTx(false): v==='inkomsten'?viewTx(true): v==='potjes'?viewPots(): v==='balans'?viewBalance(): v==='abonnementen'?viewSubs(): viewDash());
   const h1=main.querySelector('.head h1'); if(h1)h1.insertAdjacentHTML('beforeend',pvMini());
 }
 
@@ -892,11 +955,11 @@ function viewDash(){
   const E=ui.dash;
   let h='<div class="head"><div><h1>Dashboard</h1><div class="sub">'+MONTHS[ui.m-1]+' '+ui.y+' · '+st.count+' transacties</div></div>'+(E?'':'<button class="btn small dashbtn" type="button" data-act="dash-edit">'+ICON_GRID+'Indeling aanpassen</button>')+monthNav()+'</div>';
   if(E)h+='<div class="dkhelp"><span>'+(isWide()?'Sleep de vakjes en blokken naar de plek die je wil, of gebruik de pijltjes.':'Gebruik de pijltjes om een vakje of blok te verplaatsen.')+'</span><div class="actions"><button class="btn small ghost" type="button" data-act="dash-reset">Standaard herstellen</button><button class="btn small" type="button" data-act="dash-cancel">Annuleren</button><button class="btn small primary" type="button" data-act="dash-save">Klaar</button></div></div>';
-  h+=dashNotes();
   // M1: op de iPhone eerst één kaart met het belangrijkste van de maand
   const ratio=st.inkomen>0?Math.min(st.uitgaven/st.inkomen,1):0;
-  h+='<section class="card msum"><span class="label">'+MONTHS[ui.m-1]+' in één oogopslag</span><div class="msum3"><div><span>Binnen</span><b>'+fmt(st.inkomen)+'</b></div><div><span>Uit</span><b>'+fmt(st.uitgaven)+'</b></div><div><span>Over</span><b class="'+(st.eindsaldo<0?'neg':'over')+'">'+fmt(st.eindsaldo)+'</b></div></div>'+
+  h+='<section class="card msum"><span class="label">'+MONTHS[ui.m-1]+' in één oogopslag</span><div class="msum3"><div><span>Binnen</span><b>'+fmt0(st.inkomen)+'</b></div><div><span>Uit</span><b>'+fmt0(st.uitgaven)+'</b></div><div><span>Over</span><b class="'+(st.eindsaldo<0?'neg':'over')+'">'+fmt0(st.eindsaldo)+'</b></div></div>'+
     '<div class="track"><div class="fill" style="width:'+(ratio*100).toFixed(1)+'%;background:var(--accent)"></div></div><span class="small muted">'+(st.inkomen>0?Math.round(st.uitgaven/st.inkomen*100)+'% van wat binnenkwam is uitgegeven of gespaard':'Nog geen inkomen deze maand')+(st.sparen?' · waarvan '+fmt(st.sparen)+' gespaard':'')+'</span></section>';
+  h+=dashNotes();
   const K={
     netto:kpi('Netto inkomen',fmt(st.inkomen),'',(hasPrev?deltaChip(st.inkomen,pst.inkomen,true):'')+(st.uitPot?'<span class="small muted">incl. '+fmt(st.uitPot)+' uit potjes</span>':'')+(st.carry?'<span class="small muted">incl. '+fmt(st.carry)+' over van vorige maand</span>':'')),
     leven:kpi('Levenskosten',fmt(st.levenskosten),'',hasPrev?deltaChip(st.levenskosten,pst.levenskosten,false):'<span class="small muted">'+pct(st.levPct)+' van je inkomen</span>'),
@@ -1339,7 +1402,29 @@ function quickCats(t){
 }
 function closeSheet(discard){
   if(discard&&F&&F.newReceipt&&assets){assets.delete(F.newReceipt.id).catch(()=>{})}
-  F=null;PW=null;CP=null;document.getElementById('sheetRoot').innerHTML='';
+  F=null;PW=null;CP=null;MORE=false;document.getElementById('sheetRoot').innerHTML='';
+}
+
+/* ---------- Menu Meer (iPhone) ---------- */
+let MORE=false;
+function drawMore(){
+  MORE=true;
+  const I=p=>'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">'+p+'</svg>';
+  const go=(v,label,icon)=>'<button type="button" data-act="more-go" data-h="'+v+'"'+(ui.view===v?' class="cur" aria-current="page"':'')+'>'+I(icon)+label+'</button>';
+  const act=(a,label,icon)=>'<button type="button" data-act="'+a+'">'+I(icon)+label+'</button>';
+  document.getElementById('sheetRoot').innerHTML='<div class="scrim" data-act="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="moreT"><div class="shead"><h2 id="moreT">Meer</h2><button class="iconbtn" type="button" data-act="close" aria-label="Sluiten"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div class="morelist">'+
+    go('inkomsten','Inkomsten','<path d="M12 19V5M5 12l7-7 7 7"/>')+
+    go('prognose','Prognose potjes','<path d="M3 20h18M5 16l4-5 4 3 6-8"/><path d="M15 6h4v4"/>')+
+    go('abonnementen','Abonnementen','<path d="M4 7h16M4 12h16M4 17h10"/>')+
+    go('balans','Balans','<path d="M12 3v18M5 7h14M3 14l2-6 2 6a2 2 0 0 1-4 0zM17 14l2-6 2 6a2 2 0 0 1-4 0z"/>')+
+    '<div class="sep"></div>'+
+    act('more-export','Back-up maken','<path d="M12 3v12M7 10l5 5 5-5M5 21h14"/>')+
+    act('more-csv','Excel (alle transacties)','<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 3v18"/>')+
+    act('more-theme',themeLabel().replace(/<svg[\s\S]*?<\/svg>/,'').trim(),'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>')+
+    act('more-pv',pvOn()?'Bedragen tonen':'Bedragen verbergen',EYE)+
+    act('pwopen','Wachtwoord wijzigen','<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>')+
+    act('logout','Afmelden','<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>')+
+    '</div></div></div>';
 }
 
 /* ---------- Vaste lasten van vorige maand overnemen ---------- */
@@ -1498,6 +1583,13 @@ document.addEventListener('click',async e=>{
     case 'lay-save': await saveLayout(); break;
     case 'lay-show': ui.f={q:'',year:'all',month:'all',type:'all',cat:el.dataset.c}; location.hash='transacties'; toast('Je indeling staat nog open in het jaaroverzicht; vergeet niet te bewaren'); break;
     case 'export': exportData(); break;
+    case 'more': drawMore(); break;
+    case 'more-go': closeSheet(false); if(location.hash==='#'+el.dataset.h)route(); else location.hash=el.dataset.h; break;
+    case 'more-export': closeSheet(false); exportData(); break;
+    case 'more-csv': closeSheet(false); exportCsv(S.tx,'alle-transacties'); break;
+    case 'more-theme': cycleTheme(); render(); drawMore(); break;
+    case 'more-pv': togglePv(); drawMore(); break;
+    case 'flush': flushOutbox(); break;
     case 'csv-list': exportCsv(filteredTx(!!el.dataset.income),el.dataset.income?'inkomsten':'transacties'); break;
     case 'csv-all': exportCsv(S.tx,'alle-transacties'); break;
     case 'pv': togglePv(); break;
@@ -1507,8 +1599,8 @@ document.addEventListener('click',async e=>{
     case 'cp-prev': copyStep(-1); break;
     case 'cp-next': copyStep(1); break;
     case 'cp-save': await saveCopy(); break;
-    case 'logout': await sb.auth.signOut(); break;
-    case 'pwopen': openPw(); break;
+    case 'logout': await logout(); break;
+    case 'pwopen': MORE=false; openPw(); break;
     case 'reload': dbState='wachten'; render(); loadAll(); break;
     case 'lgmode': loginUi.mode=loginUi.mode==='nieuw'?'in':'nieuw'; loginUi.err=''; render(); break;
     case 'impask': imp.confirm=true; render(); break;
@@ -1602,7 +1694,7 @@ document.addEventListener('submit',e=>{
   if(e.target.id==='loginForm'){e.preventDefault();sendCode()}
 });
 document.addEventListener('change',e=>{if(e.target.id==='impFile'&&e.target.files[0])readImportFile(e.target.files[0])});
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&session&&!F&&!ui.pendingRender)loadAll(true)});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&session&&!F&&!ui.pendingRender){if(getOutbox().length)flushOutbox();else loadAll(true)}});
 
 /* ---------- Thema ---------- */
 function themePref(){return lsGet('bf-theme')||'dark'}
