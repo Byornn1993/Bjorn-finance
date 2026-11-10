@@ -6,7 +6,7 @@
    Alle kleuren lopen via deze tokens; donker is de standaard, licht via de themaknop of het toestel. */
 :root{
   --bg:#101418; --surface:#2C3E50; --surface-2:#243445; --input:#22313F; --line:rgba(220,201,166,.17); --line-2:rgba(220,201,166,.09);
-  --fg:#FBF6EE; --muted:#CBB994; --champ:#DCC9A6; --accent:#B08D57; --accent-fg:#101418; --accent-soft:rgba(176,141,87,.18);
+  --fg:#FBF6EE; --muted:#CBB994; --champ:#DCC9A6; --accent:#B08D57; --accent-text:#D4B47F; --accent-fg:#101418; --accent-soft:rgba(176,141,87,.18);
   --pos:#8DBF98; --neg:#E0907E; --warn:#D9AE63; --pos-soft:rgba(141,191,152,.15); --neg-soft:rgba(224,144,126,.15);
   --c1:#8FA9C2; --c2:#DCC9A6; --c3:#B08D57; --c4:#7C8FA3; --c5:#9DB59A; --c6:#D08A78;
   --shadow:0 1px 2px rgba(0,0,0,.22); --side:#101418; color-scheme:dark;
@@ -16,13 +16,13 @@
 }
 @media (prefers-color-scheme: light){:root:not([data-theme]){
   --bg:#F6F1E8; --surface:#FFFDF9; --surface-2:#F3ECE0; --input:#FFFFFF; --line:#E4D9C6; --line-2:#EEE6D8;
-  --fg:#101418; --muted:#6E6253; --champ:#B08D57; --accent:#8E6E3E; --accent-fg:#FBF6EE; --accent-soft:#F1E7D4;
+  --fg:#101418; --muted:#6E6253; --champ:#B08D57; --accent:#8E6E3E; --accent-text:#8E6E3E; --accent-fg:#FFFFFF; --accent-soft:#F1E7D4;
   --pos:#4E7F5A; --neg:#A9503E; --warn:#A57524; --pos-soft:#E4EFE4; --neg-soft:#F6E2DC;
   --c1:#2C3E50; --c2:#C9AE7E; --c3:#B08D57; --c4:#7C8FA3; --c5:#7E9A7A; --c6:#B5654F;
   --shadow:0 1px 2px rgba(16,20,24,.05),0 4px 14px rgba(16,20,24,.04); --side:#FBF6EE; color-scheme:light }}
 :root[data-theme="light"]{
   --bg:#F6F1E8; --surface:#FFFDF9; --surface-2:#F3ECE0; --input:#FFFFFF; --line:#E4D9C6; --line-2:#EEE6D8;
-  --fg:#101418; --muted:#6E6253; --champ:#B08D57; --accent:#8E6E3E; --accent-fg:#FBF6EE; --accent-soft:#F1E7D4;
+  --fg:#101418; --muted:#6E6253; --champ:#B08D57; --accent:#8E6E3E; --accent-text:#8E6E3E; --accent-fg:#FFFFFF; --accent-soft:#F1E7D4;
   --pos:#4E7F5A; --neg:#A9503E; --warn:#A57524; --pos-soft:#E4EFE4; --neg-soft:#F6E2DC;
   --c1:#2C3E50; --c2:#C9AE7E; --c3:#B08D57; --c4:#7C8FA3; --c5:#7E9A7A; --c6:#B5654F;
   --shadow:0 1px 2px rgba(16,20,24,.05),0 4px 14px rgba(16,20,24,.04); --side:#FBF6EE; color-scheme:light }
@@ -74,7 +74,7 @@ h2{font-size:15.5px;font-weight:600;letter-spacing:-.01em}
 .btn.danger{color:var(--neg);border-color:var(--neg)}
 .btn.small{height:34px;padding:0 10px;font-size:13px;border-radius:10px}
 .btn.ghost{border-color:transparent;background:transparent}
-a{color:var(--accent)} a.btn{color:var(--fg);text-decoration:none} a.btn.primary{color:var(--accent-fg)}
+a{color:var(--accent-text)} a.btn{color:var(--fg);text-decoration:none} a.btn.primary{color:var(--accent-fg)}
 
 /* Cards & grids */
 .card{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);min-width:0}
@@ -87,7 +87,7 @@ a{color:var(--accent)} a.btn{color:var(--fg);text-decoration:none} a.btn.primary
 @media (min-width:700px){.kpi .v{font-size:25px}}
 .kpi .v.pos{color:var(--accent)} .kpi .v.neg{color:var(--neg)}
 .kpi.hero{background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 14%,var(--surface)),var(--surface) 70%);border-color:color-mix(in srgb,var(--accent) 50%,transparent);box-shadow:inset 0 2px 0 var(--accent)}.kpi.hero .v{color:var(--accent)}.kpi.hero .v.neg{color:var(--neg)}
-.kpi.hero .label{color:var(--accent)}
+.kpi.hero .label{color:var(--accent-text)}
 .delta{font-size:12px;font-weight:600;display:inline-flex;gap:4px;align-items:center;padding:2px 8px;border-radius:99px;width:max-content;max-width:100%}
 .delta.up{background:var(--pos-soft);color:var(--pos)} .delta.down{background:var(--neg-soft);color:var(--neg)} .delta.flat{background:var(--surface-2);color:var(--muted)}
 
@@ -137,7 +137,7 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
 .pot .meta b{display:block;font-size:14px;font-variant-numeric:tabular-nums}
 .ptrack{height:10px;border-radius:99px;background:color-mix(in srgb,var(--champ) 12%,transparent);overflow:hidden}
 .actions{display:flex;flex-wrap:wrap;gap:8px}
-details summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:13.5px;min-height:32px;display:flex;align-items:center}
+details summary{cursor:pointer;color:var(--accent-text);font-weight:600;font-size:13.5px;min-height:32px;display:flex;align-items:center}
 .minilist{display:flex;flex-direction:column;font-size:13.5px}
 .minilist div{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line-2)}
 .minilist div span:first-child{min-width:0}
@@ -163,7 +163,7 @@ table.tx .amt input{text-align:right;font-variant-numeric:tabular-nums;font-weig
 table.tx tfoot td{font-weight:600;background:var(--surface-2);padding:10px 8px}
 .amt-in{color:var(--pos)} .amt-out{color:var(--fg)}
 .amtwrap{display:flex;align-items:center;gap:2px} .amtwrap b{font-weight:700}
-.tag{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent);font-weight:600;white-space:nowrap}
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent-text);font-weight:600;white-space:nowrap}
 .list{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r);overflow:hidden}
 .li{display:flex;align-items:center;gap:12px;padding:12px 14px;border:0;border-bottom:1px solid var(--line-2);background:none;text-align:left;width:100%;cursor:pointer}
 .li:last-child{border-bottom:0}
@@ -199,7 +199,7 @@ table.tx tfoot td{font-weight:600;background:var(--surface-2);padding:10px 8px}
 .sheet .shead{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;background:var(--surface-2);padding:4px;border-radius:14px}
 .seg button{height:40px;border:0;border-radius:11px;background:transparent;cursor:pointer;font-weight:500}
-.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:var(--shadow);font-weight:700;color:var(--accent)}
+.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:var(--shadow);font-weight:700;color:var(--accent-text)}
 .field{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted);font-weight:500}
 .field input,.field select,.field textarea{height:46px;border:1px solid var(--line);border-radius:12px;background:var(--input);padding:0 12px;color:var(--fg);font-size:15px;width:100%;min-width:0}
 .field textarea{height:72px;padding:10px 12px;resize:vertical}
@@ -211,6 +211,15 @@ table.tx tfoot td{font-weight:600;background:var(--surface-2);padding:10px 8px}
 .err{color:var(--neg);font-size:13.5px}
 .hint{font-size:12.5px;color:var(--muted)}
 .empty{padding:28px;text-align:center;color:var(--muted)}
+.msum{display:none}
+@media (max-width:699px){.msum{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}}
+.msum3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.msum3 span{display:block;font-size:12px;color:var(--muted)}
+.msum3 b{display:block;font-size:19px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.msum3 b.over{color:var(--accent)} .msum3 b.neg{color:var(--neg)}
+.nbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.toast{display:flex;align-items:center;gap:14px}
+.toast button{background:none;border:0;color:inherit;font:inherit;font-weight:700;text-decoration:underline;cursor:pointer;padding:4px 0}
 .qcats{display:flex;flex-wrap:wrap;gap:6px;margin-top:-4px}
 .qcats .chip{height:32px;font-size:13px}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;z-index:60;font-size:14px}
@@ -227,7 +236,7 @@ table.yr tr.grand td{font-weight:700;font-family:var(--font-display);background:
 table.yr tr.grand td:first-child{background:var(--accent-soft)}
 table.yr .z{color:var(--muted);opacity:.55}
 table.yr .cur{background:color-mix(in srgb,var(--accent) 14%,transparent)}
-table.yr th.cur{color:var(--accent);font-weight:800;box-shadow:inset 0 -3px 0 var(--accent)}
+table.yr th.cur{color:var(--accent-text);font-weight:800;box-shadow:inset 0 -3px 0 var(--accent)}
 table.yr th button{all:unset;cursor:pointer;padding:2px 4px;border-radius:6px} table.yr th button:hover{background:var(--surface-2)}
 .laylist .layrow{display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--line)}
 .laylist .layrow .nm{flex:1;min-width:0;overflow-wrap:anywhere} .laylist .layrow.gap .nm{color:var(--muted);font-style:italic}
@@ -411,7 +420,14 @@ const isPlus=t=>t.type==='inkomen'||moveKind(t)==='opname';
 // Vanaf deze maand neemt elke maand het eindsaldo van de vorige maand mee (oktober 2026 boekte dat nog met de hand).
 const CARRY_FROM=2026*12+11, CARRY_ROW='Over van vorige maand';
 function carryIn(y,m){if(y*12+m<CARRY_FROM)return 0;return m===1?stats(y-1,12).eindsaldo:stats(y,m-1).eindsaldo}
+const statCache=new Map();
+function clearStats(){statCache.clear()}
 function stats(y,m){
+  const key=y*13+(m||0); let r=statCache.get(key);
+  if(!r){r=calcStats(y,m);statCache.set(key,r)}
+  return r;
+}
+function calcStats(y,m){
   const L=txIn(y,m); const r={inkomen:0,uitgaven:0,sparen:0,uitPot:0,opname:0,count:L.length,groups:{},cats:{}};
   for(const t of L){const a=+t.amount||0;
     if(t.type==='inkomen'){r.inkomen+=a;continue}
@@ -485,7 +501,7 @@ async function loadAll(quiet){
       for(const c of COLS)S[c]=[];
       for(const r of rows){ if(S[r.soort])S[r.soort].push(Object.assign({},r.gegevens,{id:r.id})) }
       for(const c of COLS){sortCol(c);S.loaded[c]=true}
-      applyLayout();
+      applyLayout(); clearStats();
       dbState='ok';
     }catch(e){ if(!quiet||dbState!=='ok')dbState='fout' }
     loading=null; scheduleRender();
@@ -525,7 +541,7 @@ function scheduleRender(){
 }
 document.addEventListener('focusout',()=>{if(ui.pendingRender){setTimeout(()=>{const ae=document.activeElement;if(!(ae&&document.getElementById('main').contains(ae)&&/INPUT|SELECT|TEXTAREA/.test(ae.tagName))){ui.pendingRender=false;render()}},0)}});
 function putLocal(col,id,full){
-  const doc=Object.assign({},full,{id});
+  clearStats(); const doc=Object.assign({},full,{id});
   const i=S[col].findIndex(x=>x.id===id);
   if(i>=0)S[col][i]=doc; else S[col].push(doc);
   sortCol(col);
@@ -543,7 +559,7 @@ async function remove(col,id){
   if(!session)return false;
   const {error}=await sb.from('items').delete().eq('soort',col).eq('id',id);
   if(error){toast(navigator.onLine===false?'Geen internet. Er is niets verwijderd.':'Verwijderen mislukt.');return false}
-  S[col]=S[col].filter(x=>x.id!==id); scheduleRender(); return true;
+  S[col]=S[col].filter(x=>x.id!==id); clearStats(); scheduleRender(); return true;
 }
 function newId(){const a=new Uint8Array(12);crypto.getRandomValues(a);return Array.from(a,b=>'0123456789abcdefghijklmnopqrstuvwxyz'[b%36]).join('')}
 async function snapshotNetworth(items){
@@ -568,13 +584,16 @@ async function exportCsv(list,label){
 async function shareOrDownload(blob,name,type){
   try{
     const file=new File([blob],name,{type});
-    if(!isWide()&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});return}
-  }catch(e){ if(e&&e.name==='AbortError')return }
+    if(!isWide()&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});return 'ok'}
+  }catch(e){ if(e&&e.name==='AbortError')return 'cancel' }
+  downloadBlob(blob,name); return 'ok';
+}
+function downloadBlob(blob,name){
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
   document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
 }
-async function exportData(){
-  if(dbState!=='ok'){toast('Je gegevens zijn nog niet geladen. Probeer zo opnieuw.');return}
+async function exportData(silent){
+  if(dbState!=='ok'){toast('Je gegevens zijn nog niet geladen. Probeer zo opnieuw.');return false}
   const data={}; for(const c of COLS)data[c]=JSON.parse(JSON.stringify(S[c]));
   const out={app:'Bjorn Finance',versie:1,geexporteerd:new Date().toISOString(),
     aantallen:Object.fromEntries(COLS.map(c=>[c,data[c].length])),
@@ -582,13 +601,10 @@ async function exportData(){
     gegevens:data};
   const name='bjorn-finance-export-'+todayStr()+'.json';
   const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
-  try{
-    const file=new File([blob],name,{type:'application/json'});
-    if(!isWide()&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name});return}
-  }catch(e){ if(e&&e.name==='AbortError')return }
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
-  document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
-  toast('Export bewaard: '+data.tx.length+' transacties');
+  if(silent)downloadBlob(blob,name); else if(await shareOrDownload(blob,name,'application/json')==='cancel')return false;
+  await save('prognose','backup',{last:todayStr(),updated:Date.now()});
+  if(!silent)toast('Back-up bewaard: '+data.tx.length+' transacties');
+  return true;
 }
 
 /* ---------- Importeren ---------- */
@@ -607,7 +623,7 @@ function viewImport(){
     h+='<div class="imp">'+COLS.map(c=>'<span>'+labels[c]+'</span><b>'+(g[c]||[]).length+'</b>').join('')+'</div>';
     h+='<div class="hint">Geëxporteerd op '+esc(new Date(imp.data.geexporteerd).toLocaleString('nl-BE'))+'.</div>';
     const have=COLS.reduce((n,c)=>n+S[c].length,0);
-    if(have)h+='<div class="note">Er staan al '+have+' items in deze app. Bij importeren worden die eerst gewist en vervangen door de inhoud van dit bestand.</div>';
+    if(have)h+='<div class="note">Er staan al '+have+' items in deze app. Bij importeren worden die eerst gewist en vervangen door de inhoud van dit bestand. De app downloadt vooraf automatisch een back-up van wat er nu in staat.</div>';
     const rc=(g.tx||[]).filter(t=>t.receipt).length;
     if(rc)h+='<div class="note">'+rc+' transactie'+(rc===1?' heeft':'s hebben')+' een bonnetje. De foto zelf zit niet in het bestand: open die transactie na het importeren en voeg het bonnetje opnieuw toe.</div>';
     if(have&&!imp.confirm)h+='<button class="btn primary" type="button" data-act="impask">Importeren</button>';
@@ -636,6 +652,8 @@ async function runImport(){
       if(g.receipt&&!isStoredReceipt(g.receipt))g.receipt=Object.assign({},g.receipt,{legacy:true});
       rows.push({user_id:uid,soort:c,id:String(d.id),gegevens:g});
     }
+    // eerst een back-up van wat er nu in de app staat, zodat er bij een fout niets verloren gaat
+    if(COLS.some(c=>S[c].length)&&!await exportData(true))throw 0;
     const del=await sb.from('items').delete().eq('user_id',uid); if(del.error)throw del.error;
     for(let i=0;i<rows.length;i+=500){const {error}=await sb.from('items').insert(rows.slice(i,i+500)); if(error)throw error}
     await loadAll();
@@ -713,7 +731,16 @@ async function submitPw(){
 
 /* ---------- UI-hulpjes ---------- */
 let toastT=null;
-function toast(msg){const r=document.getElementById('toastRoot');r.innerHTML='<div class="toast" role="status">'+esc(msg)+'</div>';clearTimeout(toastT);toastT=setTimeout(()=>r.innerHTML='',2600)}
+let undoFn=null;
+function toast(msg,undo){const r=document.getElementById('toastRoot');undoFn=undo||null;r.innerHTML='<div class="toast" role="status"><span>'+esc(msg)+'</span>'+(undo?'<button type="button" data-act="undo">Ongedaan maken</button>':'')+'</div>';clearTimeout(toastT);toastT=setTimeout(()=>{r.innerHTML='';undoFn=null},undo?6000:2600)}
+// Verwijdert een transactie; 6 seconden lang kan je dat ongedaan maken. Het bonnetje verdwijnt pas daarna.
+async function deleteTx(t){
+  if(!await remove('tx',t.id))return false;
+  const data=Object.assign({},t); delete data.id; let undone=false;
+  toast('Transactie verwijderd',async()=>{undone=true; if(await save('tx',t.id,data))toast('Transactie teruggezet')});
+  setTimeout(()=>{if(!undone&&t.receipt&&assets)assets.delete(t.receipt.id).catch(()=>{})},6500);
+  return true;
+}
 const isWide=()=>window.matchMedia('(min-width:900px)').matches;
 function catOptions(type,sel){
   const gs=GROUPS.filter(g=>type==='inkomen'?g.kind==='inkomen':g.kind==='uitgave');
@@ -790,6 +817,7 @@ function lineChart(points){
 
 /* ---------- Weergaven ---------- */
 function render(){
+  clearStats();
   const main=document.getElementById('main');
   document.querySelectorAll('[data-nav]').forEach(a=>{const on=a.dataset.nav===ui.view||(ui.view==='inkomsten'&&a.dataset.nav==='transacties'&&a.closest('.bottom'))||(ui.view==='prognose'&&a.dataset.nav==='potjes'&&a.closest('.bottom'));on?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current')});
   renderTheme();
@@ -864,6 +892,11 @@ function viewDash(){
   const E=ui.dash;
   let h='<div class="head"><div><h1>Dashboard</h1><div class="sub">'+MONTHS[ui.m-1]+' '+ui.y+' · '+st.count+' transacties</div></div>'+(E?'':'<button class="btn small dashbtn" type="button" data-act="dash-edit">'+ICON_GRID+'Indeling aanpassen</button>')+monthNav()+'</div>';
   if(E)h+='<div class="dkhelp"><span>'+(isWide()?'Sleep de vakjes en blokken naar de plek die je wil, of gebruik de pijltjes.':'Gebruik de pijltjes om een vakje of blok te verplaatsen.')+'</span><div class="actions"><button class="btn small ghost" type="button" data-act="dash-reset">Standaard herstellen</button><button class="btn small" type="button" data-act="dash-cancel">Annuleren</button><button class="btn small primary" type="button" data-act="dash-save">Klaar</button></div></div>';
+  h+=dashNotes();
+  // M1: op de iPhone eerst één kaart met het belangrijkste van de maand
+  const ratio=st.inkomen>0?Math.min(st.uitgaven/st.inkomen,1):0;
+  h+='<section class="card msum"><span class="label">'+MONTHS[ui.m-1]+' in één oogopslag</span><div class="msum3"><div><span>Binnen</span><b>'+fmt(st.inkomen)+'</b></div><div><span>Uit</span><b>'+fmt(st.uitgaven)+'</b></div><div><span>Over</span><b class="'+(st.eindsaldo<0?'neg':'over')+'">'+fmt(st.eindsaldo)+'</b></div></div>'+
+    '<div class="track"><div class="fill" style="width:'+(ratio*100).toFixed(1)+'%;background:var(--accent)"></div></div><span class="small muted">'+(st.inkomen>0?Math.round(st.uitgaven/st.inkomen*100)+'% van wat binnenkwam is uitgegeven of gespaard':'Nog geen inkomen deze maand')+(st.sparen?' · waarvan '+fmt(st.sparen)+' gespaard':'')+'</span></section>';
   const K={
     netto:kpi('Netto inkomen',fmt(st.inkomen),'',(hasPrev?deltaChip(st.inkomen,pst.inkomen,true):'')+(st.uitPot?'<span class="small muted">incl. '+fmt(st.uitPot)+' uit potjes</span>':'')+(st.carry?'<span class="small muted">incl. '+fmt(st.carry)+' over van vorige maand</span>':'')),
     leven:kpi('Levenskosten',fmt(st.levenskosten),'',hasPrev?deltaChip(st.levenskosten,pst.levenskosten,false):'<span class="small muted">'+pct(st.levPct)+' van je inkomen</span>'),
@@ -898,6 +931,20 @@ function viewDash(){
     '</div></section>';
   B.gespaard=saveCard(); B.abonnementen=subsCard();
   h+='<div class="dgrid">'+dashItems('blok',B)+'</div>';
+  return h;
+}
+/* ---------- Meldingen op het dashboard ---------- */
+// Vaste lasten: vanaf de 20ste kijkt de app naar volgende maand (loon komt rond de 25ste).
+function copyTarget(){const d=new Date(); let y=d.getFullYear(), m=d.getMonth()+1; if(d.getDate()>=20){m++; if(m>12){m=1;y++}} return {y,m}}
+function dashNotes(){
+  if(ui.dash)return '';
+  let h='';
+  const ct=copyTarget(), ck=ymKey(ct.y,ct.m);
+  const n=lsGet('bf-cp-skip')===ck?0:copyRows(ct.y,ct.m).filter(r=>r.on&&!r.dup).length;
+  if(n>=3)h+='<div class="note nbar"><span>De vaste lasten van <b>'+MONTHS[ct.m-1].toLowerCase()+'</b> zijn nog niet overgenomen ('+n+' posten).</span><div class="actions"><button class="btn small primary" type="button" data-act="cp-open" data-y="'+ct.y+'" data-m="'+ct.m+'">Overnemen</button><button class="btn small ghost" type="button" data-act="cp-skip" data-k="'+ck+'">Niet nu</button></div></div>';
+  const bk=(S.prognose.find(x=>x.id==='backup')||{}).last;
+  const days=bk?Math.floor((Date.now()-new Date(bk+'T12:00:00'))/864e5):null;
+  if(!bk||days>=30)h+='<div class="note nbar"><span>'+(bk?'Je laatste back-up is van '+fdate(bk)+'.':'Je hebt nog geen back-up gemaakt.')+' Maak er nu één, zo ben je nooit iets kwijt.</span><button class="btn small primary" type="button" data-act="export">Back-up maken</button></div>';
   return h;
 }
 /* ---------- Indeling dashboard ----------
@@ -1288,7 +1335,7 @@ function recentCats(type){
 function quickCats(t){
   if(t.type==='overboeking')return '';
   const L=recentCats(t.type); if(!L.length)return '';
-  return '<div class="qcats" role="group" aria-label="Recent gebruikte categorieën">'+L.map(c=>'<button type="button" class="chip" data-act="qcat" data-v="'+esc(c)+'" aria-pressed="'+(c===t.category)+'">'+esc(c===SAVE_CAT?'Sparen / beleggen':c)+'</button>').join('')+'</div>';
+  return '<div class="qcats" role="group" aria-label="Recent gebruikte categorieën">'+L.map(c=>'<button type="button" class="chip" data-act="qcat" data-v="'+esc(c)+'" aria-pressed="'+(c===t.category)+'">'+esc(c===SAVE_CAT?'Sparen / beleggen':c.replace(/\s*\(.*\)$/,''))+'</button>').join('')+'</div>';
 }
 function closeSheet(discard){
   if(discard&&F&&F.newReceipt&&assets){assets.delete(F.newReceipt.id).catch(()=>{})}
@@ -1314,11 +1361,11 @@ function copyRows(y,m){
       return {t,loon,vari,dup,maybe,on:!dup&&!maybe&&!loon&&!vari,amount:amtStr(t.amount),date:dst+'-'+String(Math.min(+t.date.slice(8,10)||1,last)).padStart(2,'0')}})
     .sort((a,b)=>rank(a.t.category)-rank(b.t.category)||a.t.date.localeCompare(b.t.date));
 }
-function openCopy(){
+function openCopy(fy,fm){
   // Loon komt rond de 26ste, dan boekt Bjorn de vaste lasten van de volgende maand al in: vanaf de 20ste opent het op volgende maand.
   const d=new Date(); let y=d.getFullYear(), m=d.getMonth()+1;
   if(d.getDate()>=20){m++; if(m>12){m=1;y++}}
-  if(ui.f.year!=='all'&&ui.f.month!=='all'){y=+ui.f.year;m=+ui.f.month}
+  if(fy){y=fy;m=fm} else if(ui.f.year!=='all'&&ui.f.month!=='all'){y=+ui.f.year;m=+ui.f.month}
   CP={y,m,rows:copyRows(y,m),err:'',busy:false}; drawCopy();
 }
 function copyStep(d){let m=CP.m+d,y=CP.y; if(m<1){m=12;y--} if(m>12){m=1;y++} CP={y,m,rows:copyRows(y,m),err:'',busy:false}; drawCopy()}
@@ -1454,7 +1501,9 @@ document.addEventListener('click',async e=>{
     case 'csv-list': exportCsv(filteredTx(!!el.dataset.income),el.dataset.income?'inkomsten':'transacties'); break;
     case 'csv-all': exportCsv(S.tx,'alle-transacties'); break;
     case 'pv': togglePv(); break;
-    case 'cp-open': openCopy(); break;
+    case 'cp-open': openCopy(el.dataset.y?+el.dataset.y:null,el.dataset.m?+el.dataset.m:null); break;
+    case 'cp-skip': lsSet('bf-cp-skip',el.dataset.k); render(); break;
+    case 'undo': {const fn=undoFn; undoFn=null; clearTimeout(toastT); document.getElementById('toastRoot').innerHTML=''; if(fn)await fn()} break;
     case 'cp-prev': copyStep(-1); break;
     case 'cp-next': copyStep(1); break;
     case 'cp-save': await saveCopy(); break;
@@ -1479,7 +1528,7 @@ document.addEventListener('click',async e=>{
     case 'edit': {const t=S.tx.find(x=>x.id===el.dataset.id); if(t)openSheet(Object.assign({},t,{potIn:t.type==='overboeking'?(t.to||t.potIn||'rekening'):t.potIn,potOut:t.type==='overboeking'?(t.from||t.potOut||'rekening'):t.potOut}));} break;
     case 'askdel': ui.confirm=el.dataset.id; render(); break;
     case 'nodel': ui.confirm=null; render(); break;
-    case 'del': {const t=S.tx.find(x=>x.id===el.dataset.id); ui.confirm=null; if(t&&await remove('tx',t.id)){if(t.receipt&&assets)assets.delete(t.receipt.id).catch(()=>{}); toast('Transactie verwijderd')} else render()} break;
+    case 'del': {const t=S.tx.find(x=>x.id===el.dataset.id); ui.confirm=null; if(!t||!await deleteTx(t))render()} break;
     case 'viewrc': {const t=S.tx.find(x=>x.id===el.dataset.id); t&&showReceipt(t.receipt)} break;
     case 'sort': {const k=el.dataset.k; ui.sort=ui.sort.k===k?{k,d:ui.sort.d==='asc'?'desc':'asc'}:{k,d:'desc'}; render()} break;
     case 'ft': ui.f.type=el.dataset.v; render(); break;
@@ -1495,7 +1544,7 @@ document.addEventListener('click',async e=>{
     case 'viewnew': showReceipt(F.removeReceipt?null:(F.newReceipt||F.origReceipt)); break;
     case 'sdelask': readSheet(); F.confirmDel=true; drawSheet(); break;
     case 'sdelno': readSheet(); F.confirmDel=false; drawSheet(); break;
-    case 'sdel': {const t=F.t; const rec=F.origReceipt; if(!await remove('tx',t.id))break; if(F&&F.newReceipt&&assets)assets.delete(F.newReceipt.id).catch(()=>{}); if(rec&&assets)assets.delete(rec.id).catch(()=>{}); F=null; document.getElementById('sheetRoot').innerHTML=''; toast('Transactie verwijderd')} break;
+    case 'sdel': {const t=S.tx.find(x=>x.id===F.t.id); if(!t||!await deleteTx(t))break; if(F&&F.newReceipt&&assets)assets.delete(F.newReceipt.id).catch(()=>{}); F=null; document.getElementById('sheetRoot').innerHTML=''} break;
     case 'theme': cycleTheme(); render(); break;
   }
 });
