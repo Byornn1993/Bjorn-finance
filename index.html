@@ -217,8 +217,8 @@ table.tx tfoot td{font-weight:600;background:var(--surface-2);padding:10px 8px}
 .err{color:var(--neg);font-size:13.5px}
 .hint{font-size:12.5px;color:var(--muted)}
 .empty{padding:28px;text-align:center;color:var(--muted)}
-.msum{display:none}
-@media (max-width:699px){.msum{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}}
+.msum{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+@media (min-width:700px){.msum{padding:20px 24px;margin-bottom:16px}.msum3{gap:24px}.msum3 span{font-size:13px}.msum3 b{font-size:28px}}
 .msum3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .msum3 span{display:block;font-size:12px;color:var(--muted)}
 .msum3 b{display:block;white-space:nowrap;font-size:19px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
@@ -942,9 +942,10 @@ function viewDash(){
   const E=ui.dash;
   let h='<div class="head"><div><h1>Dashboard</h1><div class="sub">'+MONTHS[ui.m-1]+' '+ui.y+' · '+st.count+' transacties</div></div>'+(E?'':'<button class="btn small dashbtn" type="button" data-act="dash-edit">'+ICON_GRID+'Indeling aanpassen</button>')+monthNav()+'</div>';
   if(E)h+='<div class="dkhelp"><span>'+(isWide()?'Sleep de vakjes en blokken naar de plek die je wil, of gebruik de pijltjes.':'Gebruik de pijltjes om een vakje of blok te verplaatsen.')+'</span><div class="actions"><button class="btn small ghost" type="button" data-act="dash-reset">Standaard herstellen</button><button class="btn small" type="button" data-act="dash-cancel">Annuleren</button><button class="btn small primary" type="button" data-act="dash-save">Klaar</button></div></div>';
-  // M1: op de iPhone eerst één kaart met het belangrijkste van de maand
+  // M1: bovenaan één kaart met het belangrijkste van de maand (op de iPhone zonder centen, zodat het past)
+  const fa=isWide()?fmt:fmt0;
   const ratio=st.inkomen>0?Math.min(st.uitgaven/st.inkomen,1):0;
-  h+='<section class="card msum"><span class="label">'+MONTHS[ui.m-1]+' in één oogopslag</span><div class="msum3"><div><span>Binnen</span><b>'+fmt0(st.inkomen)+'</b></div><div><span>Uit</span><b>'+fmt0(st.uitgaven)+'</b></div><div><span>Over</span><b class="'+(st.eindsaldo<0?'neg':'over')+'">'+fmt0(st.eindsaldo)+'</b></div></div>'+
+  h+='<section class="card msum"><span class="label">'+MONTHS[ui.m-1]+' in één oogopslag</span><div class="msum3"><div><span>Binnen</span><b>'+fa(st.inkomen)+'</b></div><div><span>Uit</span><b>'+fa(st.uitgaven)+'</b></div><div><span>Over</span><b class="'+(st.eindsaldo<0?'neg':'over')+'">'+fa(st.eindsaldo)+'</b></div></div>'+
     '<div class="track"><div class="fill" style="width:'+(ratio*100).toFixed(1)+'%;background:var(--accent)"></div></div><span class="small muted">'+(st.inkomen>0?Math.round(st.uitgaven/st.inkomen*100)+'% van wat binnenkwam is uitgegeven of gespaard':'Nog geen inkomen deze maand')+(st.sparen?' · waarvan '+fmt(st.sparen)+' gespaard':'')+'</span></section>';
   h+=dashNotes();
   const K={
