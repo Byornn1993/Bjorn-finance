@@ -1014,12 +1014,13 @@ const mlabel=k=>k?MSHORT[+k.slice(5,7)-1]+' '+k.slice(0,4):'';
 function nextMonthKey(k){let y=+k.slice(0,4),m=+k.slice(5,7)+1;if(m>12){m=1;y++}return y+'-'+String(m).padStart(2,'0')}
 // Echt geld uit een potje (opname naar de rekening of een uitgave "Betaald uit potje") verlaagt dat potje in zijn maand.
 // Een overboeking tussen twee potjes verhoogt ook het andere potje. Stortingen tellen niet: die zitten al in de geplande bedragen.
+// Zoals bij de stand van een potje telt alleen wat na zijn "stand op datum" gebeurde; wat ervoor kwam, zit al in het startpunt.
 function potMoves(month,order){
-  const out={},inn={};
+  const out={},inn={}, since=id=>(S.pots.find(p=>p.id===id)||{}).startDate||'0000';
   for(const t of S.tx){
-    if(!t.date||t.date.slice(0,7)!==month||!t.potOut||!order.includes(t.potOut))continue;
+    if(!t.date||t.date.slice(0,7)!==month||!t.potOut||!order.includes(t.potOut)||t.date<since(t.potOut))continue;
     const a=+t.amount||0; out[t.potOut]=(out[t.potOut]||0)+a;
-    if(t.type==='overboeking'&&t.potIn&&order.includes(t.potIn))inn[t.potIn]=(inn[t.potIn]||0)+a;
+    if(t.type==='overboeking'&&t.potIn&&order.includes(t.potIn)&&t.date>=since(t.potIn))inn[t.potIn]=(inn[t.potIn]||0)+a;
   }
   return {out,inn};
 }
