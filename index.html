@@ -1012,31 +1012,40 @@ const PLAN_ORDER=['safety','onderhoud','fun'];
 function getPlan(){const d=S.prognose.find(x=>x.id==='plan');return d?Object.assign({start:{},startLabel:'Startpunt prognose',order:PLAN_ORDER,months:[]},d):null}
 const mlabel=k=>k?MSHORT[+k.slice(5,7)-1]+' '+k.slice(0,4):'';
 function nextMonthKey(k){let y=+k.slice(0,4),m=+k.slice(5,7)+1;if(m>12){m=1;y++}return y+'-'+String(m).padStart(2,'0')}
-// Echt geld uit een potje (opname naar de rekening of een uitgave "Betaald uit potje") verlaagt dat potje in zijn maand.
-// Een overboeking tussen twee potjes verhoogt ook het andere potje. Stortingen tellen niet: die zitten al in de geplande bedragen.
-// Zoals bij de stand van een potje telt alleen wat na zijn "stand op datum" gebeurde; wat ervoor kwam, zit al in het startpunt.
+/* Echte bewegingen per potje in een maand, vanaf de "stand op datum" van het potje (wat ervoor kwam, zit al in het startpunt):
+   storting = van de rekening naar een potje (overboeking, of Sparen / beleggen met het potje erbij);
+   opname   = uit een potje naar de rekening, of een uitgave "Betaald uit potje";
+   tussen twee potjes = uit het ene, in het andere (geen storting). */
 function potMoves(month,order){
-  const out={},inn={}, since=id=>(S.pots.find(p=>p.id===id)||{}).startDate||'0000';
+  const net={}, since=id=>(S.pots.find(p=>p.id===id)||{}).startDate||'0000'; let dep=0;
+  const add=(id,v)=>{net[id]=(net[id]||0)+v};
   for(const t of S.tx){
-    if(!t.date||t.date.slice(0,7)!==month||!t.potOut||!order.includes(t.potOut)||t.date<since(t.potOut))continue;
-    const a=+t.amount||0; out[t.potOut]=(out[t.potOut]||0)+a;
-    if(t.type==='overboeking'&&t.potIn&&order.includes(t.potIn)&&t.date>=since(t.potIn))inn[t.potIn]=(inn[t.potIn]||0)+a;
+    if(!t.date||t.date.slice(0,7)!==month)continue;
+    const a=+t.amount||0, from=order.includes(t.potOut)&&t.date>=since(t.potOut)?t.potOut:null, to=order.includes(t.potIn)&&t.date>=since(t.potIn)?t.potIn:null;
+    if(from)add(from,-a);
+    if(to){add(to,a); if(!order.includes(t.potOut))dep+=a}
   }
-  return {out,inn};
+  return {net,dep};
 }
+/* Voorbije maanden tonen wat er echt in en uit de potjes ging. Vanaf deze maand rekent de prognose met het geplande bedrag
+   plus extra storting; wat je die maand al echt stortte, gaat daar af (zo telt niets dubbel). Maanden vóór de "stand op datum"
+   van de potjes rekenen zoals vroeger alleen met de planning. */
 function forecast(plan){
   plan=plan||getPlan(); if(!plan)return null;
   const order=(plan.order||PLAN_ORDER).filter(id=>S.pots.some(p=>p.id===id));
   const goal=id=>+((S.pots.find(p=>p.id===id)||{}).goal)||0;
   const sal={}; order.forEach(id=>sal[id]=+(plan.start||{})[id]||0);
+  const curK=todayStr().slice(0,7), startK=order.reduce((k,id)=>{const d=((S.pots.find(p=>p.id===id)||{}).startDate||'').slice(0,7);return d&&(!k||d<k)?d:k},'');
   let cum=0; const rows=[], full={};
   for(const m of (plan.months||[])){
-    const planned=+m.planned||0, extra=+m.extra||0, tot=planned+extra; let rem=tot; const to={};
-    const mv=potMoves(m.month,order); let uit=0;
-    for(const id of order){const d=(mv.inn[id]||0)-(mv.out[id]||0); sal[id]+=d; uit-=d}
-    for(const id of order){const a=Math.min(rem,Math.max(goal(id)-sal[id],0));to[id]=a;rem-=a;sal[id]+=a}
+    const planned=+m.planned||0, extra=+m.extra||0; const to={}; order.forEach(id=>to[id]=0);
+    const known=startK&&m.month>=startK, past=known&&m.month<curK;
+    let echt=0, tot=planned+extra;
+    if(known){const mv=potMoves(m.month,order); for(const id of order){const d=mv.net[id]||0; sal[id]+=d; to[id]+=d; echt+=d} tot=past?0:Math.max(0,tot-mv.dep)}
+    let rem=tot;
+    for(const id of order){const a=Math.min(rem,Math.max(goal(id)-sal[id],0));to[id]+=a;rem-=a;sal[id]+=a}
     cum+=rem;
-    rows.push({month:m.month,planned,extra,tot,uit:round2(uit),to,over:rem,sal:Object.assign({},sal),cum});
+    rows.push({month:m.month,planned,extra,tot,echt:round2(echt),past,to,over:rem,sal:Object.assign({},sal),cum});
     for(const id of order){if(!full[id]&&goal(id)>0&&sal[id]>=goal(id))full[id]=m.month}
   }
   return {order,goal,rows,full,cum,start:Object.assign({},plan.start),label:plan.startLabel};
@@ -1051,7 +1060,7 @@ function progKpis(fc){const last=fc.rows[fc.rows.length-1];
   return '<div class="kpis">'+fc.order.map(id=>{const f=fc.full[id];return kpi(esc(potName(id))+' vol',f?'25 '+mlabel(f):'Buiten prognose',f?'':'neg','<span class="small muted">doel '+fmt0(fc.goal(id))+'</span>')}).join('')+
     kpi('Extra na alle doelen',fmt0(fc.cum),'','<span class="small" style="opacity:.85">eind prognose'+(last?', '+mlabel(last.month):'')+'</span>',true)+'</div>'}
 function progChart(fc){return lineMulti(fc.order.map(id=>({name:potName(id),color:PCOLORS[id]||'--c4',goal:fc.goal(id),vals:[+fc.start[id]||0].concat(fc.rows.map(r=>r.sal[id]))})),['start'].concat(fc.rows.map(r=>mlabel(r.month))))}
-function rowCalc(fc,r){return [zf(r.tot),zf(-r.uit)].concat(fc.order.map(id=>zf(r.to[id])),[zf(r.over)],fc.order.map(id=>fmt(r.sal[id])+(fc.full[id]===r.month?'<span class="fulltag">vol</span>':'')),[zf(r.cum)])}
+function rowCalc(fc,r){return [r.past?'<span class="z">voorbij</span>':zf(r.tot),zf(r.echt)].concat(fc.order.map(id=>zf(r.to[id])),[zf(r.over)],fc.order.map(id=>fmt(r.sal[id])+(fc.full[id]===r.month?'<span class="fulltag">vol</span>':'')),[zf(r.cum)])}
 /* Live rekenen: bij elke toets meteen herberekenen, opslaan pas na een korte pauze */
 function planFromDom(){const p=getPlan(); if(!p)return null; const months=p.months.map(m=>Object.assign({},m)), start=Object.assign({},p.start); let bad=false;
   document.querySelectorAll('#main [data-pedit]').forEach(el=>{const raw=el.value.trim();const v=raw===''?0:parseAmount(raw);if(!isFinite(v)||v<0){bad=true;return}const i=+el.dataset.i;if(months[i])months[i][el.dataset.pedit]=round2(v)});
@@ -1099,7 +1108,7 @@ function prognoseBody(){
     '<section class="card"><h2>Spaarbedrag snel aanpassen</h2><div class="cap">Zet hetzelfde geplande bedrag voor een maand en alle maanden erna.</div><form class="bulk" data-form="pbulk"><label class="field">Vanaf maand<select id="pbFrom" name="from">'+rows.map((r,i)=>'<option value="'+i+'"'+(r.month===curK?' selected':'')+'>'+mlabel(r.month)+'</option>').join('')+'</select></label><label class="field">Gepland per maand<input id="pbAmt" name="amt" inputmode="decimal" placeholder="1500"></label><button class="btn primary" type="submit">Toepassen</button></form></section></div>';
   const cc=k=>k===curK?' class="cur"':'';
   const z=v=>Math.abs(v)<0.005?'<span class="z">–</span>':fmt(v);
-  let t='<div class="tablebox"><table class="yr pt" style="min-width:1300px"><thead><tr><th scope="col">Maand</th><th scope="col">Gepland</th><th scope="col">Extra storting</th><th scope="col">Totaal</th><th scope="col">Uit potjes</th>'+fc.order.map(id=>'<th scope="col">→ '+esc(potName(id).replace(/ ?\(.*\)/,''))+'</th>').join('')+'<th scope="col">Overtollig</th>'+fc.order.map(id=>'<th scope="col">Saldo '+esc(potName(id).replace(/ ?\(.*\)/,''))+'</th>').join('')+'<th scope="col">Cumulatief overtollig</th></tr></thead><tbody>';
+  let t='<div class="tablebox"><table class="yr pt" style="min-width:1300px"><thead><tr><th scope="col">Maand</th><th scope="col">Gepland</th><th scope="col">Extra storting</th><th scope="col">Totaal</th><th scope="col">Echt in/uit potjes</th>'+fc.order.map(id=>'<th scope="col">→ '+esc(potName(id).replace(/ ?\(.*\)/,''))+'</th>').join('')+'<th scope="col">Overtollig</th>'+fc.order.map(id=>'<th scope="col">Saldo '+esc(potName(id).replace(/ ?\(.*\)/,''))+'</th>').join('')+'<th scope="col">Cumulatief overtollig</th></tr></thead><tbody>';
   t+='<tr class="tot"><td>'+esc(plan.startLabel)+'</td><td></td><td></td><td></td><td></td>'+fc.order.map(()=>'<td></td>').join('')+'<td></td>'+fc.order.map(id=>'<td class="ps">'+fmt(+fc.start[id]||0)+'</td>').join('')+'<td>'+fmt(0)+'</td></tr>';
   rows.forEach((r,i)=>{
     t+='<tr data-pr="'+i+'"'+cc(r.month)+'><td>25 '+mlabel(r.month)+'</td>'+
@@ -1108,7 +1117,7 @@ function prognoseBody(){
       rowCalc(fc,r).map(x=>'<td class="pc">'+x+'</td>').join('')+'</tr>';
   });
   t+='</tbody></table></div>';
-  h+='<section class="card" style="padding:0;overflow:hidden"><div style="padding:16px 18px 10px"><h2>Prognose per maand</h2><div class="cap" style="margin:0">Pas de goudkleurige bedragen aan, de rest rekent automatisch. Uit potjes = wat je echt uit een potje haalde'+(isWide()?'':'. Veeg opzij voor alle kolommen')+'.</div></div>'+t+'</section>';
+  h+='<section class="card" style="padding:0;overflow:hidden"><div style="padding:16px 18px 10px"><h2>Prognose per maand</h2><div class="cap" style="margin:0">Voorbije maanden tonen wat er echt in en uit je potjes ging. Vanaf deze maand telt je planning; wat je die maand al echt stortte, gaat ervan af. Pas de goudkleurige bedragen aan, de rest rekent automatisch'+(isWide()?'':'. Veeg opzij voor alle kolommen')+'.</div></div>'+t+'</section>';
   const acts='<div class="actions" style="margin-top:12px"><button class="btn small" type="button" data-act="paddm">'+ICON.plus+'Maand toevoegen</button>'+
     (rows.length?(ui.confirm==='plast'?'<span class="small">'+mlabel(last.month)+' verwijderen?</span><button class="btn small danger" type="button" data-act="pdelm">Ja, verwijderen</button><button class="btn small ghost" type="button" data-act="nodel">Annuleer</button>':'<button class="btn small ghost" type="button" data-act="pdelask">Laatste maand verwijderen</button>'):'')+'</div>';
   h+='<details class="pset"'+(ui.confirm==='plast'?' open':'')+'><summary>Prognose instellen</summary><div class="psetbody">'+set+acts+'</div></details>';
