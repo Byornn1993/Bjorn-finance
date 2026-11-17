@@ -922,6 +922,7 @@ function viewSubs(){
   h+='<p class="hint">Tip: geef een abonnement elke maand dezelfde omschrijving, dan komt het op één regel.</p>';
   return h;
 }
+const netSave=s=>round2(s.sparen-s.opname);
 function viewDash(){
   const st=stats(ui.y,ui.m);
   const py=ui.m===1?ui.y-1:ui.y, pm=ui.m===1?12:ui.m-1; const pst=stats(py,pm); const hasPrev=pst.count>0;
@@ -939,7 +940,8 @@ function viewDash(){
   const K={
     cashflow:kpi('Vrije cashflow',fmt(st.cashflow),st.cashflow<0?'neg':'',hasPrev?deltaChip(st.cashflow,pst.cashflow,true):'',true),
     leven:kpi('Levenskosten',fmt(st.levenskosten),'',(hasPrev?deltaChip(st.levenskosten,pst.levenskosten,false):'')+'<span class="small muted">'+pct(st.levPct)+' van je inkomen</span>'),
-    gespaard:kpi('Gespaard & belegd',fmt(st.sparen),'pos',(hasPrev?deltaChip(st.sparen,pst.sparen,true):'')+'<span class="small muted">'+pct(st.spaarPct)+' van je inkomen</span>'),
+    // Alleen in dit vakje: wat je deze maand uit een potje terug naar je rekening haalde, telt als minder gespaard.
+    gespaard:kpi('Gespaard & belegd',fmt(netSave(st)),netSave(st)<0?'neg':'pos',(hasPrev?deltaChip(netSave(st),netSave(pst),true):'')+(st.opname?'<span class="small muted">'+fmt(st.sparen)+' gespaard − '+fmt(st.opname)+' terug naar je rekening</span>':'')+'<span class="small muted">'+pct((st.inkomen-st.carry-st.opname)?netSave(st)/(st.inkomen-st.carry-st.opname):0)+' van je inkomen</span>'),
     // Saldo rekening = alle spaarpotjes samen + eindsaldo van de gekozen maand; verandert mee met elke transactie.
     saldo:kpi('Saldo rekening',fmt(totPots+st.eindsaldo),totPots+st.eindsaldo<0?'neg':'','<span class="small muted">potjes '+fmt(totPots)+' + eindsaldo '+fmt(st.eindsaldo)+'</span>'),
     vermogen:kpi('Netto vermogen',fmt0(bt.netto),'','<span class="small muted">'+fmt0(bt.activa)+' bezit · '+fmt0(bt.schulden)+' schuld</span>')
