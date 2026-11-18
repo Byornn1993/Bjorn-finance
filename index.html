@@ -127,6 +127,9 @@ details.more{border-top:1px solid var(--line-2);padding-top:8px}
 @media (min-width:700px){.sgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .plist{display:flex;flex-direction:column;gap:6px;font-size:13.5px}
 .plist div{display:flex;justify-content:space-between;gap:10px}
+.checks{display:flex;flex-wrap:wrap;gap:10px}
+.checks label{display:flex;align-items:center;gap:10px;flex:1 1 140px;min-height:46px;padding:0 14px;border:1px solid var(--card-line);border-radius:12px;background:var(--field);font-weight:600;cursor:pointer}
+.checks input{width:20px;height:20px;accent-color:var(--accent)}
 .seg.s4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .sprofit{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-radius:12px;background:var(--accent-soft);font-weight:600}
 .sprofit b{font-size:20px}
@@ -1426,7 +1429,9 @@ function closeSheet(discard){
    Winst van een verkoop = verkoopprijs (totaal) − (aankoopprijs × aantal + platformkosten + verpakking + andere kosten).
    De verkoopdatum bepaalt de maand. Eén verpakking per verkoop. */
 const SALE_PLATFORMS=['TikTok Shop','Vinted','Facebook Marketplace','Andere'];
-const SALE_STATUS={voorraad:'In voorraad',tekoop:'Te koop',verkocht:'Verkocht'};
+const isStock=s=>s.status!=='verkocht'&&(s.inStock!=null?!!s.inStock:true);
+const isForSale=s=>s.status!=='verkocht'&&(s.forSale!=null?!!s.forSale:s.status==='tekoop');
+const stockLabel=s=>[isStock(s)?'In voorraad':'',isForSale(s)?'Te koop':''].filter(Boolean).join(' · ')||'Niet in voorraad';
 const salesItems=()=>S.prognose.filter(d=>d.kind==='sale');
 const packBuys=()=>S.prognose.filter(d=>d.kind==='pack').sort((a,b)=>(b.date||'').localeCompare(a.date||''));
 function packUnit(){const L=packBuys(),q=L.reduce((a,p)=>a+(+p.qty||0),0),c=L.reduce((a,p)=>a+(+p.price||0),0);return q?round2(c/q):0}
@@ -1455,12 +1460,12 @@ function viewSales(){
     '<div class="kpi"><span class="label">Per platform</span>'+(plat.length?'<div class="plist">'+plat.map(x=>'<div><span>'+esc(x.p)+' ('+x.n+')</span><b class="num">'+fmt(x.o)+' · <span class="'+(x.w<0?'amt-out':'amt-in')+'">'+fmt(x.w)+'</span></b></div>').join('')+'</div>':'<span class="small muted">Nog geen verkopen in deze periode</span>')+'</div></div>';
   // lijst: voorraad altijd, verkopen uit de gekozen periode
   const q=f.q.trim().toLowerCase();
-  let L=all.filter(s=>(s.status!=='verkocht'||inSalePeriod(s))&&(f.status==='all'||s.status===f.status)&&(!q||((s.name||'')+' '+(s.shop||'')+' '+(s.platform||'')+' '+(s.note||'')).toLowerCase().includes(q)));
+  let L=all.filter(s=>(s.status!=='verkocht'||inSalePeriod(s))&&(f.status==='all'||(f.status==='voorraad'?isStock(s):f.status==='tekoop'?isForSale(s):s.status===f.status))&&(!q||((s.name||'')+' '+(s.shop||'')+' '+(s.platform||'')+' '+(s.note||'')).toLowerCase().includes(q)));
   L.sort((a,b)=>(b.sellDate||b.buyDate||'').localeCompare(a.sellDate||a.buyDate||'')||(b.created||0)-(a.created||0));
   h+='<div class="toolbar"><div class="search">'+ICON.search+'<label for="sq" style="position:absolute;left:-9999px">Zoeken</label><input id="sq" type="search" placeholder="Zoek op artikel, winkel of platform" value="'+esc(f.q)+'" data-act="sq"></div></div>';
   h+='<div class="chips" role="group" aria-label="Status">'+[['all','Alles'],['voorraad','In voorraad'],['tekoop','Te koop'],['verkocht','Verkocht']].map(([k,n])=>'<button type="button" class="chip" data-act="sfst" data-v="'+k+'" aria-pressed="'+(f.status===k)+'">'+n+'</button>').join('')+'</div>';
   h+='<div class="list">'+(L.length?L.map(s=>{const sold=s.status==='verkocht',p=saleProfit(s);
-    return '<button class="li" type="button" data-act="sale-edit" data-id="'+esc(s.id)+'"><span class="ic" style="background:var(--surface-2);color:var(--accent)">'+esc((s.name||'?').slice(0,2).toUpperCase())+'</span><span class="t"><b>'+esc(s.name||'Artikel')+'</b><span>'+(sold?(saleQty(s)>1?saleQty(s)+' stuks · ':'')+esc(s.platform||'')+' · '+fdate(s.sellDate):saleQty(s)+(saleQty(s)===1?' stuk':' stuks')+' · '+SALE_STATUS[s.status]+(s.shop?' · '+esc(s.shop):''))+'</span></span>'+
+    return '<button class="li" type="button" data-act="sale-edit" data-id="'+esc(s.id)+'"><span class="ic" style="background:var(--surface-2);color:var(--accent)">'+esc((s.name||'?').slice(0,2).toUpperCase())+'</span><span class="t"><b>'+esc(s.name||'Artikel')+'</b><span>'+(sold?(saleQty(s)>1?saleQty(s)+' stuks · ':'')+esc(s.platform||'')+' · '+fdate(s.sellDate):saleQty(s)+(saleQty(s)===1?' stuk':' stuks')+' · '+stockLabel(s)+(s.shop?' · '+esc(s.shop):''))+'</span></span>'+
       '<span class="a '+(sold?(p<0?'':'amt-in'):'')+'">'+(sold?(p<0?'':'+')+fmt(p)+'<span>verkocht '+fmt(s.sellPrice)+'</span>':fmt((+s.buyPrice||0)*saleQty(s))+'<span>'+fmt(s.buyPrice)+' per stuk</span>')+'</span></button>'}).join(''):'<div class="empty">'+(all.length?'Geen artikels gevonden met deze filters.':'Nog geen artikels. Voeg je eerste artikel toe met Nieuw artikel of de gouden plusknop.')+'</div>')+'</div>';
   // verpakking
   const PB=packBuys(), unit=packUnit(), left=packLeft();
@@ -1477,7 +1482,7 @@ function openSale(s){
   drawSale(); SF.start=JSON.stringify(readSaleForm());
   const a=document.getElementById('sfName'); if(a&&!s)a.focus();
 }
-function readSaleForm(){if(!SF)return null;document.querySelectorAll('#saleForm [data-sf]').forEach(el=>{SF.t[el.dataset.sf]=el.value});const q=document.getElementById('sfSellQty');if(q)SF.sellQty=q.value;return SF.t}
+function readSaleForm(){if(!SF)return null;document.querySelectorAll('#saleForm [data-sf]').forEach(el=>{SF.t[el.dataset.sf]=el.value});const a=document.getElementById('sfInStock'),b=document.getElementById('sfForSale');if(a)SF.t.inStock=a.checked;if(b)SF.t.forSale=b.checked;const q=document.getElementById('sfSellQty');if(q)SF.sellQty=q.value;return SF.t}
 function saleFormProfit(){const t=SF.t,n=v=>{const x=parseAmount(v);return isFinite(x)?x:0};const q=SF.t.status==='verkocht'?(parseInt(SF.t.qty,10)||1):(parseInt(SF.sellQty,10)||1);return round2(n(t.sellPrice)-n(t.buyPrice)*q-n(t.feeCost)-n(t.packCost)-n(t.otherCost))}
 function drawSale(){
   if(!SF)return; const t=SF.t, soldRec=t.status==='verkocht';
@@ -1487,7 +1492,7 @@ function drawSale(){
   '<label class="field">Artikel<input id="sfName" placeholder="Bijv. Daily fitness planner" value="'+esc(t.name)+'" data-sf="name"></label>'+
   '<div class="row2"><label class="field">Gekocht bij<input id="sfShop" placeholder="Bijv. Amazon, Action, kringloop" value="'+esc(t.shop)+'" data-sf="shop"></label><label class="field">Aankoopdatum<input id="sfBuyDate" type="date" value="'+esc(t.buyDate)+'" data-sf="buyDate"></label></div>'+
   '<div class="row2">'+amt('sfBuy','buyPrice','Aankoopprijs per stuk')+'<label class="field">'+(soldRec?'Aantal verkocht':'Aantal in voorraad')+'<input id="sfQty" inputmode="numeric" placeholder="1" value="'+esc(t.qty)+'" data-sf="qty"></label></div>';
-  if(!soldRec)h+='<div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr))" role="group" aria-label="Status">'+[['voorraad','In voorraad'],['tekoop','Te koop']].map(([k,n])=>'<button type="button" data-act="sfstat" data-v="'+k+'" aria-pressed="'+(t.status===k)+'">'+n+'</button>').join('')+'</div>';
+  if(!soldRec)h+='<div class="checks" role="group" aria-label="Status"><label><input type="checkbox" id="sfInStock"'+(isStock(t)?' checked':'')+'>In voorraad</label><label><input type="checkbox" id="sfForSale"'+(isForSale(t)?' checked':'')+'>Te koop</label></div>';
   if(!soldRec&&!SF.sell)h+='<button class="btn" type="button" data-act="sfsell" style="justify-content:center">Verkoop registreren</button>';
   if(SF.sell){
     h+='<div class="sect" style="font-size:16px;margin:4px 0 -4px">'+(soldRec?'Verkoop':'Verkoop registreren')+'</div>';
@@ -1523,11 +1528,11 @@ async function submitSale(){
   }else if(SF.sell){ // verkoop registreren: aparte verkoop, voorraad daalt
     ok=await save('prognose','sale-'+newId(),Object.assign({},base,sale(),{status:'verkocht',qty:sq,from:t.id||'',created:Date.now(),updated:Date.now()}));
     if(ok){const rest=qty-sq;
-      if(rest>0)ok=await save('prognose',t.id||('sale-'+newId()),Object.assign(base,{status:t.status,qty:rest,created:t.created||Date.now(),updated:Date.now()}));
+      if(rest>0)ok=await save('prognose',t.id||('sale-'+newId()),Object.assign(base,{status:'voorraad',inStock:isStock(t),forSale:isForSale(t),qty:rest,created:t.created||Date.now(),updated:Date.now()}));
       else if(t.id)ok=await remove('prognose',t.id);
       msg=sq+(sq===1?' stuk':' stuks')+' verkocht'+(rest>0?' · nog '+rest+' in voorraad':' · voorraad op');}
   }else{
-    ok=await save('prognose',t.id||('sale-'+newId()),Object.assign(base,{status:t.status,qty,created:t.created||Date.now(),updated:Date.now()}));msg=SF.isNew?'Artikel toegevoegd':'Artikel bijgewerkt';
+    ok=await save('prognose',t.id||('sale-'+newId()),Object.assign(base,{status:'voorraad',inStock:isStock(t),forSale:isForSale(t),qty,created:t.created||Date.now(),updated:Date.now()}));msg=SF.isNew?'Artikel toegevoegd':'Artikel bijgewerkt';
   }
   if(!SF)return; SF.saving=false; if(!ok){drawSale();return}
   closeSheet(false); toast(msg);
@@ -1737,7 +1742,6 @@ document.addEventListener('click',async e=>{
     case 'more': drawMore(); break;
     case 'sale-new': openSale(null); break;
     case 'sale-edit': {const s=salesItems().find(x=>x.id===el.dataset.id); if(s)openSale(s)} break;
-    case 'sfstat': readSaleForm(); SF.t.status=el.dataset.v; SF.err=''; drawSale(); break;
     case 'sfsell': readSaleForm(); SF.sell=true; if(!SF.t.sellDate)SF.t.sellDate=todayStr(); if(!(+parseAmount(SF.t.packCost)>0)){const u=packUnit(); if(u)SF.t.packCost=amtStr(u)} SF.sellQty=1; SF.err=''; drawSale(); break;
     case 'sfsellno': readSaleForm(); SF.sell=false; SF.err=''; drawSale(); break;
     case 'sale-delask': readSaleForm(); SF.confirmDel=true; drawSale(); break;
