@@ -1422,18 +1422,22 @@ function closeSheet(discard){
 
 /* ---------- Sales ----------
    Losstaand: telt nergens anders mee. Artikels: soort prognose, id sale-…; verpakkingsaankopen: id pack-….
-   Winst = verkoopprijs − (aankoopprijs + platformkosten + verpakking + andere kosten). De verkoopdatum bepaalt de maand. */
+   Aankoopprijs is per stuk; qty = aantal stuks (in voorraad, of verkocht in die ene verkoop).
+   Winst van een verkoop = verkoopprijs (totaal) − (aankoopprijs × aantal + platformkosten + verpakking + andere kosten).
+   De verkoopdatum bepaalt de maand. Eén verpakking per verkoop. */
 const SALE_PLATFORMS=['TikTok Shop','Vinted','Facebook Marketplace','Andere'];
 const SALE_STATUS={voorraad:'In voorraad',tekoop:'Te koop',verkocht:'Verkocht'};
 const salesItems=()=>S.prognose.filter(d=>d.kind==='sale');
 const packBuys=()=>S.prognose.filter(d=>d.kind==='pack').sort((a,b)=>(b.date||'').localeCompare(a.date||''));
 function packUnit(){const L=packBuys(),q=L.reduce((a,p)=>a+(+p.qty||0),0),c=L.reduce((a,p)=>a+(+p.price||0),0);return q?round2(c/q):0}
 function packLeft(){return packBuys().reduce((a,p)=>a+(+p.qty||0),0)-salesItems().filter(s=>s.status==='verkocht'&&(+s.packCost||0)>0).length}
-const saleCost=s=>(+s.buyPrice||0)+(s.status==='verkocht'?(+s.feeCost||0)+(+s.packCost||0)+(+s.otherCost||0):0);
+const saleQty=s=>Math.max(1,parseInt(s.qty,10)||1);
+const saleCost=s=>(+s.buyPrice||0)*saleQty(s)+(s.status==='verkocht'?(+s.feeCost||0)+(+s.packCost||0)+(+s.otherCost||0):0);
 const saleProfit=s=>round2((+s.sellPrice||0)-saleCost(s));
 function inSalePeriod(s){const f=ui.sf;if(f.year==='all')return true;const d=s.sellDate||'';if(d.slice(0,4)!==f.year)return false;return f.month==='all'||+d.slice(5,7)===+f.month}
 function viewSales(){
   const f=ui.sf, all=salesItems(), sold=all.filter(s=>s.status==='verkocht'&&inSalePeriod(s)), stock=all.filter(s=>s.status!=='verkocht');
+  const soldN=sold.reduce((a,s)=>a+saleQty(s),0), stockN=stock.reduce((a,s)=>a+saleQty(s),0);
   const omzet=sold.reduce((a,s)=>a+(+s.sellPrice||0),0), kosten=sold.reduce((a,s)=>a+saleCost(s),0), winst=round2(omzet-kosten);
   const ys=[...new Set([now.getFullYear()].concat(all.map(s=>+(s.sellDate||s.buyDate||'').slice(0,4)).filter(Boolean)))].sort((a,b)=>b-a);
   const per=f.year==='all'?'all':f.year+'|'+f.month;
@@ -1444,10 +1448,10 @@ function viewSales(){
     '<button class="iconbtn" type="button" data-act="sper" data-d="1" aria-label="Volgende periode"'+(per==='all'?' disabled':'')+'>'+ICON.right+'</button></div></div>';
   const lbl=f.year==='all'?'Alle verkopen':f.month==='all'?'Heel '+f.year:MONTHS[+f.month-1]+' '+f.year;
   h+='<section class="card msum"><span class="label">'+lbl+'</span><div class="msum3"><div><span>Omzet</span><b>'+fmt(omzet)+'</b></div><div><span>Kosten</span><b>'+fmt(kosten)+'</b></div><div><span>Winst</span><b class="'+(winst<0?'neg':'over')+'">'+fmt(winst)+'</b></div></div>'+
-    '<span class="small muted">'+sold.length+(sold.length===1?' artikel':' artikels')+' verkocht'+(omzet?' · marge '+pct(winst/omzet):'')+'</span></section>';
-  const plat=SALE_PLATFORMS.map(p=>{const L=sold.filter(s=>(s.platform||'Andere')===p);return {p,n:L.length,o:L.reduce((a,s)=>a+(+s.sellPrice||0),0),w:L.reduce((a,s)=>a+saleProfit(s),0)}}).filter(x=>x.n);
-  h+='<div class="sgrid">'+kpi('Voorraad',fmt(stock.reduce((a,s)=>a+(+s.buyPrice||0),0)),'','<span class="small muted">'+stock.length+(stock.length===1?' artikel':' artikels')+' nog niet verkocht</span>')+
-    kpi('Gemiddelde winst',sold.length?fmt(winst/sold.length):'–','','<span class="small muted">per verkocht artikel</span>')+
+    '<span class="small muted">'+soldN+(soldN===1?' stuk':' stuks')+' verkocht in '+sold.length+(sold.length===1?' verkoop':' verkopen')+(omzet?' · marge '+pct(winst/omzet):'')+'</span></section>';
+  const plat=SALE_PLATFORMS.map(p=>{const L=sold.filter(s=>(s.platform||'Andere')===p);return {p,n:L.reduce((a,s)=>a+saleQty(s),0),o:L.reduce((a,s)=>a+(+s.sellPrice||0),0),w:L.reduce((a,s)=>a+saleProfit(s),0)}}).filter(x=>x.n);
+  h+='<div class="sgrid">'+kpi('Voorraad',fmt(stock.reduce((a,s)=>a+(+s.buyPrice||0)*saleQty(s),0)),'','<span class="small muted">'+stockN+(stockN===1?' stuk':' stuks')+' nog niet verkocht</span>')+
+    kpi('Gemiddelde winst',sold.length?fmt(winst/sold.length):'–','','<span class="small muted">per verkoop</span>')+
     '<div class="kpi"><span class="label">Per platform</span>'+(plat.length?'<div class="plist">'+plat.map(x=>'<div><span>'+esc(x.p)+' ('+x.n+')</span><b class="num">'+fmt(x.o)+' · <span class="'+(x.w<0?'amt-out':'amt-in')+'">'+fmt(x.w)+'</span></b></div>').join('')+'</div>':'<span class="small muted">Nog geen verkopen in deze periode</span>')+'</div></div>';
   // lijst: voorraad altijd, verkopen uit de gekozen periode
   const q=f.q.trim().toLowerCase();
@@ -1456,8 +1460,8 @@ function viewSales(){
   h+='<div class="toolbar"><div class="search">'+ICON.search+'<label for="sq" style="position:absolute;left:-9999px">Zoeken</label><input id="sq" type="search" placeholder="Zoek op artikel, winkel of platform" value="'+esc(f.q)+'" data-act="sq"></div></div>';
   h+='<div class="chips" role="group" aria-label="Status">'+[['all','Alles'],['voorraad','In voorraad'],['tekoop','Te koop'],['verkocht','Verkocht']].map(([k,n])=>'<button type="button" class="chip" data-act="sfst" data-v="'+k+'" aria-pressed="'+(f.status===k)+'">'+n+'</button>').join('')+'</div>';
   h+='<div class="list">'+(L.length?L.map(s=>{const sold=s.status==='verkocht',p=saleProfit(s);
-    return '<button class="li" type="button" data-act="sale-edit" data-id="'+esc(s.id)+'"><span class="ic" style="background:var(--surface-2);color:var(--accent)">'+esc((s.name||'?').slice(0,2).toUpperCase())+'</span><span class="t"><b>'+esc(s.name||'Artikel')+'</b><span>'+(sold?esc(s.platform||'')+' · '+fdate(s.sellDate):SALE_STATUS[s.status]+(s.shop?' · gekocht bij '+esc(s.shop):''))+'</span></span>'+
-      '<span class="a '+(sold?(p<0?'':'amt-in'):'')+'">'+(sold?(p<0?'':'+')+fmt(p)+'<span>verkocht '+fmt(s.sellPrice)+'</span>':fmt(s.buyPrice)+'<span>aankoop</span>')+'</span></button>'}).join(''):'<div class="empty">'+(all.length?'Geen artikels gevonden met deze filters.':'Nog geen artikels. Voeg je eerste artikel toe met Nieuw artikel of de gouden plusknop.')+'</div>')+'</div>';
+    return '<button class="li" type="button" data-act="sale-edit" data-id="'+esc(s.id)+'"><span class="ic" style="background:var(--surface-2);color:var(--accent)">'+esc((s.name||'?').slice(0,2).toUpperCase())+'</span><span class="t"><b>'+esc(s.name||'Artikel')+'</b><span>'+(sold?(saleQty(s)>1?saleQty(s)+' stuks · ':'')+esc(s.platform||'')+' · '+fdate(s.sellDate):saleQty(s)+(saleQty(s)===1?' stuk':' stuks')+' · '+SALE_STATUS[s.status]+(s.shop?' · '+esc(s.shop):''))+'</span></span>'+
+      '<span class="a '+(sold?(p<0?'':'amt-in'):'')+'">'+(sold?(p<0?'':'+')+fmt(p)+'<span>verkocht '+fmt(s.sellPrice)+'</span>':fmt((+s.buyPrice||0)*saleQty(s))+'<span>'+fmt(s.buyPrice)+' per stuk</span>')+'</span></button>'}).join(''):'<div class="empty">'+(all.length?'Geen artikels gevonden met deze filters.':'Nog geen artikels. Voeg je eerste artikel toe met Nieuw artikel of de gouden plusknop.')+'</div>')+'</div>';
   // verpakking
   const PB=packBuys(), unit=packUnit(), left=packLeft();
   h+='<section class="card"><div class="head" style="margin-bottom:10px"><div><h2>Verpakking</h2><div class="cap" style="margin:0">'+(PB.length?'Nog '+left+' stuks · '+fmt(unit)+' per stuk':'Voer een aankoop in, dan rekent de app de prijs per stuk uit')+'</div></div><button class="btn small" type="button" data-act="pack-new">'+ICON.plus+'Aankoop verpakking</button></div>'+
@@ -1465,48 +1469,68 @@ function viewSales(){
   return h;
 }
 let SF=null; // formulier artikel
+// SF.sell = er wordt een verkoop geregistreerd (uit een voorraadartikel, of een artikel dat al verkocht is)
 function openSale(s){
-  const t=s?Object.assign({},s):{name:'',shop:'',buyDate:todayStr(),buyPrice:'',status:'voorraad',sellDate:'',platform:'Vinted',sellPrice:'',feeCost:'',packCost:'',otherCost:'',note:''};
-  SF={t,isNew:!s,confirmDel:false,err:'',saving:false};
+  const t=s?Object.assign({},s):{name:'',shop:'',buyDate:todayStr(),buyPrice:'',qty:'1',status:'voorraad',sellDate:'',platform:'Vinted',sellPrice:'',feeCost:'',packCost:'',otherCost:'',note:''};
+  if(t.qty==null||t.qty==='')t.qty=1;
+  SF={t,isNew:!s,sell:t.status==='verkocht',sellQty:t.status==='verkocht'?saleQty(t):1,confirmDel:false,err:'',saving:false};
   drawSale(); SF.start=JSON.stringify(readSaleForm());
   const a=document.getElementById('sfName'); if(a&&!s)a.focus();
 }
-function readSaleForm(){if(!SF)return null;document.querySelectorAll('#saleForm [data-sf]').forEach(el=>{SF.t[el.dataset.sf]=el.value});return SF.t}
-function saleFormProfit(t){const n=v=>{const x=parseAmount(v);return isFinite(x)?x:0};return round2(n(t.sellPrice)-n(t.buyPrice)-n(t.feeCost)-n(t.packCost)-n(t.otherCost))}
+function readSaleForm(){if(!SF)return null;document.querySelectorAll('#saleForm [data-sf]').forEach(el=>{SF.t[el.dataset.sf]=el.value});const q=document.getElementById('sfSellQty');if(q)SF.sellQty=q.value;return SF.t}
+function saleFormProfit(){const t=SF.t,n=v=>{const x=parseAmount(v);return isFinite(x)?x:0};const q=SF.t.status==='verkocht'?(parseInt(SF.t.qty,10)||1):(parseInt(SF.sellQty,10)||1);return round2(n(t.sellPrice)-n(t.buyPrice)*q-n(t.feeCost)-n(t.packCost)-n(t.otherCost))}
 function drawSale(){
-  if(!SF)return; const t=SF.t, sold=t.status==='verkocht';
+  if(!SF)return; const t=SF.t, soldRec=t.status==='verkocht';
   const amt=(id,k,label,ph)=>'<label class="field">'+label+'<input id="'+id+'" inputmode="decimal" placeholder="'+(ph||'0,00')+'" value="'+esc(amtStr(t[k]))+'" data-sf="'+k+'"></label>';
-  let h='<div class="scrim" data-act="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sfT"><div class="shead"><h2 id="sfT">'+(SF.isNew?'Nieuw artikel':'Artikel bewerken')+'</h2><button class="iconbtn" type="button" data-act="close" aria-label="Sluiten"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'+
+  let h='<div class="scrim" data-act="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sfT"><div class="shead"><h2 id="sfT">'+(soldRec?'Verkoop bewerken':SF.isNew?'Nieuw artikel':'Artikel bewerken')+'</h2><button class="iconbtn" type="button" data-act="close" aria-label="Sluiten"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'+
   '<form id="saleForm" style="display:flex;flex-direction:column;gap:14px" novalidate>'+
-  '<label class="field">Artikel<input id="sfName" placeholder="Bijv. Nike sneakers maat 43" value="'+esc(t.name)+'" data-sf="name"></label>'+
-  '<div class="row2"><label class="field">Gekocht bij<input id="sfShop" placeholder="Bijv. Action, Vinted, kringloop" value="'+esc(t.shop)+'" data-sf="shop"></label><label class="field">Aankoopdatum<input id="sfBuyDate" type="date" value="'+esc(t.buyDate)+'" data-sf="buyDate"></label></div>'+
-  amt('sfBuy','buyPrice','Aankoopprijs')+
-  '<div class="seg" role="group" aria-label="Status">'+Object.entries(SALE_STATUS).map(([k,n])=>'<button type="button" data-act="sfstat" data-v="'+k+'" aria-pressed="'+(t.status===k)+'">'+n+'</button>').join('')+'</div>';
-  if(sold)h+='<div class="row2"><label class="field">Verkoopdatum<input id="sfSellDate" type="date" value="'+esc(t.sellDate)+'" data-sf="sellDate"></label><label class="field">Platform<select id="sfPlat" data-sf="platform">'+SALE_PLATFORMS.map(p=>'<option'+(p===t.platform?' selected':'')+'>'+esc(p)+'</option>').join('')+'</select></label></div>'+
-    amt('sfSell','sellPrice','Verkoopprijs')+'<div class="row2">'+amt('sfFee','feeCost','Platformkosten')+amt('sfPack','packCost','Verpakking')+'</div>'+amt('sfOther','otherCost','Andere kosten (bv. verzending als jij betaalt)')+
-    '<div class="sprofit"><span>Winst</span><b id="sfProfit">'+fmt(saleFormProfit(t))+'</b></div>';
+  '<label class="field">Artikel<input id="sfName" placeholder="Bijv. Daily fitness planner" value="'+esc(t.name)+'" data-sf="name"></label>'+
+  '<div class="row2"><label class="field">Gekocht bij<input id="sfShop" placeholder="Bijv. Amazon, Action, kringloop" value="'+esc(t.shop)+'" data-sf="shop"></label><label class="field">Aankoopdatum<input id="sfBuyDate" type="date" value="'+esc(t.buyDate)+'" data-sf="buyDate"></label></div>'+
+  '<div class="row2">'+amt('sfBuy','buyPrice','Aankoopprijs per stuk')+'<label class="field">'+(soldRec?'Aantal verkocht':'Aantal in voorraad')+'<input id="sfQty" inputmode="numeric" placeholder="1" value="'+esc(t.qty)+'" data-sf="qty"></label></div>';
+  if(!soldRec)h+='<div class="seg" style="grid-template-columns:repeat(2,minmax(0,1fr))" role="group" aria-label="Status">'+[['voorraad','In voorraad'],['tekoop','Te koop']].map(([k,n])=>'<button type="button" data-act="sfstat" data-v="'+k+'" aria-pressed="'+(t.status===k)+'">'+n+'</button>').join('')+'</div>';
+  if(!soldRec&&!SF.sell)h+='<button class="btn" type="button" data-act="sfsell" style="justify-content:center">Verkoop registreren</button>';
+  if(SF.sell){
+    h+='<div class="sect" style="font-size:16px;margin:4px 0 -4px">'+(soldRec?'Verkoop':'Verkoop registreren')+'</div>';
+    if(!soldRec)h+='<label class="field">Aantal verkocht (van '+esc(t.qty||1)+')<input id="sfSellQty" inputmode="numeric" value="'+esc(SF.sellQty)+'"></label>';
+    h+='<div class="row2"><label class="field">Verkoopdatum<input id="sfSellDate" type="date" value="'+esc(t.sellDate)+'" data-sf="sellDate"></label><label class="field">Platform<select id="sfPlat" data-sf="platform">'+SALE_PLATFORMS.map(p=>'<option'+(p===t.platform?' selected':'')+'>'+esc(p)+'</option>').join('')+'</select></label></div>'+
+      amt('sfSell','sellPrice','Verkoopprijs (totaal ontvangen)')+'<div class="row2">'+amt('sfFee','feeCost','Platformkosten')+amt('sfPack','packCost','Verpakking')+'</div>'+amt('sfOther','otherCost','Andere kosten (bv. verzending als jij betaalt)')+
+      '<div class="sprofit"><span>Winst</span><b id="sfProfit">'+fmt(saleFormProfit())+'</b></div>';
+    if(!soldRec)h+='<button class="btn ghost small" type="button" data-act="sfsellno" style="justify-content:center">Geen verkoop registreren</button>';
+  }
   h+='<label class="field">Notitie (optioneel)<textarea id="sfNote" data-sf="note">'+esc(t.note)+'</textarea></label>';
   if(SF.err)h+='<div class="err" role="alert">'+esc(SF.err)+'</div>';
-  h+='<button class="btn primary" type="submit" style="height:50px;justify-content:center;font-size:16px"'+(SF.saving?' disabled':'')+'>'+(SF.saving?'Bezig met bewaren…':'Opslaan')+'</button>';
-  if(!SF.isNew)h+=SF.confirmDel?'<div class="actions" style="justify-content:center"><span class="small">Dit artikel definitief verwijderen?</span><button class="btn small danger" type="button" data-act="sale-del">Ja, verwijderen</button><button class="btn small" type="button" data-act="sale-delno">Nee</button></div>':'<button class="btn ghost danger" type="button" data-act="sale-delask" style="justify-content:center;border:0">Artikel verwijderen</button>';
+  h+='<button class="btn primary" type="submit" style="height:50px;justify-content:center;font-size:16px"'+(SF.saving?' disabled':'')+'>'+(SF.saving?'Bezig met bewaren…':(SF.sell&&!soldRec?'Verkoop opslaan':'Opslaan'))+'</button>';
+  if(!SF.isNew)h+=SF.confirmDel?'<div class="actions" style="justify-content:center"><span class="small">Definitief verwijderen?</span><button class="btn small danger" type="button" data-act="sale-del">Ja, verwijderen</button><button class="btn small" type="button" data-act="sale-delno">Nee</button></div>':'<button class="btn ghost danger" type="button" data-act="sale-delask" style="justify-content:center;border:0">'+(soldRec?'Verkoop verwijderen':'Artikel verwijderen')+'</button>';
   h+='</form></div></div>';
   document.getElementById('sheetRoot').innerHTML=h;
 }
 async function submitSale(){
-  if(!SF||SF.saving)return; const t=readSaleForm(); const n=v=>{if(v===''||v==null)return 0;const x=parseAmount(v);return x};
+  if(!SF||SF.saving)return; const t=readSaleForm(); const n=v=>{if(v===''||v==null)return 0;return parseAmount(v)};
   if(!(t.name||'').trim()){SF.err='Geef het artikel een naam.';drawSale();return}
+  const qty=parseInt(t.qty,10);
+  if(!(qty>=1)){SF.err='Vul het aantal in (minstens 1).';drawSale();return}
   const nums={buyPrice:n(t.buyPrice),sellPrice:n(t.sellPrice),feeCost:n(t.feeCost),packCost:n(t.packCost),otherCost:n(t.otherCost)};
   if(Object.values(nums).some(v=>!isFinite(v)||v<0)){SF.err='Controleer de bedragen, bijvoorbeeld 12,50.';drawSale();return}
-  const sold=t.status==='verkocht';
-  if(sold&&(!t.sellDate||!(nums.sellPrice>0))){SF.err='Vul de verkoopdatum en de verkoopprijs in.';drawSale();return}
-  const data={kind:'sale',name:t.name.trim(),shop:(t.shop||'').trim(),buyDate:t.buyDate||'',buyPrice:round2(nums.buyPrice),status:t.status,
-    sellDate:sold?t.sellDate:'',platform:sold?t.platform:'',sellPrice:sold?round2(nums.sellPrice):0,feeCost:sold?round2(nums.feeCost):0,packCost:sold?round2(nums.packCost):0,otherCost:sold?round2(nums.otherCost):0,
-    note:(t.note||'').trim(),created:t.created||Date.now(),updated:Date.now()};
-  const id=t.id||('sale-'+newId());
+  const soldRec=t.status==='verkocht', base={kind:'sale',name:t.name.trim(),shop:(t.shop||'').trim(),buyDate:t.buyDate||'',buyPrice:round2(nums.buyPrice),note:(t.note||'').trim()};
+  const sale=()=>({sellDate:t.sellDate,platform:t.platform,sellPrice:round2(nums.sellPrice),feeCost:round2(nums.feeCost),packCost:round2(nums.packCost),otherCost:round2(nums.otherCost)});
+  if(SF.sell&&(!t.sellDate||!(nums.sellPrice>0))){SF.err='Vul de verkoopdatum en de verkoopprijs in.';drawSale();return}
+  let sq=0;
+  if(SF.sell&&!soldRec){sq=parseInt(SF.sellQty,10); if(!(sq>=1&&sq<=qty)){SF.err='Het aantal verkocht moet tussen 1 en '+qty+' liggen.';drawSale();return}}
   SF.saving=true;SF.err='';drawSale();
-  const ok=await save('prognose',id,data);
+  let ok, msg;
+  if(soldRec){ // een bestaande verkoop aanpassen
+    ok=await save('prognose',t.id,Object.assign(base,sale(),{status:'verkocht',qty,created:t.created||Date.now(),updated:Date.now()}));msg='Verkoop bijgewerkt';
+  }else if(SF.sell){ // verkoop registreren: aparte verkoop, voorraad daalt
+    ok=await save('prognose','sale-'+newId(),Object.assign({},base,sale(),{status:'verkocht',qty:sq,from:t.id||'',created:Date.now(),updated:Date.now()}));
+    if(ok){const rest=qty-sq;
+      if(rest>0)ok=await save('prognose',t.id||('sale-'+newId()),Object.assign(base,{status:t.status,qty:rest,created:t.created||Date.now(),updated:Date.now()}));
+      else if(t.id)ok=await remove('prognose',t.id);
+      msg=sq+(sq===1?' stuk':' stuks')+' verkocht'+(rest>0?' · nog '+rest+' in voorraad':' · voorraad op');}
+  }else{
+    ok=await save('prognose',t.id||('sale-'+newId()),Object.assign(base,{status:t.status,qty,created:t.created||Date.now(),updated:Date.now()}));msg=SF.isNew?'Artikel toegevoegd':'Artikel bijgewerkt';
+  }
   if(!SF)return; SF.saving=false; if(!ok){drawSale();return}
-  const wasNew=SF.isNew; closeSheet(false); toast(wasNew?'Artikel toegevoegd':'Artikel bijgewerkt');
+  closeSheet(false); toast(msg);
 }
 let PK=null; // aankoop verpakking
 function openPack(){
@@ -1713,7 +1737,9 @@ document.addEventListener('click',async e=>{
     case 'more': drawMore(); break;
     case 'sale-new': openSale(null); break;
     case 'sale-edit': {const s=salesItems().find(x=>x.id===el.dataset.id); if(s)openSale(s)} break;
-    case 'sfstat': readSaleForm(); SF.t.status=el.dataset.v; if(SF.t.status==='verkocht'){if(!SF.t.sellDate)SF.t.sellDate=todayStr(); if(SF.t.packCost===''||SF.t.packCost==null||+SF.t.packCost===0){const u=packUnit(); if(u)SF.t.packCost=amtStr(u)}} SF.err=''; drawSale(); break;
+    case 'sfstat': readSaleForm(); SF.t.status=el.dataset.v; SF.err=''; drawSale(); break;
+    case 'sfsell': readSaleForm(); SF.sell=true; if(!SF.t.sellDate)SF.t.sellDate=todayStr(); if(!(+parseAmount(SF.t.packCost)>0)){const u=packUnit(); if(u)SF.t.packCost=amtStr(u)} SF.sellQty=1; SF.err=''; drawSale(); break;
+    case 'sfsellno': readSaleForm(); SF.sell=false; SF.err=''; drawSale(); break;
     case 'sale-delask': readSaleForm(); SF.confirmDel=true; drawSale(); break;
     case 'sale-delno': readSaleForm(); SF.confirmDel=false; drawSale(); break;
     case 'sale-del': {const id=SF.t.id; if(id&&await remove('prognose',id)){closeSheet(false); toast('Artikel verwijderd')}} break;
@@ -1826,7 +1852,7 @@ document.addEventListener('change',async e=>{
 });
 document.addEventListener('input',e=>{const el=e.target;if(el.dataset&&(el.dataset.pedit||el.dataset.pstart)){liveProg();clearTimeout(progT);progT=setTimeout(commitProg,800)}});
 document.addEventListener('keydown',e=>{const el=e.target;if(e.key==='Enter'&&el.dataset&&el.dataset.pedit){e.preventDefault();const n=document.querySelector('#main [data-pedit="'+el.dataset.pedit+'"][data-i="'+(+el.dataset.i+1)+'"]');if(n){n.focus();n.select()}else el.blur()}});
-document.addEventListener('input',e=>{const el=e.target;if(SF&&el.dataset&&el.dataset.sf){readSaleForm();const p=document.getElementById('sfProfit');if(p)p.textContent=fmt(saleFormProfit(SF.t))}});
+document.addEventListener('input',e=>{const el=e.target;if(SF&&el.dataset&&(el.dataset.sf||el.id==='sfSellQty')){readSaleForm();const p=document.getElementById('sfProfit');if(p)p.textContent=fmt(saleFormProfit())}});
 let sqT=null;
 document.addEventListener('input',e=>{if(e.target.dataset.act==='sq'){ui.sf.q=e.target.value;clearTimeout(sqT);sqT=setTimeout(()=>{const pos=e.target.selectionStart;render();const n=document.getElementById('sq');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(_){}}},250)}});
 let qT=null;
