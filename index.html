@@ -123,6 +123,13 @@ details.pset{margin-top:16px} details.pset>summary{font-size:15px}
 details.more{border-top:1px solid var(--line-2);padding-top:8px}
 .morebody{display:flex;flex-direction:column;gap:14px;margin-top:12px}
 .onlywide{display:none} @media (min-width:900px){.onlywide{display:inline-flex}}
+.sgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+@media (min-width:700px){.sgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.plist{display:flex;flex-direction:column;gap:6px;font-size:13.5px}
+.plist div{display:flex;justify-content:space-between;gap:10px}
+.seg.s4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.sprofit{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-radius:12px;background:var(--accent-soft);font-weight:600}
+.sprofit b{font-size:20px}
 .dgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
 @media (min-width:1000px){.dgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .dk{position:relative;display:flex;flex-direction:column;min-width:0;border-radius:var(--r);outline:1.5px dashed color-mix(in srgb,var(--accent) 70%,transparent);outline-offset:3px;cursor:grab}
@@ -331,6 +338,7 @@ html.pv .pvmini{color:var(--accent);border-color:var(--accent)}
     <a href="#jaar" data-nav="jaar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M8 13h2M14 13h2M8 17h2M14 17h2"/></svg>Jaaroverzicht</a>
     <a href="#potjes" data-nav="potjes"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 9h14l-1.2 11H6.2zM9 9V7a3 3 0 0 1 6 0v2"/></svg>Spaarpotjes</a>
     <a href="#balans" data-nav="balans"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v18M5 7h14M3 14l2-6 2 6a2 2 0 0 1-4 0zM17 14l2-6 2 6a2 2 0 0 1-4 0z"/></svg>Balans</a>
+    <a href="#sales" data-nav="sales"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>Sales</a>
     <button class="sidemore" type="button" data-act="more"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>Meer</button>
   </nav>
 
@@ -391,7 +399,8 @@ let dbState='wachten';
 const now=new Date();
 const ui={view:'dashboard',y:now.getFullYear(),m:now.getMonth()+1,
   f:{q:'',year:String(now.getFullYear()),month:String(now.getMonth()+1),type:'all',cat:'all'},showF:false,sort:{k:'date',d:'desc'},
-  confirm:null,potEdit:null,pendingRender:false,dash:null};
+  confirm:null,potEdit:null,pendingRender:false,dash:null,
+  sf:{year:String(now.getFullYear()),month:String(now.getMonth()+1),status:'all',q:''}};
 
 /* ---------- Hulpfuncties ---------- */
 const eur=new Intl.NumberFormat('nl-BE',{style:'currency',currency:'EUR'});
@@ -866,7 +875,7 @@ function render(){
   clearStats();
   const main=document.getElementById('main');
   document.querySelectorAll('[data-nav]').forEach(a=>{const on=a.dataset.nav===ui.view;on?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current')});
-  const mb=document.querySelector('[data-navmore]'); if(mb)mb.classList.toggle('on',['abonnementen','balans','import'].includes(ui.view));
+  const mb=document.querySelector('[data-navmore]'); if(mb)mb.classList.toggle('on',['sales','abonnementen','balans','import'].includes(ui.view));
   document.body.classList.toggle('auth',authState!=='in');
   if(authState==='laden'){main.innerHTML='<div class="empty">Bjorn Finance wordt geladen…</div>';return}
   if(authState==='uit'){main.innerHTML=viewLogin();return}
@@ -874,7 +883,7 @@ function render(){
   if(!COLS.every(c=>S.loaded[c])){main.innerHTML='<div class="empty">Je gegevens worden opgehaald…</div>';return}
   if(ui.view==='import'){main.innerHTML=viewImport();return}
   const v=ui.view;
-  main.innerHTML= offlineBar()+(v==='jaar'?viewYear(): v==='transacties'?viewTx(): v==='potjes'?viewPots(): v==='balans'?viewBalance(): v==='abonnementen'?viewSubs(): viewDash());
+  main.innerHTML= offlineBar()+(v==='jaar'?viewYear(): v==='transacties'?viewTx(): v==='potjes'?viewPots(): v==='balans'?viewBalance(): v==='abonnementen'?viewSubs(): v==='sales'?viewSales(): viewDash());
   const h1=main.querySelector('.head h1'); if(h1)h1.insertAdjacentHTML('beforeend',pvMini());
 }
 
@@ -1387,6 +1396,10 @@ function openSheet(tx,preset){
 }
 // Q2: een ingevuld formulier verdwijnt niet zonder te vragen
 function formSnap(){const o={type:F.t.type};document.querySelectorAll('#txForm [data-f]').forEach(el=>{o[el.dataset.f]=el.value});return JSON.stringify(o)}
+function askCloseSale(){
+  if(SF&&JSON.stringify(readSaleForm())!==SF.start&&!confirm('Wat je invulde is nog niet bewaard. Weggooien?'))return;
+  closeSheet(true);
+}
 function askCloseSheet(){
   if(F&&document.getElementById('txForm')&&(formSnap()!==F.start||F.newReceipt||F.removeReceipt)&&!confirm('Wat je invulde is nog niet bewaard. Weggooien?'))return;
   closeSheet(true);
@@ -1404,7 +1417,117 @@ function quickCats(t){
 }
 function closeSheet(discard){
   if(discard&&F&&F.newReceipt&&assets){assets.delete(F.newReceipt.id).catch(()=>{})}
-  F=null;PW=null;CP=null;MORE=false;document.getElementById('sheetRoot').innerHTML='';
+  F=null;PW=null;CP=null;MORE=false;SF=null;PK=null;document.getElementById('sheetRoot').innerHTML='';
+}
+
+/* ---------- Sales ----------
+   Losstaand: telt nergens anders mee. Artikels: soort prognose, id sale-…; verpakkingsaankopen: id pack-….
+   Winst = verkoopprijs − (aankoopprijs + platformkosten + verpakking + andere kosten). De verkoopdatum bepaalt de maand. */
+const SALE_PLATFORMS=['TikTok Shop','Vinted','Facebook Marketplace','Andere'];
+const SALE_STATUS={voorraad:'In voorraad',tekoop:'Te koop',verkocht:'Verkocht'};
+const salesItems=()=>S.prognose.filter(d=>d.kind==='sale');
+const packBuys=()=>S.prognose.filter(d=>d.kind==='pack').sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+function packUnit(){const L=packBuys(),q=L.reduce((a,p)=>a+(+p.qty||0),0),c=L.reduce((a,p)=>a+(+p.price||0),0);return q?round2(c/q):0}
+function packLeft(){return packBuys().reduce((a,p)=>a+(+p.qty||0),0)-salesItems().filter(s=>s.status==='verkocht'&&(+s.packCost||0)>0).length}
+const saleCost=s=>(+s.buyPrice||0)+(s.status==='verkocht'?(+s.feeCost||0)+(+s.packCost||0)+(+s.otherCost||0):0);
+const saleProfit=s=>round2((+s.sellPrice||0)-saleCost(s));
+function inSalePeriod(s){const f=ui.sf;if(f.year==='all')return true;const d=s.sellDate||'';if(d.slice(0,4)!==f.year)return false;return f.month==='all'||+d.slice(5,7)===+f.month}
+function viewSales(){
+  const f=ui.sf, all=salesItems(), sold=all.filter(s=>s.status==='verkocht'&&inSalePeriod(s)), stock=all.filter(s=>s.status!=='verkocht');
+  const omzet=sold.reduce((a,s)=>a+(+s.sellPrice||0),0), kosten=sold.reduce((a,s)=>a+saleCost(s),0), winst=round2(omzet-kosten);
+  const ys=[...new Set([now.getFullYear()].concat(all.map(s=>+(s.sellDate||s.buyDate||'').slice(0,4)).filter(Boolean)))].sort((a,b)=>b-a);
+  const per=f.year==='all'?'all':f.year+'|'+f.month;
+  let h='<div class="head"><div><h1>Sales</h1><div class="sub">Aankoop en verkoop van je artikels, los van de rest</div></div><div class="actions"><button class="btn primary onlywide" type="button" data-act="sale-new">'+ICON.plus+'Nieuw artikel</button></div></div>';
+  h+='<div class="toolbar"><div class="monthnav"><button class="iconbtn" type="button" data-act="sper" data-d="-1" aria-label="Vorige periode"'+(per==='all'?' disabled':'')+'>'+ICON.left+'</button>'+
+    '<label for="sp" style="position:absolute;left:-9999px">Periode</label><select id="sp" class="sel" data-act="sp"><option value="all"'+(per==='all'?' selected':'')+'>Alles</option>'+
+    ys.map(y=>'<option value="'+y+'|all"'+(per===y+'|all'?' selected':'')+'>Heel '+y+'</option>'+MONTHS.map((n,i)=>'<option value="'+y+'|'+(i+1)+'"'+(per===y+'|'+(i+1)?' selected':'')+'>'+n+' '+y+'</option>').reverse().join('')).join('')+'</select>'+
+    '<button class="iconbtn" type="button" data-act="sper" data-d="1" aria-label="Volgende periode"'+(per==='all'?' disabled':'')+'>'+ICON.right+'</button></div></div>';
+  const lbl=f.year==='all'?'Alle verkopen':f.month==='all'?'Heel '+f.year:MONTHS[+f.month-1]+' '+f.year;
+  h+='<section class="card msum"><span class="label">'+lbl+'</span><div class="msum3"><div><span>Omzet</span><b>'+fmt(omzet)+'</b></div><div><span>Kosten</span><b>'+fmt(kosten)+'</b></div><div><span>Winst</span><b class="'+(winst<0?'neg':'over')+'">'+fmt(winst)+'</b></div></div>'+
+    '<span class="small muted">'+sold.length+(sold.length===1?' artikel':' artikels')+' verkocht'+(omzet?' · marge '+pct(winst/omzet):'')+'</span></section>';
+  const plat=SALE_PLATFORMS.map(p=>{const L=sold.filter(s=>(s.platform||'Andere')===p);return {p,n:L.length,o:L.reduce((a,s)=>a+(+s.sellPrice||0),0),w:L.reduce((a,s)=>a+saleProfit(s),0)}}).filter(x=>x.n);
+  h+='<div class="sgrid">'+kpi('Voorraad',fmt(stock.reduce((a,s)=>a+(+s.buyPrice||0),0)),'','<span class="small muted">'+stock.length+(stock.length===1?' artikel':' artikels')+' nog niet verkocht</span>')+
+    kpi('Gemiddelde winst',sold.length?fmt(winst/sold.length):'–','','<span class="small muted">per verkocht artikel</span>')+
+    '<div class="kpi"><span class="label">Per platform</span>'+(plat.length?'<div class="plist">'+plat.map(x=>'<div><span>'+esc(x.p)+' ('+x.n+')</span><b class="num">'+fmt(x.o)+' · <span class="'+(x.w<0?'amt-out':'amt-in')+'">'+fmt(x.w)+'</span></b></div>').join('')+'</div>':'<span class="small muted">Nog geen verkopen in deze periode</span>')+'</div></div>';
+  // lijst: voorraad altijd, verkopen uit de gekozen periode
+  const q=f.q.trim().toLowerCase();
+  let L=all.filter(s=>(s.status!=='verkocht'||inSalePeriod(s))&&(f.status==='all'||s.status===f.status)&&(!q||((s.name||'')+' '+(s.shop||'')+' '+(s.platform||'')+' '+(s.note||'')).toLowerCase().includes(q)));
+  L.sort((a,b)=>(b.sellDate||b.buyDate||'').localeCompare(a.sellDate||a.buyDate||'')||(b.created||0)-(a.created||0));
+  h+='<div class="toolbar"><div class="search">'+ICON.search+'<label for="sq" style="position:absolute;left:-9999px">Zoeken</label><input id="sq" type="search" placeholder="Zoek op artikel, winkel of platform" value="'+esc(f.q)+'" data-act="sq"></div></div>';
+  h+='<div class="chips" role="group" aria-label="Status">'+[['all','Alles'],['voorraad','In voorraad'],['tekoop','Te koop'],['verkocht','Verkocht']].map(([k,n])=>'<button type="button" class="chip" data-act="sfst" data-v="'+k+'" aria-pressed="'+(f.status===k)+'">'+n+'</button>').join('')+'</div>';
+  h+='<div class="list">'+(L.length?L.map(s=>{const sold=s.status==='verkocht',p=saleProfit(s);
+    return '<button class="li" type="button" data-act="sale-edit" data-id="'+esc(s.id)+'"><span class="ic" style="background:var(--surface-2);color:var(--accent)">'+esc((s.name||'?').slice(0,2).toUpperCase())+'</span><span class="t"><b>'+esc(s.name||'Artikel')+'</b><span>'+(sold?esc(s.platform||'')+' · '+fdate(s.sellDate):SALE_STATUS[s.status]+(s.shop?' · gekocht bij '+esc(s.shop):''))+'</span></span>'+
+      '<span class="a '+(sold?(p<0?'':'amt-in'):'')+'">'+(sold?(p<0?'':'+')+fmt(p)+'<span>verkocht '+fmt(s.sellPrice)+'</span>':fmt(s.buyPrice)+'<span>aankoop</span>')+'</span></button>'}).join(''):'<div class="empty">'+(all.length?'Geen artikels gevonden met deze filters.':'Nog geen artikels. Voeg je eerste artikel toe met Nieuw artikel of de gouden plusknop.')+'</div>')+'</div>';
+  // verpakking
+  const PB=packBuys(), unit=packUnit(), left=packLeft();
+  h+='<section class="card"><div class="head" style="margin-bottom:10px"><div><h2>Verpakking</h2><div class="cap" style="margin:0">'+(PB.length?'Nog '+left+' stuks · '+fmt(unit)+' per stuk':'Voer een aankoop in, dan rekent de app de prijs per stuk uit')+'</div></div><button class="btn small" type="button" data-act="pack-new">'+ICON.plus+'Aankoop verpakking</button></div>'+
+    (PB.length?'<div class="minilist">'+PB.map(p=>'<div><span>'+fdate(p.date)+' · '+esc(p.desc||'Verpakking')+' · '+(+p.qty||0)+' stuks</span><span class="num">'+fmt(p.price)+' '+(ui.confirm===p.id?'<button class="btn small danger" type="button" data-act="pack-del" data-id="'+esc(p.id)+'">Verwijderen</button>':'<button class="btn small ghost" type="button" data-act="askdel" data-id="'+esc(p.id)+'" aria-label="Verwijderen" style="padding:0 6px">'+ICON.trash+'</button>')+'</span></div>').join('')+'</div>':'')+'</section>';
+  return h;
+}
+let SF=null; // formulier artikel
+function openSale(s){
+  const t=s?Object.assign({},s):{name:'',shop:'',buyDate:todayStr(),buyPrice:'',status:'voorraad',sellDate:'',platform:'Vinted',sellPrice:'',feeCost:'',packCost:'',otherCost:'',note:''};
+  SF={t,isNew:!s,confirmDel:false,err:'',saving:false};
+  drawSale(); SF.start=JSON.stringify(readSaleForm());
+  const a=document.getElementById('sfName'); if(a&&!s)a.focus();
+}
+function readSaleForm(){if(!SF)return null;document.querySelectorAll('#saleForm [data-sf]').forEach(el=>{SF.t[el.dataset.sf]=el.value});return SF.t}
+function saleFormProfit(t){const n=v=>{const x=parseAmount(v);return isFinite(x)?x:0};return round2(n(t.sellPrice)-n(t.buyPrice)-n(t.feeCost)-n(t.packCost)-n(t.otherCost))}
+function drawSale(){
+  if(!SF)return; const t=SF.t, sold=t.status==='verkocht';
+  const amt=(id,k,label,ph)=>'<label class="field">'+label+'<input id="'+id+'" inputmode="decimal" placeholder="'+(ph||'0,00')+'" value="'+esc(amtStr(t[k]))+'" data-sf="'+k+'"></label>';
+  let h='<div class="scrim" data-act="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sfT"><div class="shead"><h2 id="sfT">'+(SF.isNew?'Nieuw artikel':'Artikel bewerken')+'</h2><button class="iconbtn" type="button" data-act="close" aria-label="Sluiten"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'+
+  '<form id="saleForm" style="display:flex;flex-direction:column;gap:14px" novalidate>'+
+  '<label class="field">Artikel<input id="sfName" placeholder="Bijv. Nike sneakers maat 43" value="'+esc(t.name)+'" data-sf="name"></label>'+
+  '<div class="row2"><label class="field">Gekocht bij<input id="sfShop" placeholder="Bijv. Action, Vinted, kringloop" value="'+esc(t.shop)+'" data-sf="shop"></label><label class="field">Aankoopdatum<input id="sfBuyDate" type="date" value="'+esc(t.buyDate)+'" data-sf="buyDate"></label></div>'+
+  amt('sfBuy','buyPrice','Aankoopprijs')+
+  '<div class="seg" role="group" aria-label="Status">'+Object.entries(SALE_STATUS).map(([k,n])=>'<button type="button" data-act="sfstat" data-v="'+k+'" aria-pressed="'+(t.status===k)+'">'+n+'</button>').join('')+'</div>';
+  if(sold)h+='<div class="row2"><label class="field">Verkoopdatum<input id="sfSellDate" type="date" value="'+esc(t.sellDate)+'" data-sf="sellDate"></label><label class="field">Platform<select id="sfPlat" data-sf="platform">'+SALE_PLATFORMS.map(p=>'<option'+(p===t.platform?' selected':'')+'>'+esc(p)+'</option>').join('')+'</select></label></div>'+
+    amt('sfSell','sellPrice','Verkoopprijs')+'<div class="row2">'+amt('sfFee','feeCost','Platformkosten')+amt('sfPack','packCost','Verpakking')+'</div>'+amt('sfOther','otherCost','Andere kosten (bv. verzending als jij betaalt)')+
+    '<div class="sprofit"><span>Winst</span><b id="sfProfit">'+fmt(saleFormProfit(t))+'</b></div>';
+  h+='<label class="field">Notitie (optioneel)<textarea id="sfNote" data-sf="note">'+esc(t.note)+'</textarea></label>';
+  if(SF.err)h+='<div class="err" role="alert">'+esc(SF.err)+'</div>';
+  h+='<button class="btn primary" type="submit" style="height:50px;justify-content:center;font-size:16px"'+(SF.saving?' disabled':'')+'>'+(SF.saving?'Bezig met bewaren…':'Opslaan')+'</button>';
+  if(!SF.isNew)h+=SF.confirmDel?'<div class="actions" style="justify-content:center"><span class="small">Dit artikel definitief verwijderen?</span><button class="btn small danger" type="button" data-act="sale-del">Ja, verwijderen</button><button class="btn small" type="button" data-act="sale-delno">Nee</button></div>':'<button class="btn ghost danger" type="button" data-act="sale-delask" style="justify-content:center;border:0">Artikel verwijderen</button>';
+  h+='</form></div></div>';
+  document.getElementById('sheetRoot').innerHTML=h;
+}
+async function submitSale(){
+  if(!SF||SF.saving)return; const t=readSaleForm(); const n=v=>{if(v===''||v==null)return 0;const x=parseAmount(v);return x};
+  if(!(t.name||'').trim()){SF.err='Geef het artikel een naam.';drawSale();return}
+  const nums={buyPrice:n(t.buyPrice),sellPrice:n(t.sellPrice),feeCost:n(t.feeCost),packCost:n(t.packCost),otherCost:n(t.otherCost)};
+  if(Object.values(nums).some(v=>!isFinite(v)||v<0)){SF.err='Controleer de bedragen, bijvoorbeeld 12,50.';drawSale();return}
+  const sold=t.status==='verkocht';
+  if(sold&&(!t.sellDate||!(nums.sellPrice>0))){SF.err='Vul de verkoopdatum en de verkoopprijs in.';drawSale();return}
+  const data={kind:'sale',name:t.name.trim(),shop:(t.shop||'').trim(),buyDate:t.buyDate||'',buyPrice:round2(nums.buyPrice),status:t.status,
+    sellDate:sold?t.sellDate:'',platform:sold?t.platform:'',sellPrice:sold?round2(nums.sellPrice):0,feeCost:sold?round2(nums.feeCost):0,packCost:sold?round2(nums.packCost):0,otherCost:sold?round2(nums.otherCost):0,
+    note:(t.note||'').trim(),created:t.created||Date.now(),updated:Date.now()};
+  const id=t.id||('sale-'+newId());
+  SF.saving=true;SF.err='';drawSale();
+  const ok=await save('prognose',id,data);
+  if(!SF)return; SF.saving=false; if(!ok){drawSale();return}
+  const wasNew=SF.isNew; closeSheet(false); toast(wasNew?'Artikel toegevoegd':'Artikel bijgewerkt');
+}
+let PK=null; // aankoop verpakking
+function openPack(){
+  PK={err:'',saving:false};
+  document.getElementById('sheetRoot').innerHTML='<div class="scrim" data-act="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pkT"><div class="shead"><h2 id="pkT">Aankoop verpakking</h2><button class="iconbtn" type="button" data-act="close" aria-label="Sluiten"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'+
+  '<form id="packForm" style="display:flex;flex-direction:column;gap:14px" novalidate>'+
+  '<label class="field">Omschrijving<input id="pkDesc" placeholder="Bijv. 50 verzenddozen" data-pk="desc"></label>'+
+  '<div class="row2"><label class="field">Aantal stuks<input id="pkQty" inputmode="numeric" placeholder="50" data-pk="qty"></label><label class="field">Totaalprijs<input id="pkPrice" inputmode="decimal" placeholder="0,00" data-pk="price"></label></div>'+
+  '<label class="field">Datum<input id="pkDate" type="date" value="'+todayStr()+'" data-pk="date"></label>'+
+  '<div class="err" role="alert" id="pkErr" hidden></div>'+
+  '<button class="btn primary" type="submit" style="height:50px;justify-content:center;font-size:16px">Opslaan</button></form></div></div>';
+  const a=document.getElementById('pkDesc'); if(a)a.focus();
+}
+async function submitPack(){
+  if(!PK||PK.saving)return; const v={}; document.querySelectorAll('#packForm [data-pk]').forEach(el=>{v[el.dataset.pk]=el.value.trim()});
+  const qty=parseInt(v.qty,10), price=parseAmount(v.price), err=document.getElementById('pkErr');
+  if(!(qty>0)||!isFinite(price)||price<0){err.textContent='Vul het aantal stuks en de totaalprijs in, bijvoorbeeld 50 en 20,00.';err.hidden=false;return}
+  PK.saving=true;
+  const ok=await save('prognose','pack-'+newId(),{kind:'pack',desc:v.desc||'Verpakking',qty,price:round2(price),date:v.date||todayStr(),created:Date.now()});
+  if(!PK)return; PK.saving=false; if(!ok)return;
+  closeSheet(false); toast('Aankoop verpakking bewaard · '+fmt(packUnit())+' per stuk');
 }
 
 /* ---------- Menu Meer (iPhone) ---------- */
@@ -1415,6 +1538,7 @@ function drawMore(){
   const go=(v,label,icon)=>'<button type="button" data-act="more-go" data-h="'+v+'"'+(ui.view===v?' class="cur" aria-current="page"':'')+'>'+I(icon)+label+'</button>';
   const act=(a,label,icon)=>'<button type="button" data-act="'+a+'">'+I(icon)+label+'</button>';
   document.getElementById('sheetRoot').innerHTML='<div class="scrim" data-act="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="moreT"><div class="shead"><h2 id="moreT">Meer</h2><button class="iconbtn" type="button" data-act="close" aria-label="Sluiten"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div class="morelist">'+
+    go('sales','Sales','<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/>')+
     go('abonnementen','Abonnementen','<path d="M4 7h16M4 12h16M4 17h10"/>')+
     go('balans','Balans','<path d="M12 3v18M5 7h14M3 14l2-6 2 6a2 2 0 0 1-4 0zM17 14l2-6 2 6a2 2 0 0 1-4 0z"/>')+
     '<div class="sep"></div>'+
@@ -1572,8 +1696,8 @@ document.addEventListener('drop',e=>{const d=e.target.closest&&e.target.closest(
 document.addEventListener('dragend',()=>{dragKey=null;document.querySelectorAll('.dk.dragging,.dk.over').forEach(x=>x.classList.remove('dragging','over'))});
 document.addEventListener('click',async e=>{
   const el=e.target.closest('[data-act]'); if(!el)return; const act=el.dataset.act;
-  if(act==='scrim'){if(e.target===el){if(F)askCloseSheet(); else closeSheet(true)}return}
-  if(['setm','sety','fp','fc','fs','fq','lay-move'].includes(act))return;
+  if(act==='scrim'){if(e.target===el){if(F)askCloseSheet(); else if(SF)askCloseSale(); else closeSheet(true)}return}
+  if(['setm','sety','fp','fc','fs','fq','sp','sq','lay-move'].includes(act))return;
   if(act.startsWith('lay-')&&ui.lay&&!['lay-save','lay-cancel','lay-show'].includes(act)){await layAction(act,el);return}
   switch(act){
     case 'lay-open': ui.lay={groups:Object.fromEntries(GROUPS.map(g=>[g.id,g.layout.slice()])),renames:{},msg:''}; render(); window.scrollTo(0,0); break;
@@ -1587,6 +1711,16 @@ document.addEventListener('click',async e=>{
     case 'lay-show': ui.f={q:'',year:'all',month:'all',type:'all',cat:el.dataset.c}; location.hash='transacties'; toast('Je indeling staat nog open in het jaaroverzicht; vergeet niet te bewaren'); break;
     case 'export': exportData(); break;
     case 'more': drawMore(); break;
+    case 'sale-new': openSale(null); break;
+    case 'sale-edit': {const s=salesItems().find(x=>x.id===el.dataset.id); if(s)openSale(s)} break;
+    case 'sfstat': readSaleForm(); SF.t.status=el.dataset.v; if(SF.t.status==='verkocht'){if(!SF.t.sellDate)SF.t.sellDate=todayStr(); if(SF.t.packCost===''||SF.t.packCost==null||+SF.t.packCost===0){const u=packUnit(); if(u)SF.t.packCost=amtStr(u)}} SF.err=''; drawSale(); break;
+    case 'sale-delask': readSaleForm(); SF.confirmDel=true; drawSale(); break;
+    case 'sale-delno': readSaleForm(); SF.confirmDel=false; drawSale(); break;
+    case 'sale-del': {const id=SF.t.id; if(id&&await remove('prognose',id)){closeSheet(false); toast('Artikel verwijderd')}} break;
+    case 'sfst': ui.sf.status=el.dataset.v; render(); break;
+    case 'sper': {const f=ui.sf,d=+el.dataset.d; if(f.year==='all')break; if(f.month==='all')f.year=String(+f.year+d); else {let y=+f.year,m=+f.month+d; if(m<1){m=12;y--} if(m>12){m=1;y++} f.year=String(y);f.month=String(m)} render()} break;
+    case 'pack-new': openPack(); break;
+    case 'pack-del': {const id=el.dataset.id; ui.confirm=null; if(await remove('prognose',id))toast('Aankoop verpakking verwijderd'); else render()} break;
     case 'more-go': closeSheet(false); if(location.hash==='#'+el.dataset.h)route(); else location.hash=el.dataset.h; break;
     case 'more-export': closeSheet(false); exportData(); break;
     case 'more-dash': closeSheet(false); ui.dash={kpi:dashOrder('kpi'),blok:dashOrder('blok')}; if(location.hash!=='#dashboard')location.hash='dashboard'; else render(); break;
@@ -1632,7 +1766,7 @@ document.addEventListener('click',async e=>{
     case 'potedit': ui.potEdit=ui.potEdit===el.dataset.id?null:el.dataset.id; render(); break;
     case 'baladd': {const id=newId(); const order=Math.max(0,...S.balance.map(b=>b.order||0))+1; await save('balance',id,{side:el.dataset.side,group:el.dataset.group,name:el.dataset.side==='schuld'?'Nieuwe schuld':'Nieuw bezit',value:0,order}); } break;
     case 'baldel': {const id=el.dataset.id; ui.confirm=null; const rest=S.balance.filter(b=>b.id!==id); await remove('balance',id); await snapshotNetworth(rest); toast('Post verwijderd')} break;
-    case 'close': if(F)askCloseSheet(); else closeSheet(true); break;
+    case 'close': if(F)askCloseSheet(); else if(SF)askCloseSale(); else closeSheet(true); break;
     case 'qcat': readSheet(); F.t.category=el.dataset.v; if(isSaveCat(F.t.category))F.t.potOut=''; else F.t.potIn=''; drawSheet(); break;
     case 'stype': readSheet(); F.t.type=el.dataset.v; if(F.t.type==='inkomen'&&groupOf(F.t.category).kind!=='inkomen')F.t.category='Netto loon 1'; if(F.t.type==='uitgave'&&(groupOf(F.t.category).kind!=='uitgave'||!CAT_GROUP[F.t.category]))F.t.category='Boodschappen'; if(F.t.type==='overboeking'){F.t.potOut=F.t.potOut||'rekening';F.t.potIn=F.t.potIn||''} F.err=''; drawSheet(); break;
     case 'rmrc': readSheet(); F.removeReceipt=true; if(F.newReceipt){assets&&assets.delete(F.newReceipt.id).catch(()=>{});F.newReceipt=null} drawSheet(); break;
@@ -1643,9 +1777,11 @@ document.addEventListener('click',async e=>{
     case 'theme': cycleTheme(); render(); break;
   }
 });
-document.getElementById('fab').addEventListener('click',()=>openSheet(null,null));
+document.getElementById('fab').addEventListener('click',()=>ui.view==='sales'?openSale(null):openSheet(null,null));
 document.addEventListener('submit',e=>{e.preventDefault();
   if(e.target.id==='loginForm'){signIn();return}
+  if(e.target.id==='saleForm'){submitSale();return}
+  if(e.target.id==='packForm'){submitPack();return}
   if(e.target.id==='txForm'){submitSheet();return}
   if(e.target.id==='pwForm'){submitPw();return}
   if(e.target.dataset.form==='pbulk'){const p=getPlan();if(!p)return;const fd=new FormData(e.target);const from=+fd.get('from');const a=parseAmount(fd.get('amt'));if(!isFinite(a)||a<0){toast('Vul een geldig bedrag in, bijvoorbeeld 1500.');return}
@@ -1660,6 +1796,8 @@ document.addEventListener('change',async e=>{
   if(el.dataset.act==='lay-move'&&el.value&&ui.lay){const L=ui.lay,from=L.groups[el.dataset.g];L.groups[el.value].push(from.splice(+el.dataset.i,1)[0]);L.msg='';render();return}
   if(el.dataset.act==='setm'){ui.m=+el.value;render();return}
   if(el.dataset.act==='sety'){if(el.value==='new'){const y=Math.max(...yearsAvailable())+1;ui.y=y;ui.m=1;toast('Boekjaar '+y+' geopend met dezelfde categorieën')}else ui.y=+el.value;render();return}
+  if(el.dataset.act==='sp'){const [y,m]=el.value==='all'?['all','all']:el.value.split('|');ui.sf.year=y;ui.sf.month=m;render();return}
+  if(el.id==='sfPlat'){readSaleForm();return}
   if(el.dataset.act==='fp'){const [y,m]=el.value==='all'?['all','all']:el.value.split('|');ui.f.year=y;ui.f.month=m;render();return}
   if(el.dataset.act==='fc'){ui.f.cat=el.value;render();return}
   if(el.dataset.act==='fs'){const [k,d]=el.value.split('-');ui.sort={k,d};render();return}
@@ -1688,9 +1826,12 @@ document.addEventListener('change',async e=>{
 });
 document.addEventListener('input',e=>{const el=e.target;if(el.dataset&&(el.dataset.pedit||el.dataset.pstart)){liveProg();clearTimeout(progT);progT=setTimeout(commitProg,800)}});
 document.addEventListener('keydown',e=>{const el=e.target;if(e.key==='Enter'&&el.dataset&&el.dataset.pedit){e.preventDefault();const n=document.querySelector('#main [data-pedit="'+el.dataset.pedit+'"][data-i="'+(+el.dataset.i+1)+'"]');if(n){n.focus();n.select()}else el.blur()}});
+document.addEventListener('input',e=>{const el=e.target;if(SF&&el.dataset&&el.dataset.sf){readSaleForm();const p=document.getElementById('sfProfit');if(p)p.textContent=fmt(saleFormProfit(SF.t))}});
+let sqT=null;
+document.addEventListener('input',e=>{if(e.target.dataset.act==='sq'){ui.sf.q=e.target.value;clearTimeout(sqT);sqT=setTimeout(()=>{const pos=e.target.selectionStart;render();const n=document.getElementById('sq');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(_){}}},250)}});
 let qT=null;
 document.addEventListener('input',e=>{if(e.target.dataset.act==='fq'){ui.f.q=e.target.value;clearTimeout(qT);qT=setTimeout(()=>{const pos=e.target.selectionStart;render();const n=document.getElementById('fq');if(n){n.focus();try{n.setSelectionRange(pos,pos)}catch(_){}}},250)}});
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.querySelector('.viewer')){document.querySelector('.viewer').remove();return} if(F)askCloseSheet(); else if(document.getElementById('sheetRoot').firstChild)closeSheet(true)}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(document.querySelector('.viewer')){document.querySelector('.viewer').remove();return} if(F)askCloseSheet(); else if(SF)askCloseSale(); else if(document.getElementById('sheetRoot').firstChild)closeSheet(true)}});
 
 document.addEventListener('change',e=>{if(e.target.id==='impFile'&&e.target.files[0])readImportFile(e.target.files[0])});
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&session&&!F&&!ui.pendingRender){if(getOutbox().length)flushOutbox();else loadAll(true)}});
@@ -1732,7 +1873,7 @@ function togglePv(){
 if(lsGet('bf-pv')==='1')document.documentElement.classList.add('pv');
 
 /* ---------- Routering ---------- */
-const VIEWS=['dashboard','transacties','jaar','potjes','balans','import','abonnementen'];
+const VIEWS=['dashboard','transacties','jaar','potjes','balans','import','abonnementen','sales'];
 // Oude adressen blijven werken: #inkomsten toont Transacties met de filter Inkomsten, #prognose de prognose onder Spaarpotjes.
 function route(){
   let h=(location.hash||'').slice(1), to=null;
