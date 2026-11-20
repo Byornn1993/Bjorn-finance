@@ -934,7 +934,7 @@ function viewSubs(){
   h+='<p class="hint">Tip: geef een abonnement elke maand dezelfde omschrijving, dan komt het op één regel.</p>';
   return h;
 }
-const netSave=s=>round2(s.sparen-s.opname);
+const netSave=s=>round2(s.sparen-s.opname), netCash=s=>round2(s.cashflow-s.opname);
 function viewDash(){
   const st=stats(ui.y,ui.m);
   const py=ui.m===1?ui.y-1:ui.y, pm=ui.m===1?12:ui.m-1; const pst=stats(py,pm); const hasPrev=pst.count>0;
@@ -950,7 +950,8 @@ function viewDash(){
     '<div class="track"><div class="fill" style="width:'+(ratio*100).toFixed(1)+'%;background:var(--accent)"></div></div><span class="small muted">'+(st.inkomen>0?Math.round(st.uitgaven/st.inkomen*100)+'% van wat binnenkwam is uitgegeven of gespaard':'Nog geen inkomen deze maand')+(st.sparen?' · waarvan '+fmt(st.sparen)+' gespaard':'')+(st.carry?' · incl. '+fmt(st.carry)+' over van vorige maand':'')+'</span></section>';
   h+=dashNotes();
   const K={
-    cashflow:kpi('Vrije cashflow',fmt(st.cashflow),st.cashflow<0?'neg':'',hasPrev?deltaChip(st.cashflow,pst.cashflow,true):'',true),
+    // Alleen in dit vakje: geld dat je uit een potje terug naar je rekening haalde, is geen inkomen en telt niet mee.
+    cashflow:kpi('Vrije cashflow',fmt(netCash(st)),netCash(st)<0?'neg':'',(hasPrev?deltaChip(netCash(st),netCash(pst),true):'')+(st.opname?'<span class="small muted">zonder '+fmt(st.opname)+' uit je potjes</span>':''),true),
     leven:kpi('Levenskosten',fmt(st.levenskosten),'',(hasPrev?deltaChip(st.levenskosten,pst.levenskosten,false):'')+'<span class="small muted">'+pct(st.levPct)+' van je inkomen</span>'),
     // Alleen in dit vakje: wat je deze maand uit een potje terug naar je rekening haalde, telt als minder gespaard.
     gespaard:kpi('Gespaard & belegd',fmt(netSave(st)),netSave(st)<0?'neg':'pos',(hasPrev?deltaChip(netSave(st),netSave(pst),true):'')+(st.opname?'<span class="small muted">'+fmt(st.sparen)+' gespaard − '+fmt(st.opname)+' terug naar je rekening</span>':'')+'<span class="small muted">'+pct((st.inkomen-st.carry-st.opname)?netSave(st)/(st.inkomen-st.carry-st.opname):0)+' van je inkomen</span>'),
