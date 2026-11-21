@@ -1,0 +1,8 @@
+# Exportbestanden met financiële gegevens horen nooit in de (openbare) repo
+bjorn-finance-export-*.json
+*.bak.html
+test*.html
+prompts/
+werkbestanden/
+documenten/
+logboek/
