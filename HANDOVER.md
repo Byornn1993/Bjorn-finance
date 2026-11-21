@@ -45,7 +45,6 @@ Doel op termijn: samen met zijn vriendin grip houden op het huishouden. Ze komt 
 **Half af / open:**
 - De gebruiksaanwijzing is bijgewerkt tot en met v52. De wijziging van v53 (Vrije cashflow zonder opnames uit potjes) staat er nog niet in.
 - Het logboek van november 2026 is een tussenstand en wordt op 25 november aangevuld.
-- Er staat nog een oude kopie van deze map in `C:\Users\Gebruiker\OneDrive\Documenten\Be finance`, met dezelfde inhoud. Pas na Bjorns akkoord verwijderen.
 
 **Voorgesteld, nog niet gekozen:**
 - een potje "Onvoorzien";
@@ -170,9 +169,8 @@ Be finance/
 ## 10. Volgende stappen
 1. **25 november 2026:** het maandgesprek via de geplande taak "Maandgesprek Bjorn Finance". Die staat in `C:\Users\Gebruiker\.claude\scheduled-tasks\bjorn-finance-maandgesprek\SKILL.md` en verwijst naar `…\Persoonlijke apps\Be finance\logboek`. Werk `logboek/2026-11 november.md` bij (de waarom-kolom, wat anders). De gegevens alleen lezen.
 2. Zet de wijziging van v53 in de gebruiksaanwijzing. Die staat als Claude Doc (https://claude.ai/artifact/WhKpxqJChAQzZ8KcyEVPjf), met een export in `documenten/`.
-3. Vraag Bjorn of de oude map `Documenten\Be finance` weg mag.
-4. In december: het laatste maandgesprek plus `logboek/2026 jaarsamenvatting.md`.
-5. Als zijn vriendin er woont: een plan voor gedeelde kosten. Eerst een plan voorleggen en niets bouwen zonder akkoord. Daarna eventueel het potje "Onvoorzien".
+3. In december: het laatste maandgesprek plus `logboek/2026 jaarsamenvatting.md`.
+4. Als zijn vriendin er woont: een plan voor gedeelde kosten. Eerst een plan voorleggen en niets bouwen zonder akkoord. Daarna eventueel het potje "Onvoorzien".
 
 ## 11. Samenhang met Bjorns andere apps
 Alle apps staan in `C:\Users\Gebruiker\OneDrive\Documenten\Persoonlijke apps\`. Ze delen dezelfde huisstijl (goud en antraciet, licht en donker) en worden op dezelfde manier gehost op GitHub Pages onder `byornn1993`.
