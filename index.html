@@ -426,6 +426,21 @@ const amtStr=v=>(v==null||v==='')?'':typeof v==='string'?v:String(round2(v)).rep
 function fdate(d){if(!d)return'';const [y,m,dd]=d.split('-');return dd+'/'+m+'/'+y}
 function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+/* Gekozen periode: Dashboard, Transacties en Sales delen dezelfde maand. Ze blijft bewaard op dit toestel (bf-period, bf-month)
+   tot je zelf een andere kiest, ook als er een nieuwe maand begint. 'Deze maand' springt terug naar vandaag. */
+function setPeriod(y,m){
+  const Y=String(y), M=String(m);
+  ui.f.year=Y; ui.f.month=M; ui.sf.year=Y; ui.sf.month=M;
+  if(Y!=='all'){ui.y=+Y; if(M!=='all'){ui.m=+M; lsSet('bf-month',Y+'|'+M)}}
+  lsSet('bf-period',Y+'|'+M);
+}
+function restorePeriod(){
+  const mo=(lsGet('bf-month')||'').split('|'); if(+mo[0]&&+mo[1]){ui.y=+mo[0];ui.m=+mo[1]}
+  const p=(lsGet('bf-period')||'').split('|'); if(p.length===2&&p[0]&&p[1]){ui.f.year=ui.sf.year=p[0];ui.f.month=ui.sf.month=p[1]}
+}
+const isNowPeriod=(y,m)=>String(y)===String(now.getFullYear())&&String(m)===String(now.getMonth()+1);
+const nowBtn=(y,m)=>isNowPeriod(y,m)?'':'<button class="btn" type="button" data-act="pnow">Deze maand</button>';
+restorePeriod();
 
 /* ---------- Rekenregels ----------
    inkomen       = transacties van type Inkomen
@@ -895,7 +910,7 @@ function monthNav(){
   return '<div class="monthnav"><button class="iconbtn" type="button" data-act="mprev" aria-label="Vorige maand">'+ICON.left+'</button>'+
     '<label class="sr" style="position:absolute;left:-9999px" for="selM">Maand</label><select id="selM" class="sel" data-act="setm">'+MONTHS.map((n,i)=>'<option value="'+(i+1)+'"'+(i+1===ui.m?' selected':'')+'>'+n+'</option>').join('')+'</select>'+
     '<label style="position:absolute;left:-9999px" for="selY">Jaar</label><select id="selY" class="sel" data-act="sety">'+ys.map(y=>'<option'+(y===ui.y?' selected':'')+'>'+y+'</option>').join('')+'<option value="new">+ Nieuw jaar</option></select>'+
-    '<button class="iconbtn" type="button" data-act="mnext" aria-label="Volgende maand">'+ICON.right+'</button></div>';
+    '<button class="iconbtn" type="button" data-act="mnext" aria-label="Volgende maand">'+ICON.right+'</button></div>'+nowBtn(ui.y,ui.m);
 }
 
 // Dashboardkaart: wat je dit jaar spaarde, per potje en per spaarcategorie (zelfde regels als het jaaroverzicht).
@@ -1294,7 +1309,7 @@ function viewTx(){
   h+='<div class="toolbar"><div class="monthnav"><button class="iconbtn" type="button" data-act="fper" data-d="-1" aria-label="Vorige periode"'+(per==='all'?' disabled':'')+'>'+ICON.left+'</button>'+
     '<label for="fp" style="position:absolute;left:-9999px">Periode</label><select id="fp" class="sel" data-act="fp"><option value="all"'+(per==='all'?' selected':'')+'>Alle transacties</option>'+
     ys.map(y=>'<option value="'+y+'|all"'+(per===y+'|all'?' selected':'')+'>Heel '+y+'</option>'+MONTHS.map((n,i)=>'<option value="'+y+'|'+(i+1)+'"'+(per===y+'|'+(i+1)?' selected':'')+'>'+n+' '+y+'</option>').reverse().join('')).join('')+'</select>'+
-    '<button class="iconbtn" type="button" data-act="fper" data-d="1" aria-label="Volgende periode"'+(per==='all'?' disabled':'')+'>'+ICON.right+'</button></div>'+
+    '<button class="iconbtn" type="button" data-act="fper" data-d="1" aria-label="Volgende periode"'+(per==='all'?' disabled':'')+'>'+ICON.right+'</button></div>'+nowBtn(f.year,f.month)+
     '<div class="search">'+ICON.search+'<label for="fq" style="position:absolute;left:-9999px">Zoeken</label><input id="fq" type="search" placeholder="Zoek op omschrijving of categorie" value="'+esc(f.q)+'" data-act="fq"></div>'+
     '<button class="btn" type="button" data-act="ftog" aria-expanded="'+!!(ui.showF||f.cat!=='all')+'">Filters'+(nF?' ('+nF+')':'')+'</button></div>';
   if(ui.showF||f.cat!=='all')h+='<div class="toolbar">'+
@@ -1451,7 +1466,7 @@ function viewSales(){
   h+='<div class="toolbar"><div class="monthnav"><button class="iconbtn" type="button" data-act="sper" data-d="-1" aria-label="Vorige periode"'+(per==='all'?' disabled':'')+'>'+ICON.left+'</button>'+
     '<label for="sp" style="position:absolute;left:-9999px">Periode</label><select id="sp" class="sel" data-act="sp"><option value="all"'+(per==='all'?' selected':'')+'>Alles</option>'+
     ys.map(y=>'<option value="'+y+'|all"'+(per===y+'|all'?' selected':'')+'>Heel '+y+'</option>'+MONTHS.map((n,i)=>'<option value="'+y+'|'+(i+1)+'"'+(per===y+'|'+(i+1)?' selected':'')+'>'+n+' '+y+'</option>').reverse().join('')).join('')+'</select>'+
-    '<button class="iconbtn" type="button" data-act="sper" data-d="1" aria-label="Volgende periode"'+(per==='all'?' disabled':'')+'>'+ICON.right+'</button></div></div>';
+    '<button class="iconbtn" type="button" data-act="sper" data-d="1" aria-label="Volgende periode"'+(per==='all'?' disabled':'')+'>'+ICON.right+'</button></div>'+nowBtn(f.year,f.month)+'</div>';
   const lbl=f.year==='all'?'Alle verkopen':f.month==='all'?'Heel '+f.year:MONTHS[+f.month-1]+' '+f.year;
   h+='<section class="card msum"><span class="label">'+lbl+'</span><div class="msum3"><div><span>Omzet</span><b>'+fmt(omzet)+'</b></div><div><span>Kosten</span><b>'+fmt(kosten)+'</b></div><div><span>Winst</span><b class="'+(winst<0?'neg':'over')+'">'+fmt(winst)+'</b></div></div>'+
     '<span class="small muted">'+soldN+(soldN===1?' stuk':' stuks')+' verkocht in '+sold.length+(sold.length===1?' verkoop':' verkopen')+(omzet?' · marge '+pct(winst/omzet):'')+'</span></section>';
@@ -1749,7 +1764,8 @@ document.addEventListener('click',async e=>{
     case 'sale-delno': readSaleForm(); SF.confirmDel=false; drawSale(); break;
     case 'sale-del': {const id=SF.t.id; if(id&&await remove('prognose',id)){closeSheet(false); toast('Artikel verwijderd')}} break;
     case 'sfst': ui.sf.status=el.dataset.v; render(); break;
-    case 'sper': {const f=ui.sf,d=+el.dataset.d; if(f.year==='all')break; if(f.month==='all')f.year=String(+f.year+d); else {let y=+f.year,m=+f.month+d; if(m<1){m=12;y--} if(m>12){m=1;y++} f.year=String(y);f.month=String(m)} render()} break;
+    case 'sper': {const f=ui.sf,d=+el.dataset.d; if(f.year==='all')break; if(f.month==='all')f.year=String(+f.year+d); else {let y=+f.year,m=+f.month+d; if(m<1){m=12;y--} if(m>12){m=1;y++} f.year=String(y);f.month=String(m)} setPeriod(f.year,f.month); render()} break;
+    case 'pnow': setPeriod(now.getFullYear(),now.getMonth()+1); render(); break;
     case 'pack-new': openPack(); break;
     case 'pack-del': {const id=el.dataset.id; ui.confirm=null; if(await remove('prognose',id))toast('Aankoop verpakking verwijderd'); else render()} break;
     case 'more-go': closeSheet(false); if(location.hash==='#'+el.dataset.h)route(); else location.hash=el.dataset.h; break;
@@ -1771,9 +1787,9 @@ document.addEventListener('click',async e=>{
     case 'impask': imp.confirm=true; render(); break;
     case 'impno': imp.confirm=false; render(); break;
     case 'impgo': runImport(); break;
-    case 'pickm': ui.m=+el.dataset.m; render(); break;
-    case 'mprev': ui.m--; if(ui.m<1){ui.m=12;ui.y--} render(); break;
-    case 'mnext': ui.m++; if(ui.m>12){ui.m=1;ui.y++} render(); break;
+    case 'pickm': setPeriod(ui.y,+el.dataset.m); render(); break;
+    case 'mprev': {let y=ui.y,m=ui.m-1; if(m<1){m=12;y--} setPeriod(y,m); render()} break;
+    case 'mnext': {let y=ui.y,m=ui.m+1; if(m>12){m=1;y++} setPeriod(y,m); render()} break;
     case 'yprev': ui.y--; render(); break;
     case 'paddm': {const p=getPlan(); if(!p)break; const months=p.months.map(m=>Object.assign({},m)); const lm=months[months.length-1]; months.push({month:lm?nextMonthKey(lm.month):todayStr().slice(0,7),planned:lm?lm.planned:0,extra:0}); await savePlan(Object.assign({},p,{months})); toast('Maand toegevoegd')} break;
     case 'pdelask': ui.confirm='plast'; render(); break;
@@ -1791,7 +1807,7 @@ document.addEventListener('click',async e=>{
     case 'ft': ui.f.type=el.dataset.v; render(); break;
     case 'ftog': ui.showF=!(ui.showF||ui.f.cat!=='all'); if(!ui.showF)ui.f.cat='all'; render(); break;
     case 'freset': ui.f.cat='all'; ui.sort={k:'date',d:'desc'}; render(); break;
-    case 'fper': {const f=ui.f,d=+el.dataset.d; if(f.year==='all')break; if(f.month==='all')f.year=String(+f.year+d); else {let y=+f.year,m=+f.month+d; if(m<1){m=12;y--} if(m>12){m=1;y++} f.year=String(y);f.month=String(m)} render()} break;
+    case 'fper': {const f=ui.f,d=+el.dataset.d; if(f.year==='all')break; if(f.month==='all')f.year=String(+f.year+d); else {let y=+f.year,m=+f.month+d; if(m<1){m=12;y--} if(m>12){m=1;y++} f.year=String(y);f.month=String(m)} setPeriod(f.year,f.month); render()} break;
     case 'potin': openSheet(null,{type:'uitgave',category:SAVE_CAT,potIn:el.dataset.id,description:'Storting '+potName(el.dataset.id)}); break;
     case 'potout': openSheet(null,{type:'overboeking',potOut:el.dataset.id,potIn:'rekening',category:'Overboeking',description:'Opname '+potName(el.dataset.id)}); break;
     case 'potedit': ui.potEdit=ui.potEdit===el.dataset.id?null:el.dataset.id; render(); break;
@@ -1825,11 +1841,11 @@ document.addEventListener('change',async e=>{
   const el=e.target;
   if(el.id==='sFile'){handleFile(el.files&&el.files[0]);return}
   if(el.dataset.act==='lay-move'&&el.value&&ui.lay){const L=ui.lay,from=L.groups[el.dataset.g];L.groups[el.value].push(from.splice(+el.dataset.i,1)[0]);L.msg='';render();return}
-  if(el.dataset.act==='setm'){ui.m=+el.value;render();return}
-  if(el.dataset.act==='sety'){if(el.value==='new'){const y=Math.max(...yearsAvailable())+1;ui.y=y;ui.m=1;toast('Boekjaar '+y+' geopend met dezelfde categorieën')}else ui.y=+el.value;render();return}
-  if(el.dataset.act==='sp'){const [y,m]=el.value==='all'?['all','all']:el.value.split('|');ui.sf.year=y;ui.sf.month=m;render();return}
+  if(el.dataset.act==='setm'){setPeriod(ui.y,+el.value);render();return}
+  if(el.dataset.act==='sety'){if(el.value==='new'){const y=Math.max(...yearsAvailable())+1;setPeriod(y,1);toast('Boekjaar '+y+' geopend met dezelfde categorieën')}else setPeriod(+el.value,ui.m);render();return}
+  if(el.dataset.act==='sp'){const [y,m]=el.value==='all'?['all','all']:el.value.split('|');setPeriod(y,m);render();return}
   if(el.id==='sfPlat'){readSaleForm();return}
-  if(el.dataset.act==='fp'){const [y,m]=el.value==='all'?['all','all']:el.value.split('|');ui.f.year=y;ui.f.month=m;render();return}
+  if(el.dataset.act==='fp'){const [y,m]=el.value==='all'?['all','all']:el.value.split('|');setPeriod(y,m);render();return}
   if(el.dataset.act==='fc'){ui.f.cat=el.value;render();return}
   if(el.dataset.act==='fs'){const [k,d]=el.value.split('-');ui.sort={k,d};render();return}
   if(el.id==='sCat'||el.id==='sFrom'||el.id==='sTo'){readSheet();drawSheet();return}

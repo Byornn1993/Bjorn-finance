@@ -1,6 +1,6 @@
 # Bjorn Finance: overdracht
 
-Stand: 24 november 2026, app-versie **v54**. Dit document is voor een nieuwe Claude-sessie zonder voorkennis.
+Stand: 24 november 2026, app-versie **v55** (lokaal gecommit; Bjorn pusht met `..\Push Be finance.cmd`). Dit document is voor een nieuwe Claude-sessie zonder voorkennis.
 
 > Let op: deze repo is **publiek** en GitHub Pages serveert ook dit bestand. Zet hier nooit bedragen, rekeningnummers, wachtwoorden of sleutels.
 
@@ -43,8 +43,9 @@ Doel op termijn: samen met zijn vriendin grip houden op het huishouden. Ze komt 
 - **Maandlogboek** (map `logboek/`, alleen lokaal) met een geplande taak elke 25ste om 19:00 (zie §10), en sinds 23 november 2026 een **midmaandreview** elke 10de om 18:31 (geplande taak "Midmaandreview Bjorn Finance", een Claude-taak die deze computer nodig heeft; inhoud in `logboek/LEES MIJ.md`). Alleen lezen, niets wijzigen in de app.
 
 **Half af / open:**
+- **v55** (24/11): de gekozen maand wordt onthouden (localStorage `bf-period` en `bf-month`) en is gedeeld tussen Dashboard, Transacties en Sales. Ze blijft staan tot Bjorn zelf een andere kiest, ook bij een nieuwe kalendermaand. Knop **Deze maand** (alleen zichtbaar als je niet op de huidige maand staat) springt terug. Logica getest met node; nog niet visueel getest op laptop en iPhone.
 - **v54** (24/11): de "25" vóór de maand is weg in de Prognose (tabel, "vol"-vakjes) en bij Spaarpotjes ("Vol volgens prognose"); er staat nu gewoon "nov 2026". Live sinds 24/11.
-- De gebruiksaanwijzing is bijgewerkt tot en met v52. De wijziging van v53 (Vrije cashflow zonder opnames uit potjes) staat er nog niet in.
+- De gebruiksaanwijzing is bijgewerkt tot en met v52. v53 (Vrije cashflow zonder opnames uit potjes), v54 (maand zonder "25") en v55 (maand onthouden, knop Deze maand) staan er nog niet in.
 - Het logboek van november 2026 is een tussenstand en wordt op 25 november aangevuld.
 
 **Voorgesteld, nog niet gekozen:**
@@ -129,7 +130,7 @@ Be finance/
 **In de browser (localStorage):**
 - `bf-data-<uid>`: offline cache;
 - `bf-outbox-<uid>`: wijzigingen die nog verstuurd moeten worden;
-- `bf-theme`, `bf-email`, `bf-pv` (bedragen verbergen), `bf-cp-skip`.
+- `bf-theme`, `bf-email`, `bf-pv` (bedragen verbergen), `bf-cp-skip`, `bf-period` en `bf-month` (gekozen maand, sinds v55).
 
 **Lokaal:** de back-up `bjorn-finance-export-JJJJ-MM-DD.json` (knop *Back-up maken*) en `logboek/*.md`.
 
