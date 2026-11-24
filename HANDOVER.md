@@ -1,6 +1,6 @@
 # Bjorn Finance: overdracht
 
-Stand: 24 november 2026, app-versie **v54** (lokaal gecommit, nog te pushen). Dit document is voor een nieuwe Claude-sessie zonder voorkennis.
+Stand: 24 november 2026, app-versie **v54**. Dit document is voor een nieuwe Claude-sessie zonder voorkennis.
 
 > Let op: deze repo is **publiek** en GitHub Pages serveert ook dit bestand. Zet hier nooit bedragen, rekeningnummers, wachtwoorden of sleutels.
 
@@ -43,7 +43,7 @@ Doel op termijn: samen met zijn vriendin grip houden op het huishouden. Ze komt 
 - **Maandlogboek** (map `logboek/`, alleen lokaal) met een geplande taak elke 25ste om 19:00 (zie §10), en sinds 23 november 2026 een **midmaandreview** elke 10de om 18:31 (geplande taak "Midmaandreview Bjorn Finance", een Claude-taak die deze computer nodig heeft; inhoud in `logboek/LEES MIJ.md`). Alleen lezen, niets wijzigen in de app.
 
 **Half af / open:**
-- **v54** (24/11): de "25" vóór de maand is weg in de Prognose (tabel, "vol"-vakjes) en bij Spaarpotjes ("Vol volgens prognose"); er staat nu gewoon "nov 2026". Nog niet live: eerst pushen en dan nakijken op laptop en iPhone.
+- **v54** (24/11): de "25" vóór de maand is weg in de Prognose (tabel, "vol"-vakjes) en bij Spaarpotjes ("Vol volgens prognose"); er staat nu gewoon "nov 2026". Live sinds 24/11.
 - De gebruiksaanwijzing is bijgewerkt tot en met v52. De wijziging van v53 (Vrije cashflow zonder opnames uit potjes) staat er nog niet in.
 - Het logboek van november 2026 is een tussenstand en wordt op 25 november aangevuld.
 
@@ -96,6 +96,7 @@ Be finance/
 3. Test op laptopbreedte en op iPhone-breedte (375 px). **Sla geen testgegevens op in de echte database**: test zonder op te slaan. Zet `window.confirm=()=>true` als een dialoog in de weg staat.
 
 **Uitrollen:**
+0. Vanuit Cowork kan Claude niet pushen: Bjorn dubbelklikt dan op `..\Push Be finance.cmd` (doet alleen `git push` in deze map).
 1. `git rm test.html`
 2. `git add index.html sw.js`
 3. `git commit -m "vNN: korte uitleg"`, eindigend met een Co-Authored-By-regel.
