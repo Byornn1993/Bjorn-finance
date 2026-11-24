@@ -1072,7 +1072,7 @@ async function savePlan(p){
 const PCOLORS={safety:'--c3',onderhoud:'--c5',fun:'--c1'};
 const zf=v=>Math.abs(v)<0.005?'<span class="z">–</span>':fmt(v);
 function progKpis(fc){const last=fc.rows[fc.rows.length-1];
-  return '<div class="kpis">'+fc.order.map(id=>{const f=fc.full[id];return kpi(esc(potName(id))+' vol',f?'25 '+mlabel(f):'Buiten prognose',f?'':'neg','<span class="small muted">doel '+fmt0(fc.goal(id))+'</span>')}).join('')+
+  return '<div class="kpis">'+fc.order.map(id=>{const f=fc.full[id];return kpi(esc(potName(id))+' vol',f?mlabel(f):'Buiten prognose',f?'':'neg','<span class="small muted">doel '+fmt0(fc.goal(id))+'</span>')}).join('')+
     kpi('Extra na alle doelen',fmt0(fc.cum),'','<span class="small" style="opacity:.85">eind prognose'+(last?', '+mlabel(last.month):'')+'</span>',true)+'</div>'}
 function progChart(fc){return lineMulti(fc.order.map(id=>({name:potName(id),color:PCOLORS[id]||'--c4',goal:fc.goal(id),vals:[+fc.start[id]||0].concat(fc.rows.map(r=>r.sal[id]))})),['start'].concat(fc.rows.map(r=>mlabel(r.month))))}
 function rowCalc(fc,r){return [r.past?'<span class="z">voorbij</span>':zf(r.tot),zf(r.echt)].concat(fc.order.map(id=>zf(r.to[id])),[zf(r.over)],fc.order.map(id=>fmt(r.sal[id])+(fc.full[id]===r.month?'<span class="fulltag">vol</span>':'')),[zf(r.cum)])}
@@ -1126,7 +1126,7 @@ function prognoseBody(){
   let t='<div class="tablebox"><table class="yr pt" style="min-width:1300px"><thead><tr><th scope="col">Maand</th><th scope="col">Gepland</th><th scope="col">Extra storting</th><th scope="col">Totaal</th><th scope="col">Echt in/uit potjes</th>'+fc.order.map(id=>'<th scope="col">→ '+esc(potName(id).replace(/ ?\(.*\)/,''))+'</th>').join('')+'<th scope="col">Overtollig</th>'+fc.order.map(id=>'<th scope="col">Saldo '+esc(potName(id).replace(/ ?\(.*\)/,''))+'</th>').join('')+'<th scope="col">Cumulatief overtollig</th></tr></thead><tbody>';
   t+='<tr class="tot"><td>'+esc(plan.startLabel)+'</td><td></td><td></td><td></td><td></td>'+fc.order.map(()=>'<td></td>').join('')+'<td></td>'+fc.order.map(id=>'<td class="ps">'+fmt(+fc.start[id]||0)+'</td>').join('')+'<td>'+fmt(0)+'</td></tr>';
   rows.forEach((r,i)=>{
-    t+='<tr data-pr="'+i+'"'+cc(r.month)+'><td>25 '+mlabel(r.month)+'</td>'+
+    t+='<tr data-pr="'+i+'"'+cc(r.month)+'><td>'+mlabel(r.month)+'</td>'+
       '<td><input class="pin" aria-label="Gepland '+mlabel(r.month)+'" inputmode="decimal" value="'+esc(amtStr(r.planned))+'" data-pedit="planned" data-i="'+i+'"></td>'+
       '<td><input class="pin" aria-label="Extra storting '+mlabel(r.month)+'" inputmode="decimal" value="'+esc(r.extra?amtStr(r.extra):'')+'" placeholder="0" data-pedit="extra" data-i="'+i+'"></td>'+
       rowCalc(fc,r).map(x=>'<td class="pc">'+x+'</td>').join('')+'</tr>';
@@ -1353,7 +1353,7 @@ function viewPots(){
     h+='<section class="card pot"><div class="tophead"><div class="name"><i class="sw" style="width:14px;height:14px;background:'+potColor(p)+'"></i>'+esc(p.name)+'</div><span class="small muted num">'+Math.round(pr*100)+'%</span></div>'+
       '<div class="big">'+fmt(b)+'</div><div class="ptrack"><div class="fill" style="width:'+(pr*100).toFixed(1)+'%;background:'+potColor(p)+'"></div></div>'+
       '<div class="meta"><span class="muted">Doel<b class="num" style="color:var(--fg)">'+fmt0(g)+'</b></span><span class="muted">Nog nodig<b class="num" style="color:var(--fg)">'+fmt0(rest)+'</b></span><span class="muted">Stand op '+fdate(p.startDate)+'<b class="num" style="color:var(--fg)">'+fmt0(p.startBalance)+'</b></span></div>'+
-      (fc&&fc.order.includes(p.id)?'<div class="small"><span class="muted">Vol volgens prognose: </span><b>'+(fc.full[p.id]?'25 '+mlabel(fc.full[p.id]):'buiten prognose')+'</b></div>':'')+
+      (fc&&fc.order.includes(p.id)?'<div class="small"><span class="muted">Vol volgens prognose: </span><b>'+(fc.full[p.id]?mlabel(fc.full[p.id]):'buiten prognose')+'</b></div>':'')+
       '<div class="small muted">Stortingen '+fmt(ins)+' · Opnames '+fmt(outs)+'</div>'+
       '<div class="actions"><button class="btn small primary" type="button" data-act="potin" data-id="'+esc(p.id)+'">Storting</button><button class="btn small" type="button" data-act="potout" data-id="'+esc(p.id)+'">Opname</button><button class="btn small ghost" type="button" data-act="potedit" data-id="'+esc(p.id)+'">'+(editing?'Sluiten':'Stand of doel aanpassen')+'</button></div>';
     if(editing)h+='<form class="row2" data-form="pot" data-id="'+esc(p.id)+'"><label class="field">Spaardoel<input id="pg-'+esc(p.id)+'" name="goal" inputmode="decimal" value="'+esc(amtStr(p.goal))+'"></label><label class="field">Huidige stand<input id="pb-'+esc(p.id)+'" name="startBalance" inputmode="decimal" value="'+esc(amtStr(p.startBalance))+'"></label><label class="field">Naam<input id="pn-'+esc(p.id)+'" name="name" value="'+esc(p.name)+'"></label><label class="field">Stand op datum<input id="pd-'+esc(p.id)+'" type="date" name="startDate" value="'+esc(p.startDate)+'"></label><button class="btn primary" type="submit" style="grid-column:1/-1">Opslaan</button></form>';

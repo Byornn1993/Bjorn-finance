@@ -1,6 +1,6 @@
 # Bjorn Finance: overdracht
 
-Stand: 21 november 2026, app-versie **v53**. Dit document is voor een nieuwe Claude-sessie zonder voorkennis.
+Stand: 24 november 2026, app-versie **v54** (lokaal gecommit, nog te pushen). Dit document is voor een nieuwe Claude-sessie zonder voorkennis.
 
 > Let op: deze repo is **publiek** en GitHub Pages serveert ook dit bestand. Zet hier nooit bedragen, rekeningnummers, wachtwoorden of sleutels.
 
@@ -43,12 +43,15 @@ Doel op termijn: samen met zijn vriendin grip houden op het huishouden. Ze komt 
 - **Maandlogboek** (map `logboek/`, alleen lokaal) met een geplande taak elke 25ste om 19:00 (zie §10), en sinds 23 november 2026 een **midmaandreview** elke 10de om 18:31 (geplande taak "Midmaandreview Bjorn Finance", een Claude-taak die deze computer nodig heeft; inhoud in `logboek/LEES MIJ.md`). Alleen lezen, niets wijzigen in de app.
 
 **Half af / open:**
+- **v54** (24/11): de "25" vóór de maand is weg in de Prognose (tabel, "vol"-vakjes) en bij Spaarpotjes ("Vol volgens prognose"); er staat nu gewoon "nov 2026". Nog niet live: eerst pushen en dan nakijken op laptop en iPhone.
 - De gebruiksaanwijzing is bijgewerkt tot en met v52. De wijziging van v53 (Vrije cashflow zonder opnames uit potjes) staat er nog niet in.
 - Het logboek van november 2026 is een tussenstand en wordt op 25 november aangevuld.
 
 **Voorgesteld, nog niet gekozen:**
 - een potje "Onvoorzien";
 - afspraken voor het samenwonen (kosten verdelen).
+
+**Bekend probleem (nog niet opgelost, eerst plan en akkoord):** de Prognose trekt in de lopende maand alleen de stortingen naar potjes af (`potMoves` → `dep`), niet de opnames. Haal je in een maand ook geld uit een potje, dan toont de prognose te weinig nog te sparen (gezien op 24/11/2026: november toonde 9.500 i.p.v. 10.000). Voorstel: met netto stortingen rekenen.
 
 **Bewust afgewezen:** automatische update-knop, Excel-export (geschrapt in v46), het voorstel "L1" uit de analyse.
 
