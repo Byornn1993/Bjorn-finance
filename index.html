@@ -143,6 +143,7 @@ details.more{border-top:1px solid var(--line-2);padding-top:8px}
 .dkbar{order:2;display:flex;justify-content:center;gap:6px;padding-top:8px}
 .dkbar button{width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid var(--accent);background:var(--bg);color:var(--accent);cursor:pointer;font-size:13px}
 .dkbar button:disabled{opacity:.35;cursor:default}
+.dkhid{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px}
 .dkhelp{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);border-radius:var(--r);padding:12px 14px;margin-bottom:14px;font-size:14px}
 @media (min-width:700px) and (max-width:999px){.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
@@ -966,7 +967,7 @@ function viewDash(){
   const totPots=S.pots.reduce((a,p)=>a+potBalance(p),0), totGoal=S.pots.reduce((a,p)=>a+(+p.goal||0),0);
   const E=ui.dash;
   let h='<div class="head"><div><h1>Dashboard</h1><div class="sub">'+MONTHS[ui.m-1]+' '+ui.y+' · '+st.count+' transacties</div></div>'+monthNav()+'</div>';
-  if(E)h+='<div class="dkhelp"><span>'+(isWide()?'Sleep de vakjes en blokken naar de plek die je wil, of gebruik de pijltjes.':'Gebruik de pijltjes om een vakje of blok te verplaatsen.')+'</span><div class="actions"><button class="btn small ghost" type="button" data-act="dash-reset">Standaard herstellen</button><button class="btn small" type="button" data-act="dash-cancel">Annuleren</button><button class="btn small primary" type="button" data-act="dash-save">Klaar</button></div></div>';
+  if(E)h+='<div class="dkhelp"><span>'+(isWide()?'Sleep de vakjes en blokken naar de plek die je wil, of gebruik de pijltjes.':'Gebruik de pijltjes om een vakje of blok te verplaatsen.')+' Met 🗑 haal je iets van je dashboard; je gegevens blijven bewaard.'+dashHiddenChips()+'</span><div class="actions"><button class="btn small ghost" type="button" data-act="dash-reset">Standaard herstellen</button><button class="btn small" type="button" data-act="dash-cancel">Annuleren</button><button class="btn small primary" type="button" data-act="dash-save">Klaar</button></div></div>';
   // M1: bovenaan één kaart met het belangrijkste van de maand (op de iPhone zonder centen, zodat het past)
   const fa=isWide()?fmt:fmt0;
   const ratio=st.inkomen>0?Math.min(st.uitgaven/st.inkomen,1):0;
@@ -1020,8 +1021,14 @@ function dashNotes(){
   return h;
 }
 /* ---------- Indeling dashboard ----------
-   Alleen de volgorde van vakjes en blokken; bewaard als prognose/dashboard zodat laptop en iPhone dezelfde indeling tonen. */
+   Volgorde van vakjes en blokken, en (v57) welke verborgen zijn (hidden); bewaard als prognose/dashboard zodat laptop en iPhone dezelfde indeling tonen. */
 const DASH_DEFAULT={kpi:['cashflow','leven','gespaard','saldo','vermogen'],blok:['categorie','potjes','abonnementen']};
+const DASH_LABEL={cashflow:'Vrije cashflow',leven:'Levenskosten',gespaard:'Gespaard & belegd',saldo:'Saldo rekening',vermogen:'Netto vermogen',categorie:'Uitgaven',potjes:'Spaarpotjes',abonnementen:'Abonnementen'};
+// Verborgen onderdelen (v57): alleen weg van het dashboard, de gegevens blijven bestaan.
+function dashHidden(type){const src=ui.dash?(ui.dash.hidden||{})[type]:(((S.prognose.find(x=>x.id==='dashboard')||{}).hidden)||{})[type];return (Array.isArray(src)?src:[]).filter(k=>DASH_DEFAULT[type].includes(k))}
+function dashStart(){const d=S.prognose.find(x=>x.id==='dashboard')||{};return {kpi:dashOrder('kpi'),blok:dashOrder('blok'),hidden:{kpi:((d.hidden||{}).kpi||[]).slice(),blok:((d.hidden||{}).blok||[]).slice()}}}
+function dashHiddenChips(){const L=['kpi','blok'].flatMap(t=>dashHidden(t).map(k=>[t,k])); if(!L.length)return '';
+  return '<span class="dkhid"><b>Verborgen:</b> '+L.map(([t,k])=>'<button class="btn small" type="button" data-act="dash-show" data-dk="'+t+':'+k+'">+ '+esc(DASH_LABEL[k]||k)+'</button>').join(' ')+'</span>'}
 // Bewaarde volgorde, aangevuld met nieuwe onderdelen en zonder onderdelen die niet meer bestaan.
 function dashOrder(type){
   const src=ui.dash?ui.dash[type]:((S.prognose.find(x=>x.id==='dashboard')||{})[type]);
@@ -1029,19 +1036,20 @@ function dashOrder(type){
   return o.concat(def.filter(k=>!o.includes(k)));
 }
 function dashItems(type,map){
-  const o=dashOrder(type);
+  const hid=dashHidden(type), o=dashOrder(type).filter(k=>!hid.includes(k));
   if(!ui.dash)return o.map(k=>map[k]).join('');
-  return o.map((k,i)=>'<div class="dk" draggable="true" data-dk="'+type+':'+k+'"><div class="dkbar"><button type="button" data-act="dash-move" data-dk="'+type+':'+k+'" data-dir="-1" aria-label="Eén plek naar voren"'+(i?'':' disabled')+'>◀</button><button type="button" data-act="dash-move" data-dk="'+type+':'+k+'" data-dir="1" aria-label="Eén plek naar achteren"'+(i<o.length-1?'':' disabled')+'>▶</button></div>'+map[k]+'</div>').join('');
+  return o.map((k,i)=>'<div class="dk" draggable="true" data-dk="'+type+':'+k+'"><div class="dkbar"><button type="button" data-act="dash-move" data-dk="'+type+':'+k+'" data-dir="-1" aria-label="Eén plek naar voren"'+(i?'':' disabled')+'>◀</button><button type="button" data-act="dash-move" data-dk="'+type+':'+k+'" data-dir="1" aria-label="Eén plek naar achteren"'+(i<o.length-1?'':' disabled')+'>▶</button><button type="button" data-act="dash-hide" data-dk="'+type+':'+k+'" aria-label="'+esc(DASH_LABEL[k]||k)+' van het dashboard halen" title="Van het dashboard halen">🗑</button></div>'+map[k]+'</div>').join('');
 }
 function dashMove(src,dst,dir){
   const [type,k]=src.split(':'); const o=dashOrder(type); const i=o.indexOf(k); if(i<0)return;
   let j;
-  if(dst){const [t2,k2]=dst.split(':'); if(t2!==type)return; j=o.indexOf(k2)} else j=i+dir;
+  if(dst){const [t2,k2]=dst.split(':'); if(t2!==type)return; j=o.indexOf(k2)}
+  else {const hid=dashHidden(type), vis=o.filter(x=>!hid.includes(x)), nb=vis[vis.indexOf(k)+dir]; j=nb===undefined?-1:o.indexOf(nb)}
   if(j<0||j>=o.length||j===i)return;
   o.splice(i,1); o.splice(j,0,k); ui.dash[type]=o; render();
 }
 async function dashSave(){
-  const d={kpi:dashOrder('kpi'),blok:dashOrder('blok')};
+  const d={kpi:dashOrder('kpi'),blok:dashOrder('blok'),hidden:{kpi:dashHidden('kpi'),blok:dashHidden('blok')}};
   if(!await save('prognose','dashboard',Object.assign(d,{updated:Date.now()})))return;
   ui.dash=null; render(); toast('Indeling dashboard bewaard');
 }
@@ -1761,9 +1769,11 @@ document.addEventListener('click',async e=>{
   switch(act){
     case 'lay-open': ui.lay={groups:Object.fromEntries(GROUPS.map(g=>[g.id,g.layout.slice()])),renames:{},msg:''}; render(); window.scrollTo(0,0); break;
     case 'lay-cancel': ui.lay=null; render(); break;
-    case 'dash-edit': ui.dash={kpi:dashOrder('kpi'),blok:dashOrder('blok')}; render(); break;
+    case 'dash-edit': ui.dash=dashStart(); render(); break;
+    case 'dash-hide': {const [t,k]=el.dataset.dk.split(':'); const h=ui.dash.hidden[t]; if(!h.includes(k))h.push(k); render()} break;
+    case 'dash-show': {const [t,k]=el.dataset.dk.split(':'); ui.dash.hidden[t]=ui.dash.hidden[t].filter(x=>x!==k); render()} break;
     case 'dash-cancel': ui.dash=null; render(); break;
-    case 'dash-reset': ui.dash={kpi:DASH_DEFAULT.kpi.slice(),blok:DASH_DEFAULT.blok.slice()}; render(); break;
+    case 'dash-reset': ui.dash={kpi:DASH_DEFAULT.kpi.slice(),blok:DASH_DEFAULT.blok.slice(),hidden:{kpi:[],blok:[]}}; render(); break;
     case 'dash-save': await dashSave(); break;
     case 'dash-move': dashMove(el.dataset.dk,null,+el.dataset.dir); break;
     case 'lay-save': await saveLayout(); break;
@@ -1784,7 +1794,7 @@ document.addEventListener('click',async e=>{
     case 'pack-del': {const id=el.dataset.id; ui.confirm=null; if(await remove('prognose',id))toast('Aankoop verpakking verwijderd'); else render()} break;
     case 'more-go': closeSheet(false); if(location.hash==='#'+el.dataset.h)route(); else location.hash=el.dataset.h; break;
     case 'more-export': closeSheet(false); exportData(); break;
-    case 'more-dash': closeSheet(false); ui.dash={kpi:dashOrder('kpi'),blok:dashOrder('blok')}; if(location.hash!=='#dashboard')location.hash='dashboard'; else render(); break;
+    case 'more-dash': closeSheet(false); ui.dash=dashStart(); if(location.hash!=='#dashboard')location.hash='dashboard'; else render(); break;
     case 'more-theme': cycleTheme(); render(); drawMore(); break;
     case 'more-pv': togglePv(); drawMore(); break;
     case 'flush': flushOutbox(); break;

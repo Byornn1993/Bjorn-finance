@@ -1,6 +1,6 @@
 # Bjorn Finance: overdracht
 
-Stand: 24 november 2026, app-versie **v56**. Dit document is voor een nieuwe Claude-sessie zonder voorkennis.
+Stand: 24 november 2026, app-versie **v57** (lokaal gecommit; Bjorn pusht met `..\Push Be finance.cmd`). Dit document is voor een nieuwe Claude-sessie zonder voorkennis.
 
 > Let op: deze repo is **publiek** en GitHub Pages serveert ook dit bestand. Zet hier nooit bedragen, rekeningnummers, wachtwoorden of sleutels.
 
@@ -43,10 +43,11 @@ Doel op termijn: samen met zijn vriendin grip houden op het huishouden. Ze komt 
 - **Maandlogboek** (map `logboek/`, alleen lokaal) met een geplande taak elke 25ste om 19:00 (zie §10), en sinds 23 november 2026 een **midmaandreview** elke 10de om 18:31 (geplande taak "Midmaandreview Bjorn Finance", een Claude-taak die deze computer nodig heeft; inhoud in `logboek/LEES MIJ.md`). Alleen lezen, niets wijzigen in de app.
 
 **Half af / open:**
+- **v57** (25/11): Dashboard indelen heeft een 🗑-knop per vakje/blok. Verbergt het alleen van het dashboard (bewaard als `hidden:{kpi,blok}` in prognose/dashboard); terugzetten via "Verborgen: + …" of Standaard herstellen. Getest in headless browser (laptop en 375 px).
 - **v56** (25/11): nieuw transactietype **Terugbetaling** (`type:'terugbetaling'`, met een uitgavencategorie). Verlaagt de uitgaven in die categorie, telt nooit als inkomen. `stats()` geeft `bruto`, `terug`, `terugCats`; `uitgaven`, levenskosten en eindsaldo zijn netto. Dashboard toont bruto / terugbetaald / netto; categorieën netto met "€ x terugbetaald"; jaaroverzicht netto per categorie plus infoRegel "Terugbetaald"; Transacties: filterchip, groene +. Getest in een headless browser met nepgegevens (laptop en 375 px), niet op Bjorns echte iPhone.
 - **v55** (24/11): de gekozen maand wordt onthouden (localStorage `bf-period` en `bf-month`) en is gedeeld tussen Dashboard, Transacties en Sales. Ze blijft staan tot Bjorn zelf een andere kiest, ook bij een nieuwe kalendermaand. Knop **Deze maand** (alleen zichtbaar als je niet op de huidige maand staat) springt terug. Logica getest met node; nog niet visueel getest op laptop en iPhone.
 - **v54** (24/11): de "25" vóór de maand is weg in de Prognose (tabel, "vol"-vakjes) en bij Spaarpotjes ("Vol volgens prognose"); er staat nu gewoon "nov 2026". Live sinds 24/11.
-- De gebruiksaanwijzing is bijgewerkt tot en met v52. v53 (Vrije cashflow zonder opnames uit potjes), v54 (maand zonder "25") en v55 (maand onthouden, knop Deze maand) en v56 (terugbetalingen) staan er nog niet in.
+- De gebruiksaanwijzing is bijgewerkt tot en met v52. v53 (Vrije cashflow zonder opnames uit potjes), v54 (maand zonder "25") en v55 (maand onthouden, knop Deze maand) v56 (terugbetalingen) en v57 (vakjes verbergen) staan er nog niet in.
 - Het logboek van november 2026 is een tussenstand en wordt op 25 november aangevuld.
 
 **Import januari–augustus 2026 (25/11/2026):** 885 transacties uit het Argenta-jaaruittreksel (`documenten/Rekeninguittreksels_…2026 het hele jaar.pdf`), alle met id `imp26…` en notitie "import bankuittreksel". Regels: loon telt voor de maand erna (op de 1ste); alles na de loondag gaat ook naar de 1ste van de volgende maand; januari kreeg de vaste lasten van februari als "geschat" (het uittreksel begint pas op 7/1). Payconiq, collega's en andere terugstortingen = terugbetaling. Nalijst: `documenten/Nalijst 2026 januari-augustus.xlsx`; scripts en data: `werkbestanden/import2026-*`. Ongedaan maken: `delete from items where soort='tx' and id like 'imp26%'` (alleen met Bjorns akkoord). Januari en de categorieën zijn bij benadering; vanaf september zijn de cijfers nauwkeurig.
