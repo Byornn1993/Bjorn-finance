@@ -236,6 +236,8 @@ table.tx tfoot td{font-weight:600;background:var(--surface-2);padding:10px 8px}
 @media (min-width:700px){.sheet{border-radius:22px}}
 .sheet .shead{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;background:var(--surface-2);padding:4px;border-radius:14px}
+.seg.seg4{grid-template-columns:repeat(4,minmax(0,1fr))}.seg.seg4 button{font-size:13px;padding:0 2px;line-height:1.1;hyphens:manual}
+@media (max-width:420px){.seg.seg4 button{font-size:12px}}
 .seg button{height:40px;border:0;border-radius:11px;background:transparent;cursor:pointer;font-weight:500}
 .seg button[aria-pressed="true"]{background:var(--surface);box-shadow:var(--shadow);font-weight:700;color:var(--accent-text)}
 .field{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted);font-weight:500}
@@ -393,7 +395,10 @@ const groupOf=c=>CAT_GROUP[c]||groupById('vrij');
 const isSaveCat=c=>(CAT_GROUP[c]||{}).id==='spaar';
 const MONTHS=['Januari','Februari','Maart','April','Mei','Juni','Juli','Augustus','September','Oktober','November','December'];
 const MSHORT=['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
-const TYPES={inkomen:'Inkomen',uitgave:'Uitgave',overboeking:'Overboeking'};
+const TYPES={inkomen:'Inkomen',uitgave:'Uitgave',overboeking:'Overboeking',terugbetaling:'Terugbetaling'};
+// Terugbetaling (v56): geld dat je terugkrijgt voor een gedeelde uitgave. Verlaagt de uitgaven in die categorie, is geen inkomen.
+const TERUG='terugbetaling', TERUG_ROW='Terugbetaald';
+const terugCat=c=>CAT_GROUP[c]&&groupOf(c).kind==='uitgave'&&!isSaveCat(c)?c:'Overig';
 
 /* ---------- Toestand ---------- */
 const S={tx:[],pots:[],balance:[],networth:[],prognose:[],loaded:{tx:false,pots:false,balance:false,networth:false,prognose:false}};
@@ -454,6 +459,8 @@ restorePeriod();
    overboekingen: rekening → potje telt als sparen (zoals een storting),
                   potje → rekening telt als inkomen uit potjes (rij Spaarpotjes),
                   potje → potje telt niet mee
+   terugbetaling = (v56) verlaagt de uitgaven in zijn categorie; bruto = uitgaven zonder terugbetalingen,
+                   uitgaven/levenskosten/eindsaldo rekenen netto; telt nooit als inkomen
    overdracht    = vanaf november 2026 telt het eindsaldo van de vorige maand automatisch
                   als inkomen (rij Over van vorige maand); ook een negatief eindsaldo */
 function txIn(y,m){return S.tx.filter(t=>t.date&&+t.date.slice(0,4)===y&&(!m||+t.date.slice(5,7)===m))}
@@ -465,7 +472,7 @@ function moveKind(t){
   return null;
 }
 // Inkomsten en opnames uit een potje komen op je rekening binnen: die krijgen een groene +.
-const isPlus=t=>t.type==='inkomen'||moveKind(t)==='opname';
+const isPlus=t=>t.type==='inkomen'||t.type===TERUG||moveKind(t)==='opname';
 // Vanaf deze maand neemt elke maand het eindsaldo van de vorige maand mee (oktober 2026 boekte dat nog met de hand).
 const CARRY_FROM=2026*12+11, CARRY_ROW='Over van vorige maand';
 function carryIn(y,m){if(y*12+m<CARRY_FROM)return 0;return m===1?stats(y-1,12).eindsaldo:stats(y,m-1).eindsaldo}
@@ -477,19 +484,21 @@ function stats(y,m){
   return r;
 }
 function calcStats(y,m){
-  const L=txIn(y,m); const r={inkomen:0,uitgaven:0,sparen:0,uitPot:0,opname:0,count:L.length,groups:{},cats:{}};
+  const L=txIn(y,m); const r={inkomen:0,uitgaven:0,sparen:0,uitPot:0,opname:0,terug:0,terugCats:{},count:L.length,groups:{},cats:{}};
   for(const t of L){const a=+t.amount||0;
     if(t.type==='inkomen'){r.inkomen+=a;continue}
     const mk=moveKind(t);
     if(mk==='opname'){r.opname+=a;continue}
     if(mk==='storting'){r.uitgaven+=a;r.sparen+=a;r.groups.spaar=(r.groups.spaar||0)+a;r.cats[SAVE_CAT]=(r.cats[SAVE_CAT]||0)+a;continue}
+    if(t.type===TERUG){const c=terugCat(t.category), g=groupOf(c).id; r.terug+=a; r.terugCats[c]=(r.terugCats[c]||0)+a; r.cats[c]=(r.cats[c]||0)-a; r.groups[g]=(r.groups[g]||0)-a; continue}
     if(t.type!=='uitgave')continue;
     r.uitgaven+=a;
     if(isSaveCat(t.category))r.sparen+=a; else if(t.potOut)r.uitPot+=a;
     const fromPot=!isSaveCat(t.category)&&t.potOut; const ck=fromPot?'Spaarpotjes':t.category;
     const g=fromPot?'vrij':groupOf(t.category).id; r.groups[g]=(r.groups[g]||0)+a; r.cats[ck]=(r.cats[ck]||0)+a;
   }
-  for(const k of ['inkomen','uitgaven','sparen','uitPot','opname'])r[k]=round2(r[k]);
+  for(const k of ['inkomen','uitgaven','sparen','uitPot','opname','terug'])r[k]=round2(r[k]);
+  r.bruto=r.uitgaven; r.uitgaven=round2(r.bruto-r.terug); // netto uitgaven
   r.carry=round2(carryIn(y,m));
   r.inkomenLoon=r.inkomen; r.inkomen+=r.uitPot+r.opname+r.carry;
   r.inkomen=round2(r.inkomen);
@@ -817,7 +826,7 @@ async function deleteTx(t){
 }
 const isWide=()=>window.matchMedia('(min-width:900px)').matches;
 function catOptions(type,sel){
-  const gs=GROUPS.filter(g=>type==='inkomen'?g.kind==='inkomen':g.kind==='uitgave');
+  const gs=GROUPS.filter(g=>type==='inkomen'?g.kind==='inkomen':g.kind==='uitgave'&&(type!==TERUG||!g.cats.some(isSaveCat)));
   let h=''; let found=false;
   for(const g of gs){h+='<optgroup label="'+esc(g.name)+'">';for(const c of g.cats){if(c===sel)found=true;h+='<option value="'+esc(c)+'"'+(c===sel?' selected':'')+'>'+esc(c===SAVE_CAT?'Sparen / beleggen (overig)':c)+'</option>'}h+='</optgroup>'}
   if(sel&&!found)h+='<option selected>'+esc(sel)+'</option>';
@@ -962,6 +971,7 @@ function viewDash(){
   const fa=isWide()?fmt:fmt0;
   const ratio=st.inkomen>0?Math.min(st.uitgaven/st.inkomen,1):0;
   h+='<section class="card msum"><span class="label">'+MONTHS[ui.m-1]+' in één oogopslag</span><div class="msum3"><div><span>Binnen</span><b>'+fa(st.inkomen)+'</b></div><div><span>Uit</span><b>'+fa(st.uitgaven)+'</b></div><div><span>Over</span><b class="'+(st.eindsaldo<0?'neg':'over')+'">'+fa(st.eindsaldo)+'</b></div></div>'+
+    '<div class="small muted brnet" style="margin:4px 0 8px">Uitgaven bruto <b class="num">'+fmt(st.bruto)+'</b> · terugbetaald <b class="num">'+fmt(st.terug)+'</b> · netto <b class="num">'+fmt(st.uitgaven)+'</b></div>'+
     '<div class="track"><div class="fill" style="width:'+(ratio*100).toFixed(1)+'%;background:var(--accent)"></div></div><span class="small muted">'+(st.inkomen>0?Math.round(st.uitgaven/st.inkomen*100)+'% van wat binnenkwam is uitgegeven of gespaard':'Nog geen inkomen deze maand')+(st.sparen?' · waarvan '+fmt(st.sparen)+' gespaard':'')+(st.carry?' · incl. '+fmt(st.carry)+' over van vorige maand':'')+'</span></section>';
   h+=dashNotes();
   const K={
@@ -976,16 +986,16 @@ function viewDash(){
   };
   h+='<div class="kpis">'+dashItems('kpi',K)+'</div>';
   if(!st.count)h+='<div class="note">Voor '+MONTHS[ui.m-1]+' '+ui.y+' zijn nog geen transacties. Tik op de plusknop om de eerste toe te voegen.</div>';
-  const parts=GROUPS.filter(g=>g.kind==='uitgave').map(g=>({label:g.name,v:st.groups[g.id]||0,color:g.color}));
+  const parts=GROUPS.filter(g=>g.kind==='uitgave').map(g=>({label:g.name,v:Math.max(0,st.groups[g.id]||0),color:g.color}));
   const gt=parts.reduce((a,p)=>a+p.v,0);
   const B={};
   // categorieën, potjes, vermogen
   // alle spaarcategorieën samen als één regel Sparen / beleggen
   const cats=Object.entries(st.cats).filter(([c])=>!isSaveCat(c)).concat(st.sparen?[[SAVE_CAT,st.sparen]]:[]).sort((a,b)=>b[1]-a[1]).slice(0,8); const cmax=cats.length?cats[0][1]:1;
   // verdeling per groep (ring) en de top 8 categorieën in één blok
-  B.categorie='<section class="card wide"><h2>Uitgaven</h2><div class="cap">'+MONTHS[ui.m-1]+', inclusief sparen</div>'+
+  B.categorie='<section class="card wide"><h2>Uitgaven</h2><div class="cap">'+MONTHS[ui.m-1]+', inclusief sparen'+(st.terug?', netto na '+fmt(st.terug)+' terugbetaald':'')+'</div>'+
     (gt>0?'<div class="catwrap"><div class="donutwrap">'+donut(parts,gt,fmt0(gt))+'<div class="dl">'+parts.map(p=>'<div><i class="sw" style="background:var('+p.color+')"></i><span>'+esc(p.label)+'</span><b class="num">'+fmt(p.v)+'</b><span class="pct num">'+Math.round(p.v/gt*100)+'%</span></div>').join('')+'</div></div>'+
-      '<div class="hbar">'+cats.map(([c,v])=>'<div class="row"><div class="top"><span>'+esc(c)+'</span><b class="num">'+fmt(v)+'</b></div><div class="track"><div class="fill" style="width:'+(v/cmax*100).toFixed(1)+'%;background:var('+groupOf(c).color+')"></div></div></div>').join('')+'</div></div>':'<div class="empty small">Nog geen uitgaven deze maand.</div>')+
+      '<div class="hbar">'+cats.map(([c,v])=>'<div class="row"><div class="top"><span>'+esc(c)+(st.terugCats[c]?' <span class="small muted">· '+fmt(st.terugCats[c])+' terugbetaald</span>':'')+'</span><b class="num">'+fmt(v)+'</b></div><div class="track"><div class="fill" style="width:'+(Math.max(0,v)/cmax*100).toFixed(1)+'%;background:var('+groupOf(c).color+')"></div></div></div>').join('')+'</div></div>':'<div class="empty small">Nog geen uitgaven deze maand.</div>')+
     '</section>';
   B.potjes='<section class="card"><div class="head" style="margin-bottom:10px"><div><h2>Spaarpotjes</h2><div class="cap" style="margin:0">'+fmt0(totPots)+' van '+fmt0(totGoal)+'</div></div><a class="btn small" href="#potjes">Alle potjes</a></div><div class="hbar">'+
     S.pots.map(p=>{const b=potBalance(p),g=+p.goal||0,pr=g?Math.min(b/g,1):0;return '<div class="row"><div class="top"><span>'+esc(p.name)+'</span><b class="num">'+fmt0(b)+' <span class="muted" style="font-weight:400">/ '+fmt0(g)+'</span></b></div><div class="track"><div class="fill" style="width:'+(pr*100).toFixed(1)+'%;background:'+potColor(p)+'"></div></div><span class="small muted num">'+Math.round(pr*100)+'%</span></div>'}).join('')+
@@ -1160,7 +1170,7 @@ const POT_ROW='Spaarpotjes';
 const YEAR_LAYOUT=[
   {id:'in',grp:'inkomen',name:'Inkomsten',extra:[POT_ROW,CARRY_ROW],total:'Totaal inkomsten'},
   {id:'vast',grp:'vast',name:'Uitgaven — vaste lasten',total:'Totaal vaste lasten'},
-  {id:'vrij',grp:'vrij',name:'Uitgaven — vrije tijd & dagelijks leven',extra:[POT_ROW],total:'Totaal vrije tijd & dagelijks leven'},
+  {id:'vrij',grp:'vrij',name:'Uitgaven — vrije tijd & dagelijks leven',extra:[POT_ROW,TERUG_ROW],total:'Totaal vrije tijd & dagelijks leven'},
   {id:'spaar',grp:'spaar',name:'Uitgaven — sparen & beleggen',total:'Totaal sparen & beleggen'}
 ];
 // Spaarregels: één regel per potje (stortingen) plus de spaarcategorieën.
@@ -1177,11 +1187,13 @@ const rowsOf=s=>(s.grp==='spaar'?saveRowDefs():layoutRows(s.grp)).concat((s.extr
 function yearData(y){
   const inc=Array.from({length:12},()=>({})), exp=Array.from({length:12},()=>({}));
   const potInfo=Array(12).fill(0); // opnames: zichtbaar bij uitgaven Spaarpotjes, maar niet in de totalen
+  const terugInfo=Array(12).fill(0); // terugbetalingen: al afgetrokken per categorie, de regel Terugbetaald is ter info
   const known=new Set(GROUPS.filter(g=>g.kind==='uitgave').flatMap(g=>g.cats));
   const add=(o,k,a)=>{o[k]=(o[k]||0)+a};
   for(const t of S.tx){
     if(!t.date||+t.date.slice(0,4)!==y)continue; const m=+t.date.slice(5,7)-1, a=+t.amount||0;
     if(t.type==='inkomen'){add(inc[m],groupOf(t.category).kind==='inkomen'&&CAT_GROUP[t.category]?t.category:'Overige inkomsten',a)}
+    else if(t.type===TERUG){const c=terugCat(t.category);add(exp[m],known.has(c)?c:'Overig',-a);terugInfo[m]+=a}
     else if(moveKind(t)==='opname'){add(inc[m],POT_ROW,a);potInfo[m]+=a}
     else if(saveKey(t))add(exp[m],saveKey(t),a);
     else if(t.type==='uitgave'){
@@ -1190,7 +1202,7 @@ function yearData(y){
     }
   }
   for(let m=0;m<12;m++){const c=carryIn(y,m+1);if(c)inc[m][CARRY_ROW]=c}
-  return {inc,exp,potInfo};
+  return {inc,exp,potInfo,terugInfo};
 }
 /* ---------- Indeling aanpassen (bewerkscherm) ---------- */
 // ui.lay = werkkopie {groups:{groepid:[...]}, renames:{oude naam:nieuwe naam}, msg}; pas bij Bewaren wordt iets opgeslagen.
@@ -1267,9 +1279,10 @@ function viewYear(){
     t+='<tr class="sec"><td colspan="14">'+esc(s.name)+'</td></tr>';
     for(const {key:r,label,gap} of rowsOf(s)){
       if(gap){t+='<tr class="gap"><td>&nbsp;</td>'+MSHORT.map((_,m)=>'<td class="'+cc(m).trim()+'"></td>').join('')+'<td class="yt"></td></tr>';continue}
-      const vals=src.map((o,m)=>(o[r]||0)+(s.id==='vrij'&&r===POT_ROW?d.potInfo[m]:0));
-      const noDrill=r===POT_ROW||r===CARRY_ROW||r.startsWith('pot:');
-      t+='<tr><td title="'+esc(label)+'">'+esc(label)+(r===POT_ROW?' <span class="small muted">(uit potjes)</span>':'')+'</td>'+vals.map((v,m)=>cell(v,cc(m),noDrill?null:{m:m+1,c:r})).join('')+cell(r===CARRY_ROW?0:sum(vals),' yt')+'</tr>'}
+      if(r===TERUG_ROW&&!d.terugInfo.some(Boolean))continue;
+      const vals=r===TERUG_ROW?d.terugInfo.map(v=>-v):src.map((o,m)=>(o[r]||0)+(s.id==='vrij'&&r===POT_ROW?d.potInfo[m]:0));
+      const noDrill=r===POT_ROW||r===CARRY_ROW||r===TERUG_ROW||r.startsWith('pot:');
+      t+='<tr><td title="'+esc(label)+'">'+esc(label)+(r===POT_ROW?' <span class="small muted">(uit potjes)</span>':'')+(r===TERUG_ROW?' <span class="small muted">(al afgetrokken per categorie)</span>':'')+'</td>'+vals.map((v,m)=>cell(v,cc(m),noDrill?null:{m:m+1,c:r})).join('')+cell(r===CARRY_ROW?0:sum(vals),' yt')+'</tr>'}
     t+='<tr class="tot"><td>'+esc(s.total)+'</td>'+secTot[si].map((v,m)=>cell(v,cc(m))).join('')+cell(sum(secTot[si])-(si===0?cTot:0),' yt')+'</tr>';
   });
   t+='<tr class="sec"><td colspan="14">Totaal &amp; saldo</td></tr>';
@@ -1301,7 +1314,7 @@ function filteredTx(){
 function periodLabel(f){return f.year==='all'?'Alle transacties':f.month==='all'?'Heel '+f.year:MONTHS[+f.month-1]+' '+f.year}
 function viewTx(){
   const L=filteredTx(); const f=ui.f;
-  let tin=0,tout=0,tmove=0; L.forEach(t=>{const a=+t.amount||0; if(t.type==='inkomen')tin+=a; else if(t.type==='uitgave')tout+=a; else tmove+=a});
+  let tin=0,tout=0,tmove=0,tterug=0; L.forEach(t=>{const a=+t.amount||0; if(t.type==='inkomen')tin+=a; else if(t.type==='uitgave')tout+=a; else if(t.type===TERUG)tterug+=a; else tmove+=a});
   const ys=yearsAvailable().slice().sort((a,b)=>b-a);
   const per=f.year==='all'?'all':f.year+'|'+f.month;
   const nF=(f.cat!=='all'?1:0)+(ui.sort.k+'-'+ui.sort.d!=='date-desc'?1:0);
@@ -1316,8 +1329,8 @@ function viewTx(){
     '<select class="sel" id="fc" data-act="fc" aria-label="Categorie" style="max-width:260px"><option value="all">Alle categorieën</option>'+GROUPS.map(g=>'<optgroup label="'+esc(g.name)+'">'+g.cats.map(c=>'<option'+(c===f.cat?' selected':'')+'>'+esc(c)+'</option>').join('')+'</optgroup>').join('')+'</select>'+
     '<select class="sel" id="fs" data-act="fs" aria-label="Sorteren"><option value="date-desc"'+(ui.sort.k+'-'+ui.sort.d==='date-desc'?' selected':'')+'>Nieuwste eerst</option><option value="date-asc"'+(ui.sort.k+'-'+ui.sort.d==='date-asc'?' selected':'')+'>Oudste eerst</option><option value="amount-desc"'+(ui.sort.k+'-'+ui.sort.d==='amount-desc'?' selected':'')+'>Hoogste bedrag</option><option value="amount-asc"'+(ui.sort.k+'-'+ui.sort.d==='amount-asc'?' selected':'')+'>Laagste bedrag</option></select>'+
     (nF?'<button class="btn ghost small" type="button" data-act="freset">Filters wissen</button>':'')+'</div>';
-  h+='<div class="chips" role="group" aria-label="Type">'+[['all','Alles'],['uitgave','Uitgaven'],['inkomen','Inkomsten'],['overboeking','Overboekingen']].map(([k,n])=>'<button type="button" class="chip" data-act="ft" data-v="'+k+'" aria-pressed="'+(f.type===k)+'">'+n+'</button>').join('')+'</div>';
-  h+='<div class="sumbar"><span>'+periodLabel(f)+' · '+L.length+' transacties</span><span>Inkomsten <b>'+fmt(tin)+'</b></span><span>Uitgaven <b>'+fmt(tout)+'</b></span>'+(tmove?'<span>Overboekingen <b>'+fmt(tmove)+'</b></span>':'')+'</div>';
+  h+='<div class="chips" role="group" aria-label="Type">'+[['all','Alles'],['uitgave','Uitgaven'],['inkomen','Inkomsten'],['overboeking','Overboekingen'],[TERUG,'Terugbetalingen']].map(([k,n])=>'<button type="button" class="chip" data-act="ft" data-v="'+k+'" aria-pressed="'+(f.type===k)+'">'+n+'</button>').join('')+'</div>';
+  h+='<div class="sumbar"><span>'+periodLabel(f)+' · '+L.length+' transacties</span><span>Inkomsten <b>'+fmt(tin)+'</b></span><span>Uitgaven <b>'+fmt(tout)+'</b></span>'+(tterug?'<span>Terugbetaald <b>'+fmt(tterug)+'</b></span>':'')+(tmove?'<span>Overboekingen <b>'+fmt(tmove)+'</b></span>':'')+'</div>';
   if(!L.length){h+='<div class="list"><div class="empty">Geen transacties gevonden met deze filters.'+(S.tx.length?' Kies een andere periode of pas de filters aan.':' Voeg je eerste transactie toe met de plusknop.')+'</div></div>';return h}
   if(isWide()){
     const sk=k=>ui.sort.k===k?(ui.sort.d==='asc'?' ↑':' ↓'):'';
@@ -1334,7 +1347,7 @@ function viewTx(){
           (t.receipt?'<button class="btn small ghost" type="button" data-act="viewrc" data-id="'+esc(t.id)+'" aria-label="Bonnetje bekijken" title="Bonnetje bekijken">'+ICON.clip+'</button>':'')+
           '<button class="btn small ghost" type="button" data-act="edit" data-id="'+esc(t.id)+'" aria-label="Bewerken" title="Bewerken">'+ICON.edit+'</button><button class="btn small ghost" type="button" data-act="askdel" data-id="'+esc(t.id)+'" aria-label="Verwijderen" title="Verwijderen">'+ICON.trash+'</button>')+'</td></tr>';
     }
-    h+='</tbody><tfoot><tr><td colspan="4">Totaal gefilterd</td><td style="text-align:right" class="num">'+fmt(tin-tout)+'</td><td colspan="2" class="small muted">inkomsten − uitgaven</td></tr></tfoot></table></div>';
+    h+='</tbody><tfoot><tr><td colspan="4">Totaal gefilterd</td><td style="text-align:right" class="num">'+fmt(tin-tout+tterug)+'</td><td colspan="2" class="small muted">'+(tterug?'inkomsten − uitgaven + terugbetaald':'inkomsten − uitgaven')+'</td></tr></tfoot></table></div>';
   }else{
     h+='<div class="list">'; let last='';
     for(const t of L){
@@ -1342,7 +1355,7 @@ function viewTx(){
       const g=t.type==='overboeking'?null:groupOf(t.category);
       const col=t.type==='overboeking'?'--c4':g.color;
       const init=t.type==='overboeking'?'↔':esc((t.category||'?').slice(0,2).toUpperCase());
-      h+='<button class="li" type="button" data-act="edit" data-id="'+esc(t.id)+'"><span class="ic" style="background:var(--surface-2);color:var('+col+')">'+init+'</span><span class="t"><b>'+esc(t.description||t.category||'Overboeking')+'</b><span>'+(t.type==='overboeking'?esc(potName(t.potOut)+' → '+potName(t.potIn)):esc(t.category))+(t.potOut&&t.type==='uitgave'?' · uit '+esc(potName(t.potOut)):'')+(t.potIn&&t.type==='uitgave'?' · naar '+esc(potName(t.potIn)):'')+(t.receipt?' · bonnetje':'')+'</span></span><span class="a '+(isPlus(t)?'amt-in':'')+'">'+(isPlus(t)?'+':t.type==='uitgave'?'−':'')+fmt(t.amount)+(ui.sort.k!=='date'?'<span>'+fdate(t.date)+'</span>':'')+'</span></button>';
+      h+='<button class="li" type="button" data-act="edit" data-id="'+esc(t.id)+'"><span class="ic" style="background:var(--surface-2);color:var('+col+')">'+init+'</span><span class="t"><b>'+esc(t.description||t.category||'Overboeking')+'</b><span>'+(t.type==='overboeking'?esc(potName(t.potOut)+' → '+potName(t.potIn)):t.type===TERUG?'Terugbetaling · '+esc(t.category):esc(t.category))+(t.potOut&&t.type==='uitgave'?' · uit '+esc(potName(t.potOut)):'')+(t.potIn&&t.type==='uitgave'?' · naar '+esc(potName(t.potIn)):'')+(t.receipt?' · bonnetje':'')+'</span></span><span class="a '+(isPlus(t)?'amt-in':'')+'">'+(isPlus(t)?'+':t.type==='uitgave'?'−':'')+fmt(t.amount)+(ui.sort.k!=='date'?'<span>'+fdate(t.date)+'</span>':'')+'</span></button>';
     }
     h+='</div>';
   }
@@ -1660,14 +1673,15 @@ function drawSheet(){
   const isSave=t.type==='uitgave'&&isSaveCat(t.category);
   let h='<div class="scrim" data-act="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="shT"><div class="shead"><h2 id="shT">'+(F.isNew?'Nieuwe transactie':'Transactie bewerken')+'</h2><button class="iconbtn" type="button" data-act="close" aria-label="Sluiten"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'+
   '<form id="txForm" style="display:flex;flex-direction:column;gap:14px" novalidate>'+
-  '<div class="seg" role="group" aria-label="Type">'+Object.entries(TYPES).map(([k,n])=>'<button type="button" data-act="stype" data-v="'+k+'" aria-pressed="'+(t.type===k)+'">'+n+'</button>').join('')+'</div>'+
+  '<div class="seg seg4" role="group" aria-label="Type">'+Object.entries(TYPES).map(([k,n])=>'<button type="button" data-act="stype" data-v="'+k+'" aria-pressed="'+(t.type===k)+'">'+(k===TERUG?'Terug&shy;betaling':n)+'</button>').join('')+'</div>'+
   '<label class="field">Bedrag<input id="sAmount" class="amount num" inputmode="decimal" placeholder="0,00" value="'+esc(amtStr(t.amount))+'" data-f="amount"></label>'+
   '<div class="row2"><label class="field">Datum<input id="sDate" type="date" value="'+esc(t.date)+'" data-f="date"></label>'+
   (t.type==='overboeking'?'<span></span>':'<label class="field">Categorie<select id="sCat" data-f="category">'+catOptions(t.type,t.category)+'</select></label>')+'</div>'+quickCats(t);
   if(t.type==='overboeking')h+='<div class="row2"><label class="field">Van<select id="sFrom" data-f="potOut">'+potOptions(t.potOut||'',true,'Kies…')+'</select></label><label class="field">Naar<select id="sTo" data-f="potIn">'+potOptions(t.potIn||'',true,'Kies…')+'</select></label></div><span class="hint">Rekening naar potje telt als sparen, potje naar rekening als inkomen uit potjes. Tussen twee potjes telt het niet mee.</span>';
   else if(isSave)h+='<label class="field">Naar spaarpotje<select id="sPotIn" data-f="potIn">'+potOptions(t.potIn||'',false,'Geen potje (beleggen of pensioen)')+'</select></label>';
   const potOutH=(t.type==='uitgave'&&!isSave)?'<label class="field">Betaald uit potje<select id="sPotOut" data-f="potOut">'+potOptions(t.potOut||'',false,'Nee, gewoon van mijn rekening')+'</select></label>':'';
-  h+='<label class="field">Omschrijving<input id="sDesc" placeholder="'+(t.type==='inkomen'?'Bijv. loon oktober':'Bijv. supermarkt')+'" value="'+esc(t.description)+'" data-f="description"></label>';
+  if(t.type===TERUG)h+='<span class="hint">Geld dat je terugkrijgt voor een gedeelde uitgave. Het verlaagt je uitgaven in deze categorie en telt niet als inkomen.</span>';
+  h+='<label class="field">Omschrijving<input id="sDesc" placeholder="'+(t.type==='inkomen'?'Bijv. loon oktober':t.type===TERUG?'Bijv. Stephanie, Payconiq':'Bijv. supermarkt')+'" value="'+esc(t.description)+'" data-f="description"></label>';
   // potje, notitie en bonnetje gebruik je zelden: die staan onder Meer details (open als er al iets in staat)
   h+='<details class="more" id="sMore"'+((F.more||(potOutH&&t.potOut)||t.note||r||F.busy)?' open':'')+'><summary>Meer details</summary><div class="morebody">'+potOutH+
   '<label class="field">Notitie (optioneel)<textarea id="sNote" data-f="note">'+esc(t.note)+'</textarea></label>';
@@ -1815,7 +1829,7 @@ document.addEventListener('click',async e=>{
     case 'baldel': {const id=el.dataset.id; ui.confirm=null; const rest=S.balance.filter(b=>b.id!==id); await remove('balance',id); await snapshotNetworth(rest); toast('Post verwijderd')} break;
     case 'close': if(F)askCloseSheet(); else if(SF)askCloseSale(); else closeSheet(true); break;
     case 'qcat': readSheet(); F.t.category=el.dataset.v; if(isSaveCat(F.t.category))F.t.potOut=''; else F.t.potIn=''; drawSheet(); break;
-    case 'stype': readSheet(); F.t.type=el.dataset.v; if(F.t.type==='inkomen'&&groupOf(F.t.category).kind!=='inkomen')F.t.category='Netto loon 1'; if(F.t.type==='uitgave'&&(groupOf(F.t.category).kind!=='uitgave'||!CAT_GROUP[F.t.category]))F.t.category='Boodschappen'; if(F.t.type==='overboeking'){F.t.potOut=F.t.potOut||'rekening';F.t.potIn=F.t.potIn||''} F.err=''; drawSheet(); break;
+    case 'stype': readSheet(); F.t.type=el.dataset.v; if(F.t.type==='inkomen'&&groupOf(F.t.category).kind!=='inkomen')F.t.category='Netto loon 1'; if(F.t.type==='uitgave'&&(groupOf(F.t.category).kind!=='uitgave'||!CAT_GROUP[F.t.category]))F.t.category='Boodschappen'; if(F.t.type===TERUG&&terugCat(F.t.category)!==F.t.category)F.t.category='Boodschappen'; if(F.t.type==='overboeking'){F.t.potOut=F.t.potOut||'rekening';F.t.potIn=F.t.potIn||''} F.err=''; drawSheet(); break;
     case 'rmrc': readSheet(); F.removeReceipt=true; if(F.newReceipt){assets&&assets.delete(F.newReceipt.id).catch(()=>{});F.newReceipt=null} drawSheet(); break;
     case 'viewnew': showReceipt(F.removeReceipt?null:(F.newReceipt||F.origReceipt)); break;
     case 'sdelask': readSheet(); F.confirmDel=true; drawSheet(); break;
@@ -1856,7 +1870,7 @@ document.addEventListener('change',async e=>{
   if(el.dataset.edit){const tr=el.closest('tr');const id=tr&&tr.dataset.id;const t=S.tx.find(x=>x.id===id);if(!t)return;const k=el.dataset.edit;let v=el.value;
     const patch={updated:Date.now()};
     if(k==='amount'){v=parseAmount(v);if(!isFinite(v)||v<=0){toast('Ongeldig bedrag');el.value=amtStr(t.amount);return}patch.amount=round2(v)}
-    else if(k==='type'){patch.type=v; if(v==='inkomen'){patch.category=groupOf(t.category).kind==='inkomen'?t.category:'Overige inkomsten';patch.potIn='';patch.potOut=''} else if(v==='uitgave'){if(groupOf(t.category).kind!=='uitgave'||!CAT_GROUP[t.category])patch.category='Overig'} else {openSheet(Object.assign({},t,{type:'overboeking',potOut:'rekening',potIn:''}));el.value=t.type;return}}
+    else if(k==='type'){patch.type=v; if(v==='inkomen'){patch.category=groupOf(t.category).kind==='inkomen'?t.category:'Overige inkomsten';patch.potIn='';patch.potOut=''} else if(v==='uitgave'){if(groupOf(t.category).kind!=='uitgave'||!CAT_GROUP[t.category])patch.category='Overig'} else if(v===TERUG){patch.category=terugCat(t.category);patch.potIn='';patch.potOut=''} else {openSheet(Object.assign({},t,{type:'overboeking',potOut:'rekening',potIn:''}));el.value=t.type;return}}
     else if(k==='category'){patch.category=v; if(isSaveCat(v))patch.potOut=''; else patch.potIn=''}
     else if(k==='date'){if(!v){el.value=t.date;return}patch.date=v}
     else patch[k]=v.trim();
