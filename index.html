@@ -1027,34 +1027,37 @@ function dashNotes(){
 }
 /* ---------- Indeling dashboard ----------
    Volgorde van vakjes en blokken, en (v57) welke verborgen zijn (hidden); bewaard als prognose/dashboard zodat laptop en iPhone dezelfde indeling tonen. */
-const DASH_DEFAULT={kpi:['cashflow','leven','gespaard','saldo','vermogen'],blok:['categorie','potjes','abonnementen'],ppart:['kaarten','kpis','grafiek','tabel','instellen']};
+const DASH_DEFAULT={kpi:['cashflow','leven','gespaard','saldo','vermogen'],blok:['categorie','potjes','abonnementen'],ppart:['kpis','grafiek','tabel','instellen']};
 const DASH_LABEL={cashflow:'Vrije cashflow',leven:'Levenskosten',gespaard:'Gespaard & belegd',saldo:'Saldo rekening',vermogen:'Netto vermogen',categorie:'Uitgaven',potjes:'Spaarpotjes',abonnementen:'Abonnementen',
   kaarten:'Potjes',kpis:'Prognose: wanneer vol',grafiek:'Verloop per potje',tabel:'Prognose per maand',instellen:'Prognose instellen'};
 /* v58: dezelfde indeling ook voor het scherm Spaarpotjes (blokken verplaatsen en verbergen). Elke pagina bewaart haar eigen
    indeling als prognose-item: dashboard → id 'dashboard', spaarpotjes → id 'indeling-potjes'. ui.dash.page zegt welke pagina je indeelt. */
 const LAYOUT={dashboard:{store:'dashboard',types:['kpi','blok'],name:'dashboard'},potjes:{store:'indeling-potjes',types:['ppart'],name:'Spaarpotjes'}};
 const TYPE_PAGE={kpi:'dashboard',blok:'dashboard',ppart:'potjes'};
+// Elk spaarpotje is een eigen blok ('pot-<id>'), zodat je ze apart kunt verschuiven; nieuwe potjes komen er vanzelf bij.
+const dashDefault=type=>type==='ppart'?S.pots.map(p=>'pot-'+p.id).concat(DASH_DEFAULT.ppart):DASH_DEFAULT[type];
+const dashLabel=k=>k.startsWith('pot-')?potName(k.slice(4)):(DASH_LABEL[k]||k);
 const layoutEditing=type=>!!(ui.dash&&ui.dash.page===TYPE_PAGE[type]);
 const layoutStored=type=>S.prognose.find(x=>x.id===LAYOUT[TYPE_PAGE[type]].store)||{};
 // Verborgen onderdelen (v57): alleen weg van de pagina, de gegevens blijven bestaan.
-function dashHidden(type){const src=layoutEditing(type)?(ui.dash.hidden||{})[type]:(layoutStored(type).hidden||{})[type];return (Array.isArray(src)?src:[]).filter(k=>DASH_DEFAULT[type].includes(k))}
+function dashHidden(type){const src=layoutEditing(type)?(ui.dash.hidden||{})[type]:(layoutStored(type).hidden||{})[type];return (Array.isArray(src)?src:[]).filter(k=>dashDefault(type).includes(k))}
 function dashStart(page='dashboard'){const L=LAYOUT[page], d=S.prognose.find(x=>x.id===L.store)||{}, r={page,hidden:{}};
   for(const t of L.types){r[t]=dashOrder(t); r.hidden[t]=((d.hidden||{})[t]||[]).slice()} return r}
 function dashHiddenChips(){const L=LAYOUT[ui.dash.page].types.flatMap(t=>dashHidden(t).map(k=>[t,k])); if(!L.length)return '';
-  return '<span class="dkhid"><b>Verborgen:</b> '+L.map(([t,k])=>'<button class="btn small" type="button" data-act="dash-show" data-dk="'+t+':'+k+'">+ '+esc(DASH_LABEL[k]||k)+'</button>').join(' ')+'</span>'}
+  return '<span class="dkhid"><b>Verborgen:</b> '+L.map(([t,k])=>'<button class="btn small" type="button" data-act="dash-show" data-dk="'+t+':'+k+'">+ '+esc(dashLabel(k))+'</button>').join(' ')+'</span>'}
 // Uitleg + knoppen bovenaan terwijl je een pagina indeelt
 function layoutHelp(){const n=LAYOUT[ui.dash.page].name;
   return '<div class="dkhelp"><span>'+(isWide()?'Sleep de vakjes en blokken naar de plek die je wil, of gebruik de pijltjes.':'Gebruik de pijltjes om een vakje of blok te verplaatsen.')+' Met 🗑 haal je iets van je '+n+'; je gegevens blijven bewaard.'+dashHiddenChips()+'</span><div class="actions"><button class="btn small ghost" type="button" data-act="dash-reset">Standaard herstellen</button><button class="btn small" type="button" data-act="dash-cancel">Annuleren</button><button class="btn small primary" type="button" data-act="dash-save">Klaar</button></div></div>'}
 // Bewaarde volgorde, aangevuld met nieuwe onderdelen en zonder onderdelen die niet meer bestaan.
 function dashOrder(type){
   const src=layoutEditing(type)?ui.dash[type]:layoutStored(type)[type];
-  const def=DASH_DEFAULT[type], o=(Array.isArray(src)?src:[]).filter(k=>def.includes(k));
+  const def=dashDefault(type), o=(Array.isArray(src)?src:[]).filter(k=>def.includes(k));
   return o.concat(def.filter(k=>!o.includes(k)));
 }
 function dashItems(type,map){
   const hid=dashHidden(type), o=dashOrder(type).filter(k=>!hid.includes(k));
   if(!layoutEditing(type))return o.map(k=>map[k]).join('');
-  return o.map((k,i)=>'<div class="dk" draggable="true" data-dk="'+type+':'+k+'"><div class="dkbar"><button type="button" data-act="dash-move" data-dk="'+type+':'+k+'" data-dir="-1" aria-label="Eén plek naar voren"'+(i?'':' disabled')+'>◀</button><button type="button" data-act="dash-move" data-dk="'+type+':'+k+'" data-dir="1" aria-label="Eén plek naar achteren"'+(i<o.length-1?'':' disabled')+'>▶</button><button type="button" data-act="dash-hide" data-dk="'+type+':'+k+'" aria-label="'+esc(DASH_LABEL[k]||k)+' verbergen" title="Verbergen">🗑</button></div>'+map[k]+'</div>').join('');
+  return o.map((k,i)=>'<div class="dk" draggable="true" data-dk="'+type+':'+k+'"><div class="dkbar"><button type="button" data-act="dash-move" data-dk="'+type+':'+k+'" data-dir="-1" aria-label="Eén plek naar voren"'+(i?'':' disabled')+'>◀</button><button type="button" data-act="dash-move" data-dk="'+type+':'+k+'" data-dir="1" aria-label="Eén plek naar achteren"'+(i<o.length-1?'':' disabled')+'>▶</button><button type="button" data-act="dash-hide" data-dk="'+type+':'+k+'" aria-label="'+esc(dashLabel(k))+' verbergen" title="Verbergen">🗑</button></div>'+map[k]+'</div>').join('');
 }
 function dashMove(src,dst,dir){
   const [type,k]=src.split(':'); const o=dashOrder(type); const i=o.indexOf(k); if(i<0)return;
@@ -1403,12 +1406,12 @@ function viewPots(){
     (E?'':'<button class="btn small ghost" type="button" data-act="dash-edit" data-page="potjes">'+ICON_LAYOUT+'Indelen</button>')+'</div>';
   if(E)h+=layoutHelp();
   if(!S.pots.length)return h+'<div class="card empty">Nog geen spaarpotjes.</div>';
-  const out=h; h='<div class="grid3">';
+  const out=h, potBlk={}; h='';
   for(const p of S.pots){
     const b=potBalance(p),g=+p.goal||0,pr=g?Math.min(b/g,1):0,rest=Math.max(g-b,0);
     const L=potTx(p); const ins=L.filter(t=>t.potIn===p.id).reduce((a,t)=>a+(+t.amount||0),0), outs=L.filter(t=>t.potOut===p.id).reduce((a,t)=>a+(+t.amount||0),0);
     const editing=ui.potEdit===p.id;
-    h+='<section class="card pot"><div class="tophead"><div class="name"><i class="sw" style="width:14px;height:14px;background:'+potColor(p)+'"></i>'+esc(p.name)+'</div><span class="small muted num">'+Math.round(pr*100)+'%</span></div>'+
+    h='<section class="card pot"><div class="tophead"><div class="name"><i class="sw" style="width:14px;height:14px;background:'+potColor(p)+'"></i>'+esc(p.name)+'</div><span class="small muted num">'+Math.round(pr*100)+'%</span></div>'+
       '<div class="big">'+fmt(b)+'</div><div class="ptrack"><div class="fill" style="width:'+(pr*100).toFixed(1)+'%;background:'+potColor(p)+'"></div></div>'+
       '<div class="meta"><span class="muted">Doel<b class="num" style="color:var(--fg)">'+fmt0(g)+'</b></span><span class="muted">Nog nodig<b class="num" style="color:var(--fg)">'+fmt0(rest)+'</b></span><span class="muted">Stand op '+fdate(p.startDate)+'<b class="num" style="color:var(--fg)">'+fmt0(p.startBalance)+'</b></span></div>'+
       (fc&&fc.order.includes(p.id)?'<div class="small"><span class="muted">Vol volgens prognose: </span><b>'+(fc.full[p.id]?mlabel(fc.full[p.id]):'buiten prognose')+'</b></div>':'')+
@@ -1416,15 +1419,15 @@ function viewPots(){
       '<div class="actions"><button class="btn small primary" type="button" data-act="potin" data-id="'+esc(p.id)+'">Storting</button><button class="btn small" type="button" data-act="potout" data-id="'+esc(p.id)+'">Opname</button><button class="btn small ghost" type="button" data-act="potedit" data-id="'+esc(p.id)+'">'+(editing?'Sluiten':'Stand of doel aanpassen')+'</button></div>';
     if(editing)h+='<form class="row2" data-form="pot" data-id="'+esc(p.id)+'"><label class="field">Spaardoel<input id="pg-'+esc(p.id)+'" name="goal" inputmode="decimal" value="'+esc(amtStr(p.goal))+'"></label><label class="field">Huidige stand<input id="pb-'+esc(p.id)+'" name="startBalance" inputmode="decimal" value="'+esc(amtStr(p.startBalance))+'"></label><label class="field">Naam<input id="pn-'+esc(p.id)+'" name="name" value="'+esc(p.name)+'"></label><label class="field">Stand op datum<input id="pd-'+esc(p.id)+'" type="date" name="startDate" value="'+esc(p.startDate)+'"></label><button class="btn primary" type="submit" style="grid-column:1/-1">Opslaan</button></form>';
     h+='<details><summary>Geschiedenis ('+L.length+')</summary><div class="minilist">'+(L.length?L.map(t=>'<div><span>'+fdate(t.date)+' · '+esc(t.description||t.category||'Overboeking')+'</span><b class="num" style="color:var('+(t.potIn===p.id?'--pos':'--neg')+')">'+(t.potIn===p.id?'+':'−')+fmt(t.amount)+'</b></div>').join(''):'<div><span class="muted">Nog geen stortingen of opnames.</span></div>')+'<div><span class="muted">'+fdate(p.startDate)+' · huidige stand (handmatig)</span><b class="num">'+fmt(p.startBalance)+'</b></div></div></details></section>';
+    potBlk['pot-'+p.id]='<div class="pblok">'+h+'</div>';
   }
-  h+='</div><div class="note">Storten, opnemen of iets betalen uit een potje: zie de gebruiksaanwijzing.</div>';
   const P=prognoseParts();
-  const map={kaarten:'<div class="pblok">'+h+'</div>',
+  const map={...potBlk,
     kpis:'<div class="pblok"><h2 class="sect" id="prognose">Prognose</h2><div class="sub" style="margin-bottom:12px">Eerst Safety vol, dan Huis &amp; tuin, dan Fun. Wat daarna overblijft is extra spaargeld.</div>'+P.kpis+'</div>',
     grafiek:P.grafiek?'<div class="pblok">'+P.grafiek+'</div>':'', tabel:P.tabel?'<div class="pblok">'+P.tabel+'</div>':'', instellen:P.instellen?'<div class="pblok">'+P.instellen+'</div>':''};
   // In indeelmodus ook lege blokken tonen, zodat je ze kunt plaatsen
-  if(E)for(const k in map)if(!map[k])map[k]='<div class="pblok"><section class="card"><span class="muted small">'+esc(DASH_LABEL[k])+' (nog leeg)</span></section></div>';
-  return out+'<div class="pstack">'+dashItems('ppart',map)+'</div>';
+  if(E)for(const k in map)if(!map[k])map[k]='<div class="pblok"><section class="card"><span class="muted small">'+esc(dashLabel(k))+' (nog leeg)</span></section></div>';
+  return out+'<div class="pstack">'+dashItems('ppart',map)+'</div><div class="note">Storten, opnemen of iets betalen uit een potje: zie de gebruiksaanwijzing.</div>';
 }
 
 function viewBalance(){
@@ -1800,7 +1803,7 @@ document.addEventListener('click',async e=>{
     case 'dash-hide': {const [t,k]=el.dataset.dk.split(':'); const h=ui.dash.hidden[t]; if(!h.includes(k))h.push(k); render()} break;
     case 'dash-show': {const [t,k]=el.dataset.dk.split(':'); ui.dash.hidden[t]=ui.dash.hidden[t].filter(x=>x!==k); render()} break;
     case 'dash-cancel': ui.dash=null; render(); break;
-    case 'dash-reset': {const r={page:ui.dash.page,hidden:{}}; for(const t of LAYOUT[ui.dash.page].types){r[t]=DASH_DEFAULT[t].slice(); r.hidden[t]=[]} ui.dash=r; render()} break;
+    case 'dash-reset': {const r={page:ui.dash.page,hidden:{}}; for(const t of LAYOUT[ui.dash.page].types){r[t]=dashDefault(t).slice(); r.hidden[t]=[]} ui.dash=r; render()} break;
     case 'dash-save': await dashSave(); break;
     case 'dash-move': dashMove(el.dataset.dk,null,+el.dataset.dir); break;
     case 'lay-save': await saveLayout(); break;
