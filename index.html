@@ -340,6 +340,35 @@ html.pv .pvmini{color:var(--accent);border-color:var(--accent)}
 .srow .v{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
 .srow .v span{display:block;font-size:11.5px;font-weight:400;color:var(--muted)}
 .subtot{display:flex;flex-wrap:wrap;gap:8px 24px;margin:4px 0 8px;font-size:14px}
+
+/* v61 (28/11): iPhone horizontaal en rechtop nagekeken.
+   Horizontaal (laag scherm): de menubalk onderaan nam bijna een derde van de hoogte in. Hij staat nu als smalle strook links,
+   alleen iconen (namen blijven voor schermlezers), met de gouden plusknop onderaan in de strook. */
+@media (orientation:landscape) and (max-height:500px) and (max-width:899px){
+  .bottom{top:0;bottom:0;right:auto;width:calc(60px + env(safe-area-inset-left,0px));border-top:0;border-right:1px solid var(--card-line);
+    grid-template-columns:1fr;grid-template-rows:repeat(6,minmax(0,52px));align-content:center;gap:2px;
+    padding:max(10px,env(safe-area-inset-top,0px)) 4px max(10px,env(safe-area-inset-bottom,0px)) max(4px,env(safe-area-inset-left,0px))}
+  .bottom a,.bottom button.navbtn{min-height:0;font-size:0;gap:0;border-radius:12px;position:relative}
+  .bottom a[aria-current="page"],.bottom button.navbtn.on{background:var(--accent-soft)}
+  .bottom a[aria-current="page"]::before{content:"";position:absolute;left:-4px;top:25%;bottom:25%;width:3px;border-radius:0 3px 3px 0;background:var(--accent)}
+  .bottom>div{order:10;justify-content:center;align-items:center!important}
+  .fab{width:44px;height:44px;margin:0}
+  .main{padding-left:calc(76px + env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:14px 28px;gap:14px}
+  .toast{bottom:max(12px,env(safe-area-inset-bottom,0px))}
+}
+/* Grotere iPhone horizontaal (≥ 900 px breed maar laag): de laptop-zijbalk wordt een smalle iconenstrook */
+@media (orientation:landscape) and (max-height:500px) and (min-width:900px){
+  .side{width:calc(64px + env(safe-area-inset-left,0px));padding:max(12px,env(safe-area-inset-top,0px)) 6px 12px max(6px,env(safe-area-inset-left,0px));gap:2px;justify-content:center}
+  .side .brand,.side .soon{display:none}
+  .side a,.side button.sidemore{font-size:0;justify-content:center;padding:0;min-height:48px;gap:0}
+  .side a[aria-current="page"]{box-shadow:inset 3px 0 0 var(--accent)}
+  .main{padding-left:24px;padding-right:max(20px,env(safe-area-inset-right,0px));padding-block:14px 28px;gap:14px}
+}
+/* Rechtop: in het jaaroverzicht nam de categoriekolom de halve breedte in (je zag maar 2 maanden). Smaller, naam mag op 2 regels. */
+@media (max-width:699px){
+  table.yr th:first-child,table.yr td:first-child{width:128px;min-width:128px;max-width:128px;white-space:normal;line-height:1.25}
+  table.yr{min-width:980px}
+}
 </style>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="pvBlur"><feGaussianBlur stdDeviation="4"/></filter></svg>
 
