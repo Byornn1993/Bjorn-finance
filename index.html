@@ -1,4 +1,4 @@
-<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Bjorn Finance</title><meta name="theme-color" content="#101418"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Finance"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=6"><link rel="icon" type="image/png" href="favicon.png?v=6"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#101418;color:#FBF6EE}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Aurum</title><meta name="theme-color" content="#101418"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Aurum"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=6"><link rel="icon" type="image/png" href="favicon.png?v=6"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#101418;color:#FBF6EE}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
 <style>
@@ -380,7 +380,7 @@ html.pv .pvmini{color:var(--accent);border-color:var(--accent)}
 
 <div class="app">
   <nav class="side" aria-label="Hoofdmenu">
-    <div class="brand"><img class="brand-mark" src="apple-touch-icon.png?v=6" alt=""><div><b>Bjorn Finance</b><span class="small muted">Mijn financieel overzicht</span></div></div>
+    <div class="brand"><img class="brand-mark" src="apple-touch-icon.png?v=6" alt=""><div><b>Aurum</b><span class="small muted">Mijn financieel overzicht</span></div></div>
     <a href="#dashboard" data-nav="dashboard"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="2"/><rect x="14" y="3" width="7" height="5" rx="2"/><rect x="14" y="12" width="7" height="9" rx="2"/><rect x="3" y="16" width="7" height="5" rx="2"/></svg>Dashboard</a>
     <a href="#transacties" data-nav="transacties"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>Transacties</a>
     <a href="#jaar" data-nav="jaar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M8 13h2M14 13h2M8 17h2M14 17h2"/></svg>Jaaroverzicht</a>
@@ -391,7 +391,7 @@ html.pv .pvmini{color:var(--accent);border-color:var(--accent)}
   </nav>
 
   <main class="main" id="main" aria-live="polite">
-    <div class="empty">Bjorn Finance wordt geladen…</div>
+    <div class="empty">Aurum wordt geladen…</div>
   </main>
 
   <nav class="bottom" aria-label="Menu onderaan">
@@ -756,7 +756,7 @@ async function exportData(silent){
 /* ---------- Importeren ---------- */
 const imp={file:null,data:null,err:'',busy:false,done:null,confirm:false};
 function viewImport(){
-  let h='<div class="head"><div><h1>Back-up terugzetten</h1><div class="sub">Zet een back-upbestand van Bjorn Finance terug in de app.</div></div></div>';
+  let h='<div class="head"><div><h1>Back-up terugzetten</h1><div class="sub">Zet een back-upbestand van Aurum terug in de app.</div></div></div>';
   h+='<section class="card" style="display:flex;flex-direction:column;gap:14px;max-width:640px">';
   if(imp.done){
     h+='<h2>Klaar</h2><p>'+imp.done+'</p><div class="actions"><a class="btn primary" href="#dashboard">Naar het dashboard</a><a class="btn" href="#jaar">Jaaroverzicht controleren</a></div>';
@@ -786,7 +786,7 @@ async function readImportFile(file){
     if(j.app!=='Bjorn Finance'||!j.gegevens)throw 0;
     for(const c of COLS)if(j.gegevens[c]&&!Array.isArray(j.gegevens[c]))throw 0;
     imp.data=j;
-  }catch(e){imp.err='Dit is geen back-upbestand van Bjorn Finance. Kies het bestand dat begint met bjorn-finance-export.'}
+  }catch(e){imp.err='Dit is geen back-upbestand van Aurum. Kies het bestand dat begint met bjorn-finance-export.'}
   render();
 }
 async function runImport(){
@@ -811,7 +811,7 @@ async function runImport(){
 
 /* ---------- Aanmelden ---------- */
 function viewLogin(){
-  let h='<div class="login"><div class="brand"><img class="brand-mark" src="apple-touch-icon.png?v=6" alt=""><div><b>Bjorn Finance</b><span class="small muted">Mijn financieel overzicht</span></div></div>';
+  let h='<div class="login"><div class="brand"><img class="brand-mark" src="apple-touch-icon.png?v=6" alt=""><div><b>Aurum</b><span class="small muted">Mijn financieel overzicht</span></div></div>';
   h+='<section class="card" style="display:flex;flex-direction:column;gap:14px"><h2>Aanmelden</h2>';
   h+='<form id="loginForm" style="display:flex;flex-direction:column;gap:12px" novalidate>'+
     '<label class="field">E-mailadres<input id="lgEmail" name="email" type="email" autocomplete="username" inputmode="email" value="'+esc(loginUi.email)+'" placeholder="jij@voorbeeld.be"></label>'+
@@ -951,7 +951,7 @@ function render(){
   document.querySelectorAll('[data-nav]').forEach(a=>{const on=a.dataset.nav===ui.view;on?a.setAttribute('aria-current','page'):a.removeAttribute('aria-current')});
   const mb=document.querySelector('[data-navmore]'); if(mb)mb.classList.toggle('on',['sales','abonnementen','balans','import'].includes(ui.view));
   document.body.classList.toggle('auth',authState!=='in');
-  if(authState==='laden'){main.innerHTML='<div class="empty">Bjorn Finance wordt geladen…</div>';return}
+  if(authState==='laden'){main.innerHTML='<div class="empty">Aurum wordt geladen…</div>';return}
   if(authState==='uit'){main.innerHTML=viewLogin();return}
   if(dbState==='fout'){main.innerHTML='<div class="card"><h2>Geen verbinding</h2><p class="muted">Je gegevens konden niet opgehaald worden. Controleer je internet en probeer opnieuw.</p><button class="btn primary" type="button" data-act="reload">Opnieuw proberen</button></div>';return}
   if(!COLS.every(c=>S.loaded[c])){main.innerHTML='<div class="empty">Je gegevens worden opgehaald…</div>';return}

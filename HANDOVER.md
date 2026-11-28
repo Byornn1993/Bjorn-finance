@@ -1,5 +1,7 @@
 # Bjorn Finance: overdracht
 
+> **Naam vanaf 28/11/2026: Aurum** (deel van het ecosysteem Magnum Opus). Zichtbaar in titel, beginscherm en merk; map, webadres, database en back-up-sleutels heten nog Be finance.
+
 Stand: 27 november 2026, app-versie **v62** (lokaal gecommit; Bjorn pusht met `..\Push Be finance.cmd`). Dit document is voor een nieuwe Claude-sessie zonder voorkennis.
 
 > Let op: deze repo is **publiek** en GitHub Pages serveert ook dit bestand. Zet hier nooit bedragen, rekeningnummers, wachtwoorden of sleutels.

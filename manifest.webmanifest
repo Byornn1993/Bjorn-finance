@@ -1,6 +1,6 @@
 {
-  "name": "Bjorn Finance",
-  "short_name": "Finance",
+  "name": "Aurum",
+  "short_name": "Aurum",
   "description": "Mijn financieel overzicht: uitgaven, inkomsten, spaarpotjes en balans.",
   "lang": "nl-BE",
   "start_url": "./#dashboard",
