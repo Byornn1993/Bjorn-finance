@@ -168,6 +168,9 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
 .track{height:6px;border-radius:99px;background:color-mix(in srgb,var(--champ) 12%,transparent);overflow:hidden}
 .fill{height:100%;border-radius:99px}
 
+/* v62: informatieve rij in het jaaroverzicht */
+table.yr tr.info td{color:var(--muted);font-style:italic}
+table.yr tr.info td:first-child{font-style:normal}
 /* Pots: indeling (v58) */
 .pstack{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:start}
 @media (min-width:1000px){.pstack{grid-template-columns:repeat(3,minmax(0,1fr))}.pstack>*{grid-column:1/-1}.pstack>.pblok.potk,.pstack>.dk:has(>.pblok.potk){grid-column:auto}.pblok.potk>.pot{height:100%}}
@@ -540,12 +543,15 @@ function calcStats(y,m){
   for(const k of ['inkomen','uitgaven','sparen','uitPot','opname','terug'])r[k]=round2(r[k]);
   r.bruto=r.uitgaven; r.uitgaven=round2(r.bruto-r.terug); // netto uitgaven
   r.carry=round2(carryIn(y,m));
-  r.inkomenLoon=r.inkomen; r.inkomen+=r.uitPot+r.opname+r.carry;
-  r.inkomen=round2(r.inkomen);
+  // v62: geld uit spaarpotjes is geen inkomen (het was al gespaard van je loon). Inkomen = echt inkomen + over van vorige maand.
+  // Voor wat er overblijft (Over, vrije cashflow, eindsaldo) telt het wel mee: dat geld staat/stond op je rekening.
+  r.inkomenLoon=r.inkomen; r.uitPotjes=round2(r.uitPot+r.opname);
+  r.inkomen=round2(r.inkomen+r.carry);
+  r.beschikbaar=round2(r.inkomen+r.uitPotjes);
   r.levenskosten=round2(r.uitgaven-r.sparen);
-  r.cashflow=round2(r.inkomen-r.levenskosten);
-  r.eindsaldo=round2(r.inkomen-r.levenskosten-r.sparen);
-  const inkNieuw=r.inkomen-r.carry; // percentages zonder het overgedragen bedrag
+  r.cashflow=round2(r.beschikbaar-r.levenskosten);
+  r.eindsaldo=round2(r.beschikbaar-r.levenskosten-r.sparen);
+  const inkNieuw=r.inkomenLoon; // percentages: alleen echt inkomen (zonder overgedragen bedrag en zonder geld uit potjes)
   r.spaarPct=inkNieuw?r.sparen/inkNieuw:0;
   r.levPct=inkNieuw?r.levenskosten/inkNieuw:0;
   return r;
@@ -1010,10 +1016,10 @@ function viewDash(){
   if(E)h+=layoutHelp();
   // M1: bovenaan één kaart met het belangrijkste van de maand (op de iPhone zonder centen, zodat het past)
   const fa=isWide()?fmt:fmt0;
-  const ratio=st.inkomen>0?Math.min(st.uitgaven/st.inkomen,1):0;
+  const ratio=st.beschikbaar>0?Math.min(st.uitgaven/st.beschikbaar,1):0;
   h+='<section class="card msum"><span class="label">'+MONTHS[ui.m-1]+' in één oogopslag</span><div class="msum3"><div><span>Binnen</span><b>'+fa(st.inkomen)+'</b></div><div><span>Uit</span><b>'+fa(st.uitgaven)+'</b></div><div><span>Over</span><b class="'+(st.eindsaldo<0?'neg':'over')+'">'+fa(st.eindsaldo)+'</b></div></div>'+
     '<div class="small muted brnet" style="margin:4px 0 8px">Uitgaven bruto <b class="num">'+fmt(st.bruto)+'</b> · terugbetaald <b class="num">'+fmt(st.terug)+'</b> · netto <b class="num">'+fmt(st.uitgaven)+'</b></div>'+
-    '<div class="track"><div class="fill" style="width:'+(ratio*100).toFixed(1)+'%;background:var(--accent)"></div></div><span class="small muted">'+(st.inkomen>0?Math.round(st.uitgaven/st.inkomen*100)+'% van wat binnenkwam is uitgegeven of gespaard':'Nog geen inkomen deze maand')+(st.sparen?' · waarvan '+fmt(st.sparen)+' gespaard':'')+(st.carry?' · incl. '+fmt(st.carry)+' over van vorige maand':'')+'</span></section>';
+    '<div class="track"><div class="fill" style="width:'+(ratio*100).toFixed(1)+'%;background:var(--accent)"></div></div><span class="small muted">'+(st.beschikbaar>0?Math.round(st.uitgaven/st.beschikbaar*100)+'% van wat binnenkwam is uitgegeven of gespaard':'Nog geen inkomen deze maand')+(st.sparen?' · waarvan '+fmt(st.sparen)+' gespaard':'')+(st.carry?' · incl. '+fmt(st.carry)+' over van vorige maand':'')+(st.uitPotjes?' · '+fmt(st.uitPotjes)+' uit spaarpotjes (geen inkomen)':'')+'</span></section>';
   h+=dashNotes();
   const K={
     // Alleen in dit vakje: geld dat je uit een potje terug naar je rekening haalde, is geen inkomen en telt niet mee.
@@ -1233,7 +1239,7 @@ function prognoseParts(){
 const POT_ROW='Spaarpotjes';
 // De regels per blok komen uit de indeling van de groep (grp); extra = regels die de app zelf maakt.
 const YEAR_LAYOUT=[
-  {id:'in',grp:'inkomen',name:'Inkomsten',extra:[POT_ROW,CARRY_ROW],total:'Totaal inkomsten'},
+  {id:'in',grp:'inkomen',name:'Inkomsten',extra:[CARRY_ROW],total:'Totaal inkomsten'},
   {id:'vast',grp:'vast',name:'Uitgaven — vaste lasten',total:'Totaal vaste lasten'},
   {id:'vrij',grp:'vrij',name:'Uitgaven — vrije tijd & dagelijks leven',extra:[POT_ROW,TERUG_ROW],total:'Totaal vrije tijd & dagelijks leven'},
   {id:'spaar',grp:'spaar',name:'Uitgaven — sparen & beleggen',total:'Totaal sparen & beleggen'}
@@ -1329,12 +1335,14 @@ function viewYear(){
   let h='<div class="head"><div><h1>Jaaroverzicht '+y+'</h1><div class="sub">Inkomsten en uitgaven per maand, automatisch uit je transacties</div></div><div class="monthnav"><button class="iconbtn" type="button" data-act="yprev" aria-label="Vorig jaar">'+ICON.left+'</button><label for="selYJ" style="position:absolute;left:-9999px">Jaar</label><select id="selYJ" class="sel" data-act="sety">'+ys.map(v=>'<option'+(v===y?' selected':'')+'>'+v+'</option>').join('')+'<option value="new">+ Nieuw jaar</option></select><button class="iconbtn" type="button" data-act="ynext" aria-label="Volgend jaar">'+ICON.right+'</button></div></div>';
   // totalen
   const secTot=YEAR_LAYOUT.map(s=>Array.from({length:12},(_,m)=>rowsOf(s).reduce((a,r)=>a+((s.id==='in'?d.inc:d.exp)[m][r.key]||0),0)));
-  const incM=secTot[0], expM=Array.from({length:12},(_,m)=>secTot.slice(1).reduce((a,s)=>a+s[m],0)), netM=incM.map((v,m)=>v-expM[m]);
+  // v62: geld uit spaarpotjes is geen inkomen, maar telt wel mee voor het saldo (dat geld stond op je rekening)
+  const potM=d.inc.map(o=>o[POT_ROW]||0);
+  const incM=secTot[0], expM=Array.from({length:12},(_,m)=>secTot.slice(1).reduce((a,s)=>a+s[m],0)), netM=incM.map((v,m)=>v+potM[m]-expM[m]);
   const sum=a=>a.reduce((x,v)=>x+v,0);
   // Het overgedragen bedrag telt per maand mee, maar niet in de jaartotalen (anders telt het dubbel).
-  const cTot=sum(d.inc.map(o=>o[CARRY_ROW]||0)); const tIn=sum(incM)-cTot, tEx=sum(expM), tNet=tIn-tEx;
+  const cTot=sum(d.inc.map(o=>o[CARRY_ROW]||0)); const tIn=sum(incM)-cTot, tPot=sum(potM), tEx=sum(expM), tNet=tIn+tPot-tEx;
   const tSave=sum(secTot[YEAR_LAYOUT.findIndex(s=>s.id==='spaar')]); const active=incM.filter((v,m)=>v||expM[m]).length;
-  h+='<div class="kpis">'+kpi('Totaal inkomsten',fmt(tIn),'','<span class="small muted">'+active+' maand'+(active===1?'':'en')+' met gegevens</span>')+kpi('Totaal uitgaven',fmt(tEx),'','<span class="small muted">inclusief sparen</span>')+(()=>{let km=curM;if(km<0){km=11;for(let i=11;i>=0;i--){if(incM[i]||expM[i]){km=i;break}}}const v=round2(netM[km]);return kpi('Netto saldo '+MONTHS[km].toLowerCase(),fmt(v),v<0?'neg':'pos','<span class="small muted">inkomsten − uitgaven deze maand</span>')})()+kpi('Spaarpercentage jaar',pct(tIn?tSave/tIn:0),'','<span class="small muted">'+fmt(tSave)+' gespaard</span>')+'</div>';
+  h+='<div class="kpis">'+kpi('Totaal inkomsten',fmt(tIn),'','<span class="small muted">'+active+' maand'+(active===1?'':'en')+' met gegevens</span>')+kpi('Totaal uitgaven',fmt(tEx),'','<span class="small muted">inclusief sparen</span>')+(()=>{let km=curM;if(km<0){km=11;for(let i=11;i>=0;i--){if(incM[i]||expM[i]){km=i;break}}}const v=round2(netM[km]);return kpi('Netto saldo '+MONTHS[km].toLowerCase(),fmt(v),v<0?'neg':'pos','<span class="small muted">inkomsten − uitgaven deze maand'+(potM[km]?' (+ '+fmt(potM[km])+' uit potjes)':'')+'</span>')})()+kpi('Spaarpercentage jaar',pct(tIn?tSave/tIn:0),'','<span class="small muted">'+fmt(tSave)+' gespaard</span>')+'</div>';
   // grafiek komt onder de tabel per categorie
   const chart='<section class="card"><h2>Inkomsten vs. uitgaven per maand</h2><div class="cap">'+y+', totale uitgaven inclusief sparen</div>'+barChart([incM.map(round2),expM.map(round2)],MSHORT,['--c3','--c2'],curM)+'<div class="legend"><span><i class="sw" style="background:var(--c3)"></i>Inkomsten</span><span><i class="sw" style="background:var(--c2)"></i>Uitgaven</span></div></section>';
   // tabel
@@ -1349,13 +1357,14 @@ function viewYear(){
       const noDrill=r===POT_ROW||r===CARRY_ROW||r===TERUG_ROW||r.startsWith('pot:');
       t+='<tr><td title="'+esc(label)+'">'+esc(label)+(r===POT_ROW?' <span class="small muted">(uit potjes)</span>':'')+(r===TERUG_ROW?' <span class="small muted">(al afgetrokken per categorie)</span>':'')+'</td>'+vals.map((v,m)=>cell(v,cc(m),noDrill?null:{m:m+1,c:r})).join('')+cell(r===CARRY_ROW?0:sum(vals),' yt')+'</tr>'}
     t+='<tr class="tot"><td>'+esc(s.total)+'</td>'+secTot[si].map((v,m)=>cell(v,cc(m))).join('')+cell(sum(secTot[si])-(si===0?cTot:0),' yt')+'</tr>';
+    if(s.id==='in'&&tPot)t+='<tr class="info"><td title="Uit spaarpotjes (geen inkomen)">Uit spaarpotjes <span class="small muted">(geen inkomen)</span></td>'+potM.map((v,m)=>cell(v,cc(m))).join('')+cell(tPot,' yt')+'</tr>';
   });
   t+='<tr class="sec"><td colspan="14">Totaal &amp; saldo</td></tr>';
   t+='<tr class="tot"><td>Totaal uitgaven</td>'+expM.map((v,m)=>cell(v,cc(m))).join('')+cell(tEx,' yt')+'</tr>';
-  t+='<tr class="grand"><td>Netto saldo (inkomsten − uitgaven)</td>'+netM.map((v,m)=>{const r=round2(v);return r?'<td class="'+(r<0?'neg':'pos')+cc(m)+'">'+fmt(r)+'</td>':'<td class="z'+cc(m)+'">–</td>'}).join('')+'<td class="yt '+(tNet<0?'neg':'pos')+'">'+fmt(tNet)+'</td></tr>';
+  t+='<tr class="grand"><td>Netto saldo (inkomsten − uitgaven'+(tPot?' + uit potjes':'')+')</td>'+netM.map((v,m)=>{const r=round2(v);return r?'<td class="'+(r<0?'neg':'pos')+cc(m)+'">'+fmt(r)+'</td>':'<td class="z'+cc(m)+'">–</td>'}).join('')+'<td class="yt '+(tNet<0?'neg':'pos')+'">'+fmt(tNet)+'</td></tr>';
   t+='</tbody></table></div>';
   h+='<section class="card" style="padding:0;overflow:hidden"><div style="padding:16px 18px 10px"><h2>Overzicht per categorie</h2><div class="cap" style="margin:0">Tik op een bedrag om de transacties te zien'+(isWide()?'':'. Veeg opzij voor alle maanden')+'</div></div>'+t+'</section>'+chart;
-  if(sum(d.potInfo))h+='<div class="note">De rij Spaarpotjes toont ook opnames uit potjes. Die tellen alleen als inkomen.</div>';
+  if(tPot)h+='<div class="note">Geld uit je spaarpotjes is geen inkomen: je had het al gespaard van je loon. Het staat daarom apart onder Totaal inkomsten en telt alleen mee voor het netto saldo.</div>';
   h+='<div class="actions" style="margin-top:12px"><button class="btn small ghost" type="button" data-act="lay-open">Indeling van het jaaroverzicht aanpassen</button></div>';
   if(!active)h+='<div class="note">Voor '+y+' zijn nog geen transacties. Zodra je iets boekt met een datum in '+y+', vult dit overzicht zich vanzelf.</div>';
   return h;
