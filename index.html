@@ -364,6 +364,9 @@ html.pv .pvmini{color:var(--accent);border-color:var(--accent)}
   .side a[aria-current="page"]{box-shadow:inset 3px 0 0 var(--accent)}
   .main{padding-left:24px;padding-right:max(20px,env(safe-area-inset-right,0px));padding-block:14px 28px;gap:14px}
 }
+/* Bedragen in de vakjes nooit midden in een getal afbreken; tekst wordt kleiner als het krap is (iPhone horizontaal met camera-marge) */
+.kpi .v{overflow-wrap:normal;white-space:nowrap;font-size:clamp(18px,2.6vw,25px)}
+@media (orientation:landscape) and (max-height:500px){.kpi{padding:14px 12px}.kpi .label{letter-spacing:.04em}.kpi .v{font-size:min(20px,2.15vw)}}
 /* Rechtop: in het jaaroverzicht nam de categoriekolom de halve breedte in (je zag maar 2 maanden). Smaller, naam mag op 2 regels. */
 @media (max-width:699px){
   table.yr th:first-child,table.yr td:first-child{width:128px;min-width:128px;max-width:128px;white-space:normal;line-height:1.25}
