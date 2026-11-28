@@ -201,3 +201,5 @@ Alle apps staan in `C:\Users\Gebruiker\OneDrive\Documenten\Persoonlijke apps\`. 
 | Our Network | `Our Network` | Our-Network | gedeeld project, tabellen `net_` |
 
 Er is geen technische koppeling: Bjorn Finance leest of schrijft niets in de andere apps, en omgekeerd. Raak vanuit dit project nooit het gedeelde Supabase-project aan. Zie `SUPABASE_SHARED.md` in de andere mappen.
+
+## 2026-11-28 — v64 design-opfrissing: bedragen in transacties met 2 decimalen en + ervoor, lege rijen in jaartabel smal, vaste kop in jaartabel (tabel scrolt binnen eigen vak), meldingen volle breedte, verschil-pilletje op één lijn (op gsm zonder 'vs vorige maand', % pas onder 1000%), 16px tussen cijferkaarten. Geen rekenregels gewijzigd.

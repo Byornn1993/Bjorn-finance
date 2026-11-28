@@ -98,7 +98,7 @@ a{color:var(--accent-text)} a.btn{color:var(--fg);text-decoration:none} a.btn.pr
 .card{background:var(--card);border:1px solid var(--card-line);border-radius:var(--r);padding:18px;box-shadow:var(--shadow);min-width:0}
 .card h2{margin-bottom:2px}
 .card .cap{font-size:13px;color:var(--muted);margin-bottom:12px}
-.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 @media (min-width:700px){.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}}
 .kpi{background:var(--card);border:1px solid var(--card-line);border-radius:var(--r);padding:16px 18px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:4px;min-width:0}
 .kpi .v{font-family:var(--font-display);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.025em;overflow-wrap:anywhere;color:var(--fg)}
@@ -286,6 +286,14 @@ table.yr tr.tot td{font-weight:700;border-bottom:2px solid var(--line)}
 table.yr tr.grand td{font-weight:700;font-family:var(--font-display);background:var(--accent-soft)}
 table.yr tr.grand td:first-child{background:var(--accent-soft)}
 table.yr .z{color:var(--muted);opacity:.55}
+table.yr tr.gap td{height:10px;padding:0;border-bottom:0;font-size:0;line-height:0}
+.tablebox:has(>table.yr){max-height:calc(100vh - 140px);max-height:calc(100dvh - 140px);overflow:auto;overscroll-behavior-x:contain}
+.nbar{max-width:none}
+@media (max-width:699px){.delta .dvs{display:none}}
+table.yr thead th{z-index:3;background:linear-gradient(var(--surface-2),var(--surface-2)),var(--card-solid)}
+table.yr thead th.cur{background:linear-gradient(color-mix(in srgb,var(--accent) 14%,transparent),color-mix(in srgb,var(--accent) 14%,transparent)),linear-gradient(var(--surface-2),var(--surface-2)),var(--card-solid)}
+table.yr thead th:first-child{z-index:4}
+.delta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:inline-block}
 table.yr .cur{background:color-mix(in srgb,var(--accent) 14%,transparent)}
 table.yr th.cur{color:var(--accent-text);font-weight:800;box-shadow:inset 0 -3px 0 var(--accent)}
 table.yr th button{all:unset;cursor:pointer;padding:2px 4px;border-radius:6px} table.yr th button:hover{background:var(--surface-2)}
@@ -471,6 +479,8 @@ function parseAmount(s){
 }
 // Getypte tekst (bijv. "12,50" na het wisselen van categorie) blijft zoals hij is; alleen echte getallen worden opgemaakt.
 const amtStr=v=>(v==null||v==='')?'':typeof v==='string'?v:String(round2(v)).replace('.',',');
+// Transactielijst: altijd 2 decimalen en duizendtallen (4.000,00); inkomsten met een plus ervoor.
+const txAmt=t=>{const v=t.amount;if(v==null||v==='')return '';if(typeof v==='string')return v;const n=Math.abs(round2(+v)).toLocaleString('nl-BE',{minimumFractionDigits:2,maximumFractionDigits:2});return (isPlus(t)?'+ ':'')+n};
 function fdate(d){if(!d)return'';const [y,m,dd]=d.split('-');return dd+'/'+m+'/'+y}
 function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
 function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
@@ -890,7 +900,7 @@ function deltaChip(cur,prev,goodUp){
   const d=cur-prev; if(Math.abs(d)<0.005)return '<span class="delta flat">gelijk aan vorige maand</span>';
   const up=d>0; const good=goodUp?up:!up;
   const rel=prev?Math.abs(d/prev):null;
-  return '<span class="delta '+(good?'up':'down')+'">'+(up?'↑':'↓')+' '+fmt0(Math.abs(d))+(rel!=null&&isFinite(rel)?' ('+Math.round(rel*100)+'%)':'')+' t.o.v. vorige maand</span>';
+  return '<span class="delta '+(good?'up':'down')+'">'+(up?'↑':'↓')+' '+fmt0(Math.abs(d))+(rel!=null&&isFinite(rel)&&Math.abs(rel)<10?' ('+Math.round(rel*100)+'%)':'')+'<span class="dvs"> vs vorige maand</span></span>';
 }
 const ICON_LAYOUT='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="margin-right:6px"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>';
 const ICON={
@@ -1415,7 +1425,7 @@ function viewTx(){
         '<td><select aria-label="Type" data-edit="type">'+Object.entries(TYPES).map(([k,n])=>'<option value="'+k+'"'+(t.type===k?' selected':'')+'>'+n+'</option>').join('')+'</select></td>'+
         '<td>'+(t.type==='overboeking'?'<span class="small muted" style="padding:0 6px">'+esc(potName(t.potOut))+' → '+esc(potName(t.potIn))+'</span>':'<select aria-label="Categorie" data-edit="category">'+catOptions(t.type,t.category)+'</select>')+'</td>'+
         '<td><input aria-label="Omschrijving" value="'+esc(t.description)+'" data-edit="description" placeholder="—"></td>'+
-        '<td class="amt"><div class="amtwrap">'+(isPlus(t)?'<b class="amt-in">+</b>':'')+'<input aria-label="Bedrag" inputmode="decimal" class="'+(isPlus(t)?'amt-in':'amt-out')+'" value="'+esc(amtStr(t.amount))+'" data-edit="amount"></div></td>'+
+        '<td class="amt"><div class="amtwrap"><input aria-label="Bedrag" inputmode="decimal" class="'+(isPlus(t)?'amt-in':'amt-out')+'" value="'+esc(txAmt(t))+'" data-edit="amount"></div></td>'+
         '<td>'+potCell(t)+'</td>'+
         '<td style="white-space:nowrap;text-align:right">'+(conf?'<button class="btn small danger" type="button" data-act="del" data-id="'+esc(t.id)+'">Verwijderen</button> <button class="btn small ghost" type="button" data-act="nodel">Annuleer</button>':
           (t.receipt?'<button class="btn small ghost" type="button" data-act="viewrc" data-id="'+esc(t.id)+'" aria-label="Bonnetje bekijken" title="Bonnetje bekijken">'+ICON.clip+'</button>':'')+
@@ -1953,7 +1963,7 @@ document.addEventListener('change',async e=>{
   // inline tabel
   if(el.dataset.edit){const tr=el.closest('tr');const id=tr&&tr.dataset.id;const t=S.tx.find(x=>x.id===id);if(!t)return;const k=el.dataset.edit;let v=el.value;
     const patch={updated:Date.now()};
-    if(k==='amount'){v=parseAmount(v);if(!isFinite(v)||v<=0){toast('Ongeldig bedrag');el.value=amtStr(t.amount);return}patch.amount=round2(v)}
+    if(k==='amount'){v=parseAmount(v);if(!isFinite(v)||v<=0){toast('Ongeldig bedrag');el.value=txAmt(t);return}patch.amount=round2(v)}
     else if(k==='type'){patch.type=v; if(v==='inkomen'){patch.category=groupOf(t.category).kind==='inkomen'?t.category:'Overige inkomsten';patch.potIn='';patch.potOut=''} else if(v==='uitgave'){if(groupOf(t.category).kind!=='uitgave'||!CAT_GROUP[t.category])patch.category='Overig'} else if(v===TERUG){patch.category=terugCat(t.category);patch.potIn='';patch.potOut=''} else {openSheet(Object.assign({},t,{type:'overboeking',potOut:'rekening',potIn:''}));el.value=t.type;return}}
     else if(k==='category'){patch.category=v; if(isSaveCat(v))patch.potOut=''; else patch.potIn=''}
     else if(k==='date'){if(!v){el.value=t.date;return}patch.date=v}
